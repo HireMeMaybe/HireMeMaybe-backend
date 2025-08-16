@@ -15,7 +15,7 @@ import (
 type Server struct {
 	port int
 
-	db database.Service
+	db *database.Service
 }
 
 func NewServer() *http.Server {
@@ -25,6 +25,7 @@ func NewServer() *http.Server {
 
 		db: database.New(),
 	}
+	NewServer.db.Migrate()
 
 	// Declare Server config
 	server := &http.Server{
