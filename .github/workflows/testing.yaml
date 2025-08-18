@@ -1,0 +1,52 @@
+name: testing
+on:
+  push:
+    branches:
+      - prod
+  pull_request:
+    branches:
+      - prod
+
+permissions:
+  contents: read
+  # Optional: allow read access to pull requests. Use with `only-new-issues` option.
+  # pull-requests: read
+
+env:
+  PORT: 8080
+  APP_ENV: local
+  DB_HOST: localhost
+  DB_PORT: 5432
+  DB_DATABASE: postgres
+  DB_USERNAME: postgres
+  DB_PASSWORD: password
+
+jobs:
+  golangci:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_DATABASE }}
+          
+        ports: ['5432:5432']
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      
+      - name: setup golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: v1.24
+      
+      - name: Install depedencies
+        run: go get .
+
+      - name: Test build
+        run: go build -o main cmd/api/main.go
+
+      - name: Test build
+        run: go test -v ./... 

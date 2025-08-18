@@ -25,3 +25,6 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1
+          skip-cache: true
+      - name: check linters
+        run: golangci-lint linters
