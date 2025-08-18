@@ -2,7 +2,7 @@ name: golangci-lint
 on:
   push:
     branches:
-      - prod
+      - '**'
   pull_request:
     branches:
       - prod
