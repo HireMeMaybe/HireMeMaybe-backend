@@ -1,3 +1,4 @@
+// Package database implement connection to database service and initialize ORM.
 package database
 
 import (
@@ -8,8 +9,9 @@ import (
 	"os"
 	"strconv"
 	"time"
-
+	// It's something abt database I don't know <Crying Emoji>
 	_ "github.com/jackc/pgx/v5/stdlib"
+	// Load .env file to environments
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,9 +37,10 @@ import (
 // 	GetORM() *gorm.DB
 // }
 
+// Service contain sql.DB instance and gorm instance
 type Service struct {
-	ori_db *sql.DB
-	db *gorm.DB
+	oriDB *sql.DB
+	db    *gorm.DB
 }
 
 var (
@@ -49,7 +52,8 @@ var (
 	dbInstance *Service
 )
 
-func  New() *Service {
+// New consturct new Database service with ORM
+func New() *Service {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
@@ -66,12 +70,13 @@ func  New() *Service {
 	}
 
 	dbInstance = &Service{
-		ori_db: db,
-		db: gormDB,
+		oriDB: db,
+		db:    gormDB,
 	}
 	return dbInstance
 }
 
+// Migrate database with
 func (s *Service) Migrate() error {
 	err := s.db.AutoMigrate(&model.SomeModel{})
 	if err != nil {
@@ -89,11 +94,11 @@ func (s *Service) Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	err := s.ori_db.PingContext(ctx)
+	err := s.oriDB.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err) // Log the error and terminate the program
+		log.Printf("db down: %v", err) // Log the error and terminate the program
 		return stats
 	}
 
@@ -102,7 +107,7 @@ func (s *Service) Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := s.ori_db.Stats()
+	dbStats := s.oriDB.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)
@@ -137,5 +142,5 @@ func (s *Service) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *Service) Close() error {
 	log.Printf("Disconnected from database: %s", database)
-	return s.ori_db.Close()
+	return s.oriDB.Close()
 }

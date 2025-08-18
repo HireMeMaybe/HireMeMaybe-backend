@@ -2,22 +2,26 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	// Load env file into environments.
 	_ "github.com/joho/godotenv/autoload"
 
 	"HireMeMaybe-backend/internal/database"
 )
 
+// Server contain port which server are running on and database instance
 type Server struct {
 	port int
 
 	db *database.Service
 }
 
+// NewServer construct new Server instance
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
@@ -25,7 +29,10 @@ func NewServer() *http.Server {
 
 		db: database.New(),
 	}
-	NewServer.db.Migrate()
+	err := NewServer.db.Migrate()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Declare Server config
 	server := &http.Server{

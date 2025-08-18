@@ -1,3 +1,4 @@
+// Package server contain implementation of go-gin-server and each route handlers
 package server
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RegisterRoutes will register each http endpoint routes to bound Server instance
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
@@ -24,6 +26,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	return r
 }
 
+// HelloWorldHandler handle request by return message "Hello World"
 func (s *Server) HelloWorldHandler(c *gin.Context) {
 	resp := make(map[string]string)
 	resp["message"] = "Hello World"

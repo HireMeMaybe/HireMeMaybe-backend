@@ -1,3 +1,4 @@
+// Package main contain entrypoint for running server
 package main
 
 import (
