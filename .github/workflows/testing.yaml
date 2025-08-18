@@ -43,7 +43,7 @@ jobs:
           go-version: v1.24
       
       - name: Install depedencies
-        run: go get .
+        run: go mod download
 
       - name: Test build
         run: go build -o main cmd/api/main.go
