@@ -24,20 +24,15 @@ type Server struct {
 // NewServer construct new Server instance
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	NewServer := &Server{
-		port: port,
 
-		db: database.New(),
+	if err := database.InitializeDatabase(); err != nil {
+		log.Fatalf("Database failed to initialized: %s", err)
 	}
-	err := NewServer.db.Migrate()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	
 	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
-		Handler:      NewServer.RegisterRoutes(),
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

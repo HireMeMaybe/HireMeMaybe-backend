@@ -67,16 +67,16 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	srv := New()
-	if srv == nil {
-		t.Fatal("New() returned nil")
+	err := InitializeDatabase(); if err != nil {
+		t.Fatalf("Database failed to initialize: %s", err)
 	}
 }
 
 func TestHealth(t *testing.T) {
-	srv := New()
-
-	stats := srv.Health()
+	err := InitializeDatabase(); if err != nil {
+		t.Fatalf("Database failed to initialize: %s", err)
+	}
+	stats := Health()
 
 	if stats["status"] != "up" {
 		t.Fatalf("expected status to be up, got %s", stats["status"])
@@ -92,9 +92,12 @@ func TestHealth(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	srv := New()
+	err := InitializeDatabase()
+	if err != nil {
+		t.Fatalf("Database failed to initialize: %s", err)
+	}
 
-	if srv.Close() != nil {
+	if Close() != nil {
 		t.Fatalf("expected Close() to return nil")
 	}
 }

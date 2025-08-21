@@ -2,6 +2,7 @@
 package server
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -9,7 +10,7 @@ import (
 )
 
 // RegisterRoutes will register each http endpoint routes to bound Server instance
-func (s *Server) RegisterRoutes() http.Handler {
+func RegisterRoutes() http.Handler {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -19,21 +20,21 @@ func (s *Server) RegisterRoutes() http.Handler {
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
-	r.GET("/", s.HelloWorldHandler)
+	r.GET("/", HelloWorldHandler)
 
-	r.GET("/health", s.healthHandler)
+	r.GET("/health", healthHandler)
 
 	return r
 }
 
 // HelloWorldHandler handle request by return message "Hello World"
-func (s *Server) HelloWorldHandler(c *gin.Context) {
+func HelloWorldHandler(c *gin.Context) {
 	resp := make(map[string]string)
 	resp["message"] = "Hello World"
 
 	c.JSON(http.StatusOK, resp)
 }
 
-func (s *Server) healthHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, s.db.Health())
+func healthHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, database.Health())
 }
