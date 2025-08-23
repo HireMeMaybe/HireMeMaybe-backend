@@ -2,6 +2,7 @@
 package server
 
 import (
+	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"net/http"
 
@@ -24,6 +25,9 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/health", healthHandler)
 
+	r.POST("/auth/google", auth.GoogleLogin)
+
+	r.GET("/auth/google/callback", auth.Callback)
 	return r
 }
 
