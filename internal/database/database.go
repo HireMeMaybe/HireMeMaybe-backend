@@ -60,7 +60,7 @@ func InitializeDatabase() error {
 		return nil
 	}
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-	
+
 	var err error
 
 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
@@ -77,7 +77,11 @@ func InitializeDatabase() error {
 
 // Migrate database
 func Migrate() error {
-	err := DBinstance.AutoMigrate(&model.SomeModel{}, &model.CPSKUser{})
+	err := DBinstance.AutoMigrate(
+		&model.SomeModel{},
+		&model.CPSKUser{},
+		&model.User{},
+	)
 	if err != nil {
 		return err
 	}

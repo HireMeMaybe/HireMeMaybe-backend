@@ -8,9 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	// Load env file into environments.
-	_ "github.com/joho/godotenv/autoload"
-
 	"HireMeMaybe-backend/internal/database"
 )
 
@@ -28,7 +25,7 @@ func NewServer() *http.Server {
 	if err := database.InitializeDatabase(); err != nil {
 		log.Fatalf("Database failed to initialized: %s", err)
 	}
-	
+
 	// Declare Server config
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),

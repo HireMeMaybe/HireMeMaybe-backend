@@ -67,13 +67,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	err := InitializeDatabase(); if err != nil {
+	err := InitializeDatabase()
+	if err != nil {
 		t.Fatalf("Database failed to initialize: %s", err)
 	}
 }
 
 func TestHealth(t *testing.T) {
-	err := InitializeDatabase(); if err != nil {
+	err := InitializeDatabase()
+	if err != nil {
 		t.Fatalf("Database failed to initialize: %s", err)
 	}
 	stats := Health()

@@ -20,25 +20,23 @@ var googleOauth *oauth2.Config
 func init() {
 
 	googleOauth = &oauth2.Config{
-		ClientID: os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
+		ClientID:     os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
 		ClientSecret: os.Getenv("CPSK_GOOGLE_AUTH_SECRET"),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
-        	"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.profile",
 			"https://www.googleapis.com/auth/userinfo.openid",
 		},
-		Endpoint: google.Endpoint,
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		Endpoint:    google.Endpoint,
+		RedirectURL: "http://localhost:8080/auth/google/callback",
 	}
 }
 
-func GoogleLogin(c *gin.Context) {
+func CPSKGoogleLoginHandler(c *gin.Context) {
 
-	type oauthCode struct {
+	var code struct {
 		Code string `json:"code" binding:"required"`
 	}
-
-	var code oauthCode
 
 	// check does body has code
 	if err := c.ShouldBindJSON(&code); err != nil {
@@ -50,7 +48,7 @@ func GoogleLogin(c *gin.Context) {
 
 	// Exchange code with google and get userinfo
 	token, err := googleOauth.Exchange(
-		context.Background(), 
+		context.Background(),
 		code.Code,
 	)
 	if err != nil {
@@ -69,15 +67,13 @@ func GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	type userInfo struct {
-		GID 			string `json:"sub"`
-		FirstName 	string `json:"given_name"`
-		LastName 	string `json:"family_name"`
-		Email 		string `json:"email"`
+	var uInfo struct {
+		GID       string `json:"sub"`
+		FirstName string `json:"given_name"`
+		LastName  string `json:"family_name"`
+		Email     string `json:"email"`
 	}
 
-	var uInfo userInfo
-	
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -85,26 +81,70 @@ func GoogleLogin(c *gin.Context) {
 		})
 		return
 	}
+
+	respStatus := http.StatusOK
+
 	// Check does user are already in DB or not
-	var user model.CPSKUser
-	database.DBinstance.Where("google_id = ?",  uInfo.GID).First(&user)
-	
-	// If user not exist in db create one with provided information
-	if user.ID == 0 {
-		user = model.CPSKUser{
-			GoogleId: uInfo.GID,
-			FirstName: uInfo.FirstName,
-			LastName: uInfo.LastName,
-			ContactInfo: model.ContactInfo{
-				Email: &uInfo.Email,
-			},
-		}
-		database.DBinstance.Create(&user)
+	var user model.User
+	var cpskUser model.CPSKUser
+	if err := database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
 	}
 
-	c.JSON(http.StatusCreated, &user)
-	// If already exist return that user
+	// If user not exist in db create one with provided information
+	if user.ContactInfo.Email == nil {
 
+		cpskUser = model.CPSKUser{
+			User: model.User{
+				ContactInfo: model.ContactInfo{
+					Email: &uInfo.Email,
+				},
+				GoogleId: uInfo.GID,
+				Username: uInfo.FirstName,
+			},
+			FirstName: uInfo.FirstName,
+			LastName:  uInfo.LastName,
+		}
+
+		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			})
+			return
+		}
+
+		respStatus = http.StatusCreated
+	} else {
+
+		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			})
+			return
+		}
+	}
+
+	var accessToken string
+
+	// TODO: change this when implementing refresh token
+	var _ string
+
+	accessToken, _, err = generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(respStatus, gin.H{
+		"user":        cpskUser,
+		"acess_token": accessToken,
+	})
+	// Return user that got query from database or newly created one
 }
 
 func Callback(c *gin.Context) {

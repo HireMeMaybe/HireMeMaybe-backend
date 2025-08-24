@@ -25,7 +25,7 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/health", healthHandler)
 
-	r.POST("/auth/google", auth.GoogleLogin)
+	r.POST("/auth/google", auth.CPSKGoogleLoginHandler)
 
 	r.GET("/auth/google/callback", auth.Callback)
 	return r
