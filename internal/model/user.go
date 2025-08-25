@@ -8,15 +8,11 @@ import (
 
 type User struct {
 	gorm.Model
-	ContactInfo
+	Tel   *string `json:"tel"`
+	Email *string `json:"email"`
 	ID       uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	GoogleId string    `json:"-"`
 	Username string    `json:"username"`
-}
-
-type ContactInfo struct {
-	Tel   *string `json:"tel"`
-	Email *string `json:"email"`
 }
 
 type CPSKUser struct {

@@ -95,13 +95,11 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	}
 
 	// If user not exist in db create one with provided information
-	if user.ContactInfo.Email == nil {
+	if user.Email == nil {
 
 		cpskUser = model.CPSKUser{
 			User: model.User{
-				ContactInfo: model.ContactInfo{
-					Email: &uInfo.Email,
-				},
+				Email: &uInfo.Email,
 				GoogleId: uInfo.GID,
 				Username: uInfo.FirstName,
 			},
