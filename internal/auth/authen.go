@@ -18,7 +18,6 @@ import (
 var googleOauth *oauth2.Config
 
 func init() {
-
 	googleOauth = &oauth2.Config{
 		ClientID:     os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
 		ClientSecret: os.Getenv("CPSK_GOOGLE_AUTH_SECRET"),
