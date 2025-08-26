@@ -33,7 +33,7 @@ func generateToken(uuid uuid.UUID) (string, string, error) {
 }
 
 func ValidatedToken(encodeToken string) (*jwt.Token, error) {
-	return jwt.Parse(encodeToken, func(token *jwt.Token) (interface{}, error) {
+	return jwt.ParseWithClaims(encodeToken, &jwt.RegisteredClaims{},func(token *jwt.Token) (interface{}, error) {
 		if _, isvalid := token.Method.(*jwt.SigningMethodHMAC); !isvalid {
 			return nil, fmt.Errorf("Invalid token")
 
