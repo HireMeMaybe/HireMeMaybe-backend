@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	// It's something abt database I don't know <Crying Emoji>
+	// It's something abt database I don't know 😭
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
 	_ "github.com/joho/godotenv/autoload"
@@ -81,6 +81,7 @@ func Migrate() error {
 		&model.SomeModel{},
 		&model.CPSKUser{},
 		&model.User{},
+		&model.Company{},
 	)
 	if err != nil {
 		return err
