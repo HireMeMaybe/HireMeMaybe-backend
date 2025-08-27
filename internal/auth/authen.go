@@ -85,53 +85,6 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 
 func CPSKGoogleLoginHandler(c *gin.Context) {
 
-	// var code struct {
-	// 	Code string `json:"code" binding:"required"`
-	// }
-
-	// // check does body has code
-	// if err := c.ShouldBindJSON(&code); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": fmt.Sprintf("No authorization code provided: %s", err.Error()),
-	// 	})
-	// 	return
-	// }
-
-	// // Exchange code with google and get userinfo
-	// token, err := googleOauth.Exchange(
-	// 	context.Background(),
-	// 	code.Code,
-	// )
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": fmt.Sprintf("Failed to receive token: %s", err.Error()),
-	// 	})
-	// 	return
-	// }
-
-	// client := googleOauth.Client(context.Background(), token)
-	// resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": fmt.Sprintf("Failed to fetch user information: %s", err.Error()),
-	// 	})
-	// 	return
-	// }
-
-	// var uInfo struct {
-	// 	GID       string `json:"sub"`
-	// 	FirstName string `json:"given_name"`
-	// 	LastName  string `json:"family_name"`
-	// 	Email     string `json:"email"`
-	// }
-
-	// err = json.NewDecoder(resp.Body).Decode(&uInfo)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": fmt.Sprintf("Failed to decode user info: %s", err.Error()),
-	// 	})
-	// 	return
-	// }
 	uInfo, err := getUserInfo(c)
 	if err != nil {
 		return
