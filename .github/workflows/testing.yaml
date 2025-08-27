@@ -33,6 +33,9 @@ jobs:
           POSTGRES_DB: ${{ env.DB_DATABASE }}
           
         ports: ['5432:5432']
+
+        volumes: 
+          - ./init_extensions.sql:/docker-entrypoint-initdb.d/init_extensions.sql
     steps:
       - name: checkout
         uses: actions/checkout@v4
