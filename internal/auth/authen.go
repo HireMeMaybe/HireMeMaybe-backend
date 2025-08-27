@@ -96,7 +96,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 		cpskUser = model.CPSKUser{
 			User: model.User{
-				Email: &uInfo.Email,
+				Email:    &uInfo.Email,
 				GoogleId: uInfo.GID,
 				Username: uInfo.FirstName,
 			},

@@ -17,6 +17,14 @@ func RequireAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		const BEARER_SCHEMA = "Bearer "
 		authHeader := ctx.GetHeader("Authorization")
+
+		if len(authHeader) <= len(BEARER_SCHEMA) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid authorization header",
+			})
+			return
+		}
+
 		tokenString := authHeader[len(BEARER_SCHEMA):]
 		token, err := auth.ValidatedToken(tokenString)
 
@@ -30,7 +38,6 @@ func RequireAuth() gin.HandlerFunc {
 		claims := token.Claims.(*jwt.RegisteredClaims)
 		fmt.Println(claims)
 
-		
 		if claims.ExpiresAt.Time.Before(time.Now()) {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Access token expired",
@@ -38,8 +45,8 @@ func RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		userId := claims.Subject 
-		
+		userId := claims.Subject
+
 		var foundUser model.User
 
 		if err := database.DBinstance.Where("id = ?", userId).First(&foundUser).Error; err != nil {

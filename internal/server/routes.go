@@ -3,6 +3,7 @@ package server
 
 import (
 	"HireMeMaybe-backend/internal/auth"
+	"HireMeMaybe-backend/internal/controller"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
@@ -33,6 +34,10 @@ func RegisterRoutes() http.Handler {
 	r.GET("/auth/google/callback", auth.Callback)
 
 	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
+
+	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
+	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
+
 	return r
 }
 
@@ -57,7 +62,7 @@ func thisNeedAuth(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	user, ok := u.(model.User)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
