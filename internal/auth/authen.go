@@ -5,6 +5,7 @@ import (
 	"HireMeMaybe-backend/internal/model"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"gorm.io/gorm"
 )
 
 var googleOauth *oauth2.Config
@@ -86,15 +88,11 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// Check does user are already in DB or not
 	var user model.User
 	var cpskUser model.CPSKUser
-	if err := database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
-		})
-		return
-	}
+	database.DBinstance = database.DBinstance.Debug()
+	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
 
 	// If user not exist in db create one with provided information
-	if user.Email == nil {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 
 		cpskUser = model.CPSKUser{
 			User: model.User{
@@ -114,7 +112,8 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		}
 
 		respStatus = http.StatusCreated
-	} else {
+
+	} else if err == nil {
 
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -122,6 +121,12 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 			})
 			return
 		}
+
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
 	}
 
 	var accessToken string
