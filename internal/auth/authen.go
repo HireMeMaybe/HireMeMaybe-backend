@@ -156,6 +156,77 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
+func CompanyGoogleLoginHandler(c *gin.Context) {
+	uInfo, err := getUserInfo(c)
+	if err != nil {
+		return
+	}
+
+	respStatus := http.StatusOK
+
+	// Check does user are already in DB or not
+	var user model.User
+	var companyUser model.Company
+	database.DBinstance = database.DBinstance.Debug()
+	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
+
+	// If user not exist in db create one with provided information
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+
+		companyUser = model.Company{
+			User: model.User{
+				Email:    &uInfo.Email,
+				GoogleId: uInfo.GID,
+				Username: uInfo.FirstName,
+			},
+			VerifiedStatus: "Unverified",
+		}
+
+		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			})
+			return
+		}
+
+		respStatus = http.StatusCreated
+
+	} else if err == nil {
+
+		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			})
+			return
+		}
+
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
+	}
+
+	var accessToken string
+
+	// TODO: change this when implementing refresh token
+	var _ string
+
+	accessToken, _, err = generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(respStatus, gin.H{
+		"user":        companyUser,
+		"acess_token": accessToken,
+	})
+	// Return user that got query from database or newly created one
+}
+
 func Callback(c *gin.Context) {
 	code := c.Query("code")
 	c.JSON(http.StatusOK, gin.H{

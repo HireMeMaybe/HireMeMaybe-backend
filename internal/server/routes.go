@@ -28,7 +28,9 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/health", healthHandler)
 
-	r.POST("/auth/google", auth.CPSKGoogleLoginHandler)
+	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
+
+	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
 
 	r.GET("/auth/google/callback", auth.Callback)
 
@@ -57,7 +59,7 @@ func thisNeedAuth(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	user, ok := u.(model.User)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
