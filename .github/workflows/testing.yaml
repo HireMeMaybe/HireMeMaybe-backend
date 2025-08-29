@@ -37,6 +37,12 @@ jobs:
         volumes: 
           - ./init_extensions.sql:/docker-entrypoint-initdb.d/init_extensions.sql
     steps:
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
 
       - name: Run SQL commands
         run: |
