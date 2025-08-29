@@ -2,10 +2,13 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"testing"
 	"time"
 
+	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -16,6 +19,7 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 		dbName = "database"
 		dbPwd  = "password"
 		dbUser = "user"
+		dbport = "5432"
 	)
 
 	dbContainer, err := postgres.Run(
@@ -36,19 +40,34 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 	database = dbName
 	password = dbPwd
 	username = dbUser
+	port = dbport
 
 	dbHost, err := dbContainer.Host(context.Background())
 	if err != nil {
 		return dbContainer.Terminate, err
 	}
 
-	dbPort, err := dbContainer.MappedPort(context.Background(), "5432/tcp")
+	dbPort, err := dbContainer.MappedPort(context.Background(), nat.Port("5432/tcp"))
 	if err != nil {
 		return dbContainer.Terminate, err
 	}
 
 	host = dbHost
 	port = dbPort.Port()
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", 
+	dbHost, dbPort.Port(), dbUser, dbPwd, dbName)
+
+	db, err := sql.Open("postgres", dsn)
+    if err != nil {
+        return dbContainer.Terminate, err
+    }
+    defer db.Close()
+
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s";`, "uuid-ossp"))
+	if err != nil {
+		return dbContainer.Terminate, err
+	}
 
 	return dbContainer.Terminate, err
 }
