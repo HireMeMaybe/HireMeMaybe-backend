@@ -39,10 +39,8 @@ jobs:
     steps:
 
       - name: Run SQL commands
-        env:
-          PGPASSWORD: ${{ env.DB_PASSWORD }}
         run: |
-          psql -h localhost -U ${{ env.DB_USERNAME }} -d ${{ env.DB_DATABASE }} -f ./init_extension.sql
+          PGPASSWORD=${{env.DB_PASSWORD}} psql -h localhost -U ${{ env.DB_USERNAME }} -d ${{ env.DB_DATABASE }} -f ./init_extension.sql
       
       - name: checkout
         uses: actions/checkout@v4
