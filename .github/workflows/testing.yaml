@@ -37,6 +37,13 @@ jobs:
         volumes: 
           - ./init_extensions.sql:/docker-entrypoint-initdb.d/init_extensions.sql
     steps:
+
+      - name: Run SQL commands
+        env:
+          PGPASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          psql -h localhost -U ${{ env.DB_USERNAME }} -d ${{ env.DB_DATABASE }} -c "CREATE EXTENSION IF NOT EXISTS "uuid-ossp";"
+      
       - name: checkout
         uses: actions/checkout@v4
       
