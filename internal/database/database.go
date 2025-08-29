@@ -3,7 +3,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -39,10 +38,6 @@ import (
 // }
 
 // Service contain sql.DB instance and gorm instance
-type Service struct {
-	oriDB *sql.DB
-	db    *gorm.DB
-}
 
 var (
 	database   = os.Getenv("DB_DATABASE")
@@ -50,6 +45,7 @@ var (
 	username   = os.Getenv("DB_USERNAME")
 	port       = os.Getenv("DB_PORT")
 	host       = os.Getenv("DB_HOST")
+	// DBinstance is instance or GORM orm as an interface to database
 	DBinstance *gorm.DB
 )
 

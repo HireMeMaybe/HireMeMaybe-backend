@@ -1,3 +1,4 @@
+// Package controller contains handler for several endpoints
 package controller
 
 import (
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// The function `EditCPSKProfile` in Go handles editing a user's profile information, including
+// EditCPSKProfile in Go handles editing a user's profile information, including
 // retrieving the original profile from the database, updating the information, and saving the changes.
 func EditCPSKProfile(c *gin.Context) {
 
@@ -57,6 +58,8 @@ func EditCPSKProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, cpskUser)
 }
 
+// GetMyCPSKProfile retrieves a user's CPSK profile from the database and returns it as
+// a JSON response.
 func GetMyCPSKProfile(c *gin.Context) {
 	u, _ := c.Get("user")
 	if u == nil {

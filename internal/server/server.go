@@ -11,12 +11,6 @@ import (
 	"HireMeMaybe-backend/internal/database"
 )
 
-// Server contain port which server are running on and database instance
-type Server struct {
-	port int
-	db   *database.Service
-}
-
 // NewServer construct new Server instance
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))

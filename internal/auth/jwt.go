@@ -12,7 +12,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var SECRET_KEY = os.Getenv("SECRET_KEY")
+var secretKey = os.Getenv("SECRET_KEY")
 
 // TODO: generate refresh token
 func generateToken(uuid uuid.UUID) (string, string, error) {
@@ -24,20 +24,21 @@ func generateToken(uuid uuid.UUID) (string, string, error) {
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	})
 
-	signedToken, err := generatedAccessToken.SignedString([]byte(SECRET_KEY))
+	signedToken, err := generatedAccessToken.SignedString([]byte(secretKey))
 	if err != nil {
-		return "", "", fmt.Errorf("Failed to sign token: %s", err)
+		return "", "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
 	return signedToken, "", nil
 }
 
+// ValidatedToken parses and validates a JWT token using a secret key.
 func ValidatedToken(encodeToken string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(encodeToken, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, isvalid := token.Method.(*jwt.SigningMethodHMAC); !isvalid {
-			return nil, fmt.Errorf("Invalid token")
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("invalid token")
 
 		}
-		return []byte(SECRET_KEY), nil
+		return []byte(secretKey), nil
 	})
 }

@@ -62,7 +62,12 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
     if err != nil {
         return dbContainer.Terminate, err
     }
-    defer db.Close()
+    defer func() {
+		if err := db.Close(); err != nil {
+			log.Fatal("Fail to close database")
+		}
+	}()
+	
 
 	_, err = db.ExecContext(context.Background(), fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s";`, "uuid-ossp"))
 	if err != nil {

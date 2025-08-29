@@ -6,15 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
 	Tel      *string   `json:"tel"`
 	Email    *string   `json:"email" gorm:"<-:create"`
 	ID       uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey;<-:create" json:"id" `
-	GoogleId string    `json:"-" gorm:"<-:create"`
+	GoogleID string    `json:"-" gorm:"<-:create"`
 	Username string    `json:"username" gorm:"<-:create"`
 }
 
+// CPSKUser is gorm model for store CPSK student profile data in DB
 type CPSKUser struct {
 	UserID           uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
 	User             User
@@ -27,6 +29,7 @@ type CPSKUser struct {
 	Resume           File
 }
 
+// Company is gorm model for store company relate data in DB
 type Company struct {
 	UserID         uuid.UUID
 	User           User

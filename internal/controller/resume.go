@@ -5,12 +5,15 @@ import (
 	"HireMeMaybe-backend/internal/model"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
+// UploadResume function handles the process of uploading a resume file for a user and updating the
+// user's information in the database.
 func UploadResume(c *gin.Context) {
 	var cpskUser = model.CPSKUser{}
 
@@ -51,7 +54,12 @@ func UploadResume(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
 		return
 	}
-	defer f.Close()
+	defer func ()  {
+		if err := f.Close(); err != nil {
+			log.Fatal("Failed to close file")
+		}
+	}()
+	
 
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
@@ -72,6 +80,8 @@ func UploadResume(c *gin.Context) {
 	c.JSON(http.StatusOK, cpskUser)
 }
 
+// GetFile function retrieves a file from the database and sends it as a downloadable attachment in
+// the response.
 func GetFile(c *gin.Context) {
 	var file model.File
 	id := c.Param("id")
@@ -87,5 +97,15 @@ func GetFile(c *gin.Context) {
 	c.Writer.Header().Set("Content-Length", fmt.Sprint(len(file.Content)))
 
 	// Write file data to response
-	c.Writer.Write(file.Content)
+	_, err := c.Writer.Write(file.Content)
+	if err != nil {
+		if !c.Writer.Written() {
+            c.JSON(http.StatusInternalServerError, gin.H{
+                "error": "Failed to send file content",
+            })
+        } else {
+            c.Abort()
+        }
+        return
+	}
 }
