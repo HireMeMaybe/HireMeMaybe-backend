@@ -14,8 +14,7 @@ import (
 // Server contain port which server are running on and database instance
 type Server struct {
 	port int
-
-	db *database.Service
+	db   *database.Service
 }
 
 // NewServer construct new Server instance

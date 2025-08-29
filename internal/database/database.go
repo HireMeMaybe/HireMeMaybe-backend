@@ -77,12 +77,7 @@ func InitializeDatabase() error {
 
 // Migrate database
 func Migrate() error {
-	err := DBinstance.AutoMigrate(
-		&model.SomeModel{},
-		&model.CPSKUser{},
-		&model.User{},
-		&model.Company{},
-	)
+	err := DBinstance.AutoMigrate(model.MigrateAble...)
 	if err != nil {
 		return err
 	}

@@ -23,6 +23,8 @@ type CPSKUser struct {
 	Program          *string        `check:"year IN ('CPE', 'SKE')" json:"program"`
 	EducationalLevel *string        `json:"year"`
 	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
+	ResumeID         int
+	Resume           File
 }
 
 type Company struct {
