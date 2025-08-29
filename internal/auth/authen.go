@@ -137,44 +137,6 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		return
 	}
 
-	// // If user not exist in db create one with provided information
-	// if errors.Is(err, gorm.ErrRecordNotFound) {
-
-	// 	cpskUser = model.CPSKUser{
-	// 		User: model.User{
-	// 			Email:    &uInfo.Email,
-	// 			GoogleId: uInfo.GID,
-	// 			Username: uInfo.FirstName,
-	// 		},
-	// 		FirstName: uInfo.FirstName,
-	// 		LastName:  uInfo.LastName,
-	// 	}
-
-	// 	if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{
-	// 			"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
-	// 		})
-	// 		return
-	// 	}
-
-	// 	respStatus = http.StatusCreated
-
-	// } else if err == nil {
-
-	// 	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{
-	// 			"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
-	// 		})
-	// 		return
-	// 	}
-
-	// } else {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"error": fmt.Sprintf("Database error: %s", err.Error()),
-	// 	})
-	// 	return
-	// }
-
 	var accessToken string
 
 	// TODO: change this when implementing refresh token

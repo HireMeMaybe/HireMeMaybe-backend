@@ -25,29 +25,9 @@ jobs:
   golangci:
     name: Test
     runs-on: ubuntu-latest
-    # services:
-    #   database:
-    #     image: postgres:latest
-    #     env:
-    #       POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-    #       POSTGRES_DB: ${{ env.DB_DATABASE }}
-          
-    #     ports: ['5432:5432']
-
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      
-      # - name: Wait for Postgres to be ready
-      #   run: |
-      #     until pg_isready -h localhost -p 5432; do
-      #       echo "Waiting for postgres..."
-      #       sleep 2
-      #     done
-
-      # - name: Run SQL commands
-      #   run: |
-      #     PGPASSWORD=${{env.DB_PASSWORD}} psql -h 127.0.0.1 -U ${{ env.DB_USERNAME }} -d ${{ env.DB_DATABASE }} -f ./init_extension.sql
       
       - name: setup golang
         uses: actions/setup-go@v5
