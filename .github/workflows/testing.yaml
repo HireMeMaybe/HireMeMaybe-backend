@@ -25,14 +25,6 @@ jobs:
   golangci:
     name: Test
     runs-on: ubuntu-latest
-    services:
-      database:
-        image: postgres:latest
-        env:
-          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-          POSTGRES_DB: ${{ env.DB_DATABASE }}
-          
-        ports: ['5432:5432']
     steps:
       - name: checkout
         uses: actions/checkout@v4

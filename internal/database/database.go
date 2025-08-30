@@ -3,13 +3,13 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
-	// It's something abt database I don't know <Crying Emoji>
+
+	// It's something abt database I don't know 😭
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
 	_ "github.com/joho/godotenv/autoload"
@@ -38,10 +38,6 @@ import (
 // }
 
 // Service contain sql.DB instance and gorm instance
-type Service struct {
-	oriDB *sql.DB
-	db    *gorm.DB
-}
 
 var (
 	database   = os.Getenv("DB_DATABASE")
@@ -49,36 +45,35 @@ var (
 	username   = os.Getenv("DB_USERNAME")
 	port       = os.Getenv("DB_PORT")
 	host       = os.Getenv("DB_HOST")
-	dbInstance *Service
+	// DBinstance is instance or GORM orm as an interface to database
+	DBinstance *gorm.DB
 )
 
-// New consturct new Database service with ORM
-func New() *Service {
+// InitializeDatabase constrct new Database service with ORM
+func InitializeDatabase() error {
 	// Reuse Connection
-	if dbInstance != nil {
-		return dbInstance
+	if DBinstance != nil {
+		return nil
 	}
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-	gormDB, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
+
+	var err error
+
+	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	db, err := gormDB.DB()
-	if err != nil {
-		log.Fatal(err)
+	if err := Migrate(); err != nil {
+		return err
 	}
 
-	dbInstance = &Service{
-		oriDB: db,
-		db:    gormDB,
-	}
-	return dbInstance
+	return nil
 }
 
-// Migrate database with
-func (s *Service) Migrate() error {
-	err := s.db.AutoMigrate(&model.SomeModel{})
+// Migrate database
+func Migrate() error {
+	err := DBinstance.AutoMigrate(model.MigrateAble...)
 	if err != nil {
 		return err
 	}
@@ -87,14 +82,22 @@ func (s *Service) Migrate() error {
 
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
-func (s *Service) Health() map[string]string {
+func Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	stats := make(map[string]string)
 
+	oriDB, err := DBinstance.DB()
+	if err != nil {
+		stats["status"] = "down"
+		stats["error"] = fmt.Sprintf("db down: %v", err)
+		log.Printf("db down: %v", err) // Log the error and terminate the program
+		return stats
+	}
+
 	// Ping the database
-	err := s.oriDB.PingContext(ctx)
+	err = oriDB.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -107,7 +110,7 @@ func (s *Service) Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := s.oriDB.Stats()
+	dbStats := oriDB.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)
@@ -140,7 +143,11 @@ func (s *Service) Health() map[string]string {
 // It logs a message indicating the disconnection from the specific database.
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
-func (s *Service) Close() error {
+func Close() error {
 	log.Printf("Disconnected from database: %s", database)
-	return s.oriDB.Close()
+	oriDB, err := DBinstance.DB()
+	if err != nil {
+		return err
+	}
+	return oriDB.Close()
 }
