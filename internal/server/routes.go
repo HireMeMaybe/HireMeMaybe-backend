@@ -3,6 +3,7 @@ package server
 
 import (
 	"HireMeMaybe-backend/internal/auth"
+	"HireMeMaybe-backend/internal/controller"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
@@ -25,7 +26,7 @@ func RegisterRoutes() http.Handler {
 	}))
 
 	r.GET("/", HelloWorldHandler)
-
+	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
 	r.GET("/health", healthHandler)
 
 	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
@@ -34,7 +35,12 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/auth/google/callback", auth.Callback)
 
-	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
+	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
+	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
+	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), controller.UploadResume)
+
+	r.GET("/file/:id", controller.GetFile)
+
 	return r
 }
 

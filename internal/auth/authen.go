@@ -1,3 +1,4 @@
+// Package auth contains handler relate to log in and create user account
 package auth
 
 import (
@@ -7,10 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	// Auto load .env file
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -72,6 +75,11 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 		})
 		return uInfo, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Fatal("Failed to close response body")
+		}
+	}()
 
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
@@ -83,6 +91,9 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	return uInfo, nil
 }
 
+// CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
+// info, checks and creates user in the database, generates an access token, and returns user
+// information with the access token.
 func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := getUserInfo(c)
@@ -98,13 +109,12 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	database.DBinstance = database.DBinstance.Debug()
 	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
 
-	// If user not exist in db create one with provided information
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		cpskUser = model.CPSKUser{
 			User: model.User{
 				Email:    &uInfo.Email,
-				GoogleId: uInfo.GID,
+				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
 			},
 			FirstName: uInfo.FirstName,
@@ -119,17 +129,14 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		}
 
 		respStatus = http.StatusCreated
-
-	} else if err == nil {
-
+	case err == nil:
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
-
-	} else {
+	default:
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Database error: %s", err.Error()),
 		})
@@ -156,7 +163,11 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
+// CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
+// info, checks and creates user in the database, generates an access token, and returns user
+// information with the access token.
 func CompanyGoogleLoginHandler(c *gin.Context) {
+
 	uInfo, err := getUserInfo(c)
 	if err != nil {
 		return
@@ -170,13 +181,13 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	database.DBinstance = database.DBinstance.Debug()
 	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
 
-	// If user not exist in db create one with provided information
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
 
 		companyUser = model.Company{
 			User: model.User{
 				Email:    &uInfo.Email,
-				GoogleId: uInfo.GID,
+				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
 			},
 			VerifiedStatus: "Unverified",
@@ -191,7 +202,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 		respStatus = http.StatusCreated
 
-	} else if err == nil {
+	case err == nil:
 
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -200,7 +211,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 			return
 		}
 
-	} else {
+	default:
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Database error: %s", err.Error()),
 		})
@@ -227,6 +238,8 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
+// Callback function in Go retrieves a query parameter named "code" from the request and returns it
+// in a JSON response.
 func Callback(c *gin.Context) {
 	code := c.Query("code")
 	c.JSON(http.StatusOK, gin.H{

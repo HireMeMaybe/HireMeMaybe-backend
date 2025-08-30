@@ -1,3 +1,4 @@
+// Package middleware contain utilities middleware code
 package middleware
 
 import (
@@ -13,11 +14,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// RequireAuth function is a middleware in Go that validates a Bearer token in the Authorization
+// header and checks if the user associated with the token exists and is not expired before allowing
+// access to the endpoint.
 func RequireAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		const BEARER_SCHEMA = "Bearer "
+		const BearerSchema = "Bearer "
 		authHeader := ctx.GetHeader("Authorization")
-		tokenString := authHeader[len(BEARER_SCHEMA):]
+
+		if len(authHeader) <= len(BearerSchema) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid authorization header",
+			})
+			return
+		}
+
+		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
 		if !token.Valid {
@@ -30,19 +42,18 @@ func RequireAuth() gin.HandlerFunc {
 		claims := token.Claims.(*jwt.RegisteredClaims)
 		fmt.Println(claims)
 
-		
-		if claims.ExpiresAt.Time.Before(time.Now()) {
+		if claims.ExpiresAt.Before(time.Now()) {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Access token expired",
 			})
 			return
 		}
 
-		userId := claims.Subject 
-		
+		userID := claims.Subject
+
 		var foundUser model.User
 
-		if err := database.DBinstance.Where("id = ?", userId).First(&foundUser).Error; err != nil {
+		if err := database.DBinstance.Where("id = ?", userID).First(&foundUser).Error; err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to retrieve user data",
 			})
