@@ -29,7 +29,10 @@ func RegisterRoutes() http.Handler {
 	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
 	r.GET("/health", healthHandler)
 
-	r.POST("/auth/google", auth.CPSKGoogleLoginHandler)
+	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
+
+	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
+
 	r.GET("/auth/google/callback", auth.Callback)
 
 	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)

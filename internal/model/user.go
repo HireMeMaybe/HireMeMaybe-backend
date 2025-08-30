@@ -25,13 +25,13 @@ type CPSKUser struct {
 	Program          *string        `check:"year IN ('CPE', 'SKE')" json:"program"`
 	EducationalLevel *string        `json:"year"`
 	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
-	ResumeID         *int `json:"resume_id"`
-	Resume           File `json:"-"`
+	ResumeID         *int           `json:"resume_id"`
+	Resume           File           `json:"-"`
 }
 
 // Company is gorm model for store company relate data in DB
 type Company struct {
-	UserID         uuid.UUID
+	UserID         uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
 	User           User
 	VerifiedStatus string `check:"verified_status IN ('Pending', 'Verified', 'Unverified')" json:"verified_status"`
 	Name           string `json:"name"`

@@ -36,10 +36,12 @@ func init() {
 	}
 }
 
-// CPSKGoogleLoginHandler handles Google login authentication, exchanges code for user
-// info, checks and creates user in the database, generates an access token, and returns user
-// information with the access token.
-func CPSKGoogleLoginHandler(c *gin.Context) {
+func getUserInfo(c *gin.Context) (uInfo struct {
+	GID       string `json:"sub"`
+	FirstName string `json:"given_name"`
+	LastName  string `json:"family_name"`
+	Email     string `json:"email"`
+}, e error) {
 
 	var code struct {
 		Code string `json:"code" binding:"required"`
@@ -50,7 +52,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("No authorization code provided: %s", err.Error()),
 		})
-		return
+		return uInfo, err
 	}
 
 	// Exchange code with google and get userinfo
@@ -62,7 +64,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Failed to receive token: %s", err.Error()),
 		})
-		return
+		return uInfo, err
 	}
 
 	client := googleOauth.Client(context.Background(), token)
@@ -71,27 +73,31 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Failed to fetch user information: %s", err.Error()),
 		})
-		return
+		return uInfo, err
 	}
-	defer func ()  {
+	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			log.Fatal("Failed to close response body")
 		}
 	}()
-
-
-	var uInfo struct {
-		GID       string `json:"sub"`
-		FirstName string `json:"given_name"`
-		LastName  string `json:"family_name"`
-		Email     string `json:"email"`
-	}
 
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Failed to decode user info: %s", err.Error()),
 		})
+		return uInfo, err
+	}
+	return uInfo, nil
+}
+
+// CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
+// info, checks and creates user in the database, generates an access token, and returns user
+// information with the access token.
+func CPSKGoogleLoginHandler(c *gin.Context) {
+
+	uInfo, err := getUserInfo(c)
+	if err != nil {
 		return
 	}
 
@@ -152,6 +158,81 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	c.JSON(respStatus, gin.H{
 		"user":        cpskUser,
+		"acess_token": accessToken,
+	})
+	// Return user that got query from database or newly created one
+}
+
+// CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
+// info, checks and creates user in the database, generates an access token, and returns user
+// information with the access token.
+func CompanyGoogleLoginHandler(c *gin.Context) {
+
+	uInfo, err := getUserInfo(c)
+	if err != nil {
+		return
+	}
+
+	respStatus := http.StatusOK
+
+	// Check does user are already in DB or not
+	var user model.User
+	var companyUser model.Company
+	database.DBinstance = database.DBinstance.Debug()
+	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
+
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+
+		companyUser = model.Company{
+			User: model.User{
+				Email:    &uInfo.Email,
+				GoogleID: uInfo.GID,
+				Username: uInfo.FirstName,
+			},
+			VerifiedStatus: "Unverified",
+		}
+
+		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			})
+			return
+		}
+
+		respStatus = http.StatusCreated
+
+	case err == nil:
+
+		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			})
+			return
+		}
+
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
+	}
+
+	var accessToken string
+
+	// TODO: change this when implementing refresh token
+	var _ string
+
+	accessToken, _, err = generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(respStatus, gin.H{
+		"user":        companyUser,
 		"acess_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
