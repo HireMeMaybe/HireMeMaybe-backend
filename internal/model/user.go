@@ -38,4 +38,6 @@ type Company struct {
 	Overview       string `json:"overview"`
 	Industry       string `json:"industry"`
 	Size           string `json:"size"`
+	Logo           File
+	Banner         File
 }
