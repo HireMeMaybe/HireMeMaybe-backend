@@ -50,7 +50,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	// check does body has code
 	if err := c.ShouldBindJSON(&code); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("No authorization code provided: %s", err.Error()),
+			"error": fmt.Sprintf("No authorization code provided: %w", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -62,7 +62,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to receive token: %s", err.Error()),
+			"error": fmt.Sprintf("Failed to receive token: %w", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -71,7 +71,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to fetch user information: %s", err.Error()),
+			"error": fmt.Sprintf("Failed to fetch user information: %w", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -84,7 +84,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to decode user info: %s", err.Error()),
+			"error": fmt.Sprintf("Failed to decode user info: %w", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -123,7 +123,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+				"error": fmt.Sprintf("Failed to create user: %w", err.Error()),
 			})
 			return
 		}
@@ -132,13 +132,13 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	case err == nil:
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+				"error": fmt.Sprintf("Failed to retrieve user data: %w", err.Error()),
 			})
 			return
 		}
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
+			"error": fmt.Sprintf("Database error: %w", err.Error()),
 		})
 		return
 	}
