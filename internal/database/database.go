@@ -55,9 +55,18 @@ func InitializeDatabase() error {
 	if DBinstance != nil {
 		return nil
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 
-	var err error
+	useEnvConnStr, err := strconv.ParseBool(os.Getenv("USE_CONNECTION_STR")); 
+	if err != nil {
+		log.Fatal("USE_CONNECTION_STR environments variables are invalid")
+	}
+
+	var connStr string
+	if useEnvConnStr {
+		connStr = os.Getenv("DB_CONNECTION_STR")
+	} else {
+		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+	}
 
 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
