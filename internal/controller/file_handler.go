@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -49,6 +51,15 @@ func UploadResume(c *gin.Context) {
 		return
 	}
 
+	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
+
+	if extension != ".pdf" {
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{
+			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
+		})
+		return
+	}
+
 	f, err := rawFile.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
@@ -67,7 +78,7 @@ func UploadResume(c *gin.Context) {
 	}
 
 	cpskUser.Resume.Content = fileBytes
-	cpskUser.Resume.Extension = "pdf"
+	cpskUser.Resume.Extension = extension
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -111,6 +122,20 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
+		})
+		return company, nil
+	}
+
+	allowedExtensions := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+	}
+	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
+
+	if !allowedExtensions[extension] {
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{
+			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
 		return company, nil
 	}
