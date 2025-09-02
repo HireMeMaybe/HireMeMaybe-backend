@@ -32,7 +32,7 @@ func init() {
 			"https://www.googleapis.com/auth/userinfo.openid",
 		},
 		Endpoint:    google.Endpoint,
-		RedirectURL: "http://localhost:8080/auth/google/callback",
+		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
 	}
 }
 
