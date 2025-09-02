@@ -38,6 +38,8 @@ type Company struct {
 	Overview       string `json:"overview"`
 	Industry       string `json:"industry"`
 	Size           string `json:"size"`
-	Logo           File
-	Banner         File
+	LogoID         *int   `json:"logo_id"`
+	Logo           File   `json:"-"`
+	BannerID       *int   `json:"banner_id"`
+	Banner         File   `json:"-"`
 }
