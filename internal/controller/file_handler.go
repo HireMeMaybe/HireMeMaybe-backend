@@ -44,6 +44,12 @@ func UploadResume(c *gin.Context) {
 	}
 
 	rawFile, err := c.FormFile("resume")
+	if _, ok := err.(*http.MaxBytesError); ok {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+			"error": "File larger than 10 MB",
+		})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
@@ -119,6 +125,12 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	}
 
 	rawFile, err := c.FormFile(fName)
+	if _, ok := err.(*http.MaxBytesError); ok {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+			"error": err.Error(),
+		})
+		return company, nil
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
