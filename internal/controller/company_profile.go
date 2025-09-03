@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetCompanyProfile function retrive company profile from database
+// GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
 func GetCompanyProfile(c *gin.Context) {
 	u, _ := c.Get("user")
@@ -45,6 +45,8 @@ func GetCompanyProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, company)
 }
 
+// EditCompanyProfile function overide company profile, save into database
+// ,and response edited profile as JSON format.
 func EditCompanyProfile(c *gin.Context) {
 	u, _ := c.Get("user")
 	if u == nil {

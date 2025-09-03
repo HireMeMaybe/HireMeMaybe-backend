@@ -3,6 +3,7 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -44,7 +45,8 @@ func UploadResume(c *gin.Context) {
 	}
 
 	rawFile, err := c.FormFile("resume")
-	if _, ok := err.(*http.MaxBytesError); ok {
+	var maxBytesError *http.MaxBytesError
+	if errors.As(err, &maxBytesError) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
 			"error": "File larger than 10 MB",
 		})
@@ -125,7 +127,8 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	}
 
 	rawFile, err := c.FormFile(fName)
-	if _, ok := err.(*http.MaxBytesError); ok {
+	var maxBytesError *http.MaxBytesError
+	if errors.As(err, &maxBytesError) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
 			"error": err.Error(),
 		})
@@ -194,7 +197,7 @@ func UploadLogo(c *gin.Context) {
 	c.JSON(http.StatusOK, company)
 }
 
-// UploadLogo function handles company's banner uploading and updating company profile in database.
+// UploadBanner function handles company's banner uploading and updating company profile in database.
 func UploadBanner(c *gin.Context) {
 	company, fileBytes := companyUpload(c, "banner")
 

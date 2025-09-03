@@ -6,6 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// SizeLimit function is a middleware that check if file is larger than maxBodyBytes or not
+// will return http.MaxBytesError when file size exceed maxBodyBytes
+// and usually response with 413 request entity too large.
 func SizeLimit(maxBodyBytes int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		w := c.Writer
