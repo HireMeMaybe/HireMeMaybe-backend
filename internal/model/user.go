@@ -6,6 +6,13 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	RoleAdmin  = "admin"
+	RoleCPSK  = "cpsk"
+	RoleCompany = "company"
+	RoleVisitor = "visitor" 
+)
+
 // User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
@@ -14,6 +21,8 @@ type User struct {
 	ID       uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey;<-:create" json:"id" `
 	GoogleID string    `json:"-" gorm:"<-:create"`
 	Username string    `json:"username" gorm:"<-:create"`
+	Password string    `json:"-"`
+	Role 	 string	   `json:"-"`
 }
 
 // CPSKUser is gorm model for store CPSK student profile data in DB
