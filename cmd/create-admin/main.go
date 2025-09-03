@@ -1,3 +1,4 @@
+// Package main for creating admin cli tool
 package main
 
 import (
@@ -37,7 +38,9 @@ func generateUniqueUsername(db *gorm.DB) string {
 
 func main() {
 
-	database.InitializeDatabase()
+	if err := database.InitializeDatabase(); err != nil {
+		log.Fatal("Fail to initialize database: ", err)
+	}
 
 	// Connect to database (SQLite for simplicity)
 	db := database.DBinstance

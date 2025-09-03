@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Each user role string
 var (
 	RoleAdmin  = "admin"
 	RoleCPSK  = "cpsk"
