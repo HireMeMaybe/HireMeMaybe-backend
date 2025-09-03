@@ -40,11 +40,13 @@ import (
 // Service contain sql.DB instance and gorm instance
 
 var (
-	database   = os.Getenv("DB_DATABASE")
-	password   = os.Getenv("DB_PASSWORD")
-	username   = os.Getenv("DB_USERNAME")
-	port       = os.Getenv("DB_PORT")
-	host       = os.Getenv("DB_HOST")
+	database      = os.Getenv("DB_DATABASE")
+	password      = os.Getenv("DB_PASSWORD")
+	username      = os.Getenv("DB_USERNAME")
+	port          = os.Getenv("DB_PORT")
+	host          = os.Getenv("DB_HOST")
+	useEnvConnStr = os.Getenv("USE_CONNECTION_STR")
+	envConStr     = os.Getenv("DB_CONNECTION_STR")
 	// DBinstance is instance or GORM orm as an interface to database
 	DBinstance *gorm.DB
 )
@@ -55,15 +57,15 @@ func InitializeDatabase() error {
 	if DBinstance != nil {
 		return nil
 	}
-
-	useEnvConnStr, err := strconv.ParseBool(os.Getenv("USE_CONNECTION_STR")); 
+	fmt.Println(envConStr, password, "heyyyyy")
+	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
 	if err != nil {
-		log.Fatal("USE_CONNECTION_STR environments variables are invalid")
+		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
 	}
 
 	var connStr string
 	if useEnvConnStr {
-		connStr = os.Getenv("DB_CONNECTION_STR")
+		connStr = envConStr
 	} else {
 		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 	}
