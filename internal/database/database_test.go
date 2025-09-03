@@ -12,8 +12,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	"github.com/joho/godotenv"
+	// Load env
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -81,7 +80,6 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 }
 
 func TestMain(m *testing.M) {
-	godotenv.Load("./../../.env")
 	teardown, err := mustStartPostgresContainer()
 	if err != nil {
 		log.Fatalf("could not start postgres container: %v", err)

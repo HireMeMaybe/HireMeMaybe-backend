@@ -54,12 +54,11 @@ func UploadResume(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
 		return
 	}
-	defer func ()  {
+	defer func() {
 		if err := f.Close(); err != nil {
 			log.Fatal("Failed to close file")
 		}
 	}()
-	
 
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
@@ -100,12 +99,12 @@ func GetFile(c *gin.Context) {
 	_, err := c.Writer.Write(file.Content)
 	if err != nil {
 		if !c.Writer.Written() {
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": "Failed to send file content",
-            })
-        } else {
-            c.Abort()
-        }
-        return
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to send file content",
+			})
+		} else {
+			c.Abort()
+		}
+		return
 	}
 }

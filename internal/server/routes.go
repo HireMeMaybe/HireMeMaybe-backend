@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	// Load env
 	_ "github.com/joho/godotenv/autoload"
 )
 

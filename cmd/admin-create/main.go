@@ -1,3 +1,4 @@
+// Package main for creating admin command
 package main
 
 import (
