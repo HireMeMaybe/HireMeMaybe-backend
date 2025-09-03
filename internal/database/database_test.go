@@ -12,6 +12,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	// Load env
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func mustStartPostgresContainer() (func(context.Context, ...testcontainers.TerminateOption) error, error) {
@@ -41,6 +43,7 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 	password = dbPwd
 	username = dbUser
 	port = dbport
+	useEnvConnStr = "false"
 
 	dbHost, err := dbContainer.Host(context.Background())
 	if err != nil {
@@ -55,19 +58,18 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 	host = dbHost
 	port = dbPort.Port()
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", 
-	dbHost, dbPort.Port(), dbUser, dbPwd, dbName)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dbHost, dbPort.Port(), dbUser, dbPwd, dbName)
 
 	db, err := sql.Open("postgres", dsn)
-    if err != nil {
-        return dbContainer.Terminate, err
-    }
-    defer func() {
+	if err != nil {
+		return dbContainer.Terminate, err
+	}
+	defer func() {
 		if err := db.Close(); err != nil {
 			log.Fatal("Fail to close database")
 		}
 	}()
-	
 
 	_, err = db.ExecContext(context.Background(), fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s";`, "uuid-ossp"))
 	if err != nil {
