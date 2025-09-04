@@ -45,25 +45,9 @@ func UploadResume(c *gin.Context) {
 	}
 
 	rawFile, err := c.FormFile("resume")
-	var maxBytesError *http.MaxBytesError
-	if errors.As(err, &maxBytesError) {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-			"error": "File larger than 10 MB",
-		})
-		return
-	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
-		})
-		return
-	}
-
-	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
-
-	if extension != ".pdf" {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{
-			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
 		return
 	}
@@ -86,7 +70,7 @@ func UploadResume(c *gin.Context) {
 	}
 
 	cpskUser.Resume.Content = fileBytes
-	cpskUser.Resume.Extension = extension
+	cpskUser.Resume.Extension = "pdf"
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

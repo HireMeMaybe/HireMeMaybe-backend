@@ -9,17 +9,24 @@ import (
 	"HireMeMaybe-backend/internal/model"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	// Load env
+	_ "github.com/joho/godotenv/autoload"
 )
 
 // RegisterRoutes will register each http endpoint routes to bound Server instance
 func RegisterRoutes() http.Handler {
 	r := gin.Default()
 
+	allowOrginsStr := os.Getenv("ALLOW_ORIGIN")
+	allowOrgins := strings.Split(allowOrginsStr, ",")
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URL
+		AllowOrigins:     allowOrgins, // Add your frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true, // Enable cookies/auth

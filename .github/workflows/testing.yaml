@@ -20,6 +20,7 @@ env:
   DB_DATABASE: postgres
   DB_USERNAME: postgres
   DB_PASSWORD: password
+  USE_CONNECTION_STR: false
 
 jobs:
   golangci:
