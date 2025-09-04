@@ -158,7 +158,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	c.JSON(respStatus, gin.H{
 		"user":        cpskUser,
-		"acess_token": accessToken,
+		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
@@ -233,7 +233,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 	c.JSON(respStatus, gin.H{
 		"user":        companyUser,
-		"acess_token": accessToken,
+		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
