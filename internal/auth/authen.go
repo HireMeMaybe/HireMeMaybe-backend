@@ -148,7 +148,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(user.ID)
+	accessToken, _, err = generateToken(cpskUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
