@@ -148,7 +148,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(user.ID)
+	accessToken, _, err = generateToken(cpskUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -157,8 +157,8 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	}
 
 	c.JSON(respStatus, gin.H{
-		"user":        cpskUser,
-		"acess_token": accessToken,
+		"user":         cpskUser,
+		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
@@ -223,7 +223,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(user.ID)
+	accessToken, _, err = generateToken(companyUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -232,8 +232,8 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	}
 
 	c.JSON(respStatus, gin.H{
-		"user":        companyUser,
-		"acess_token": accessToken,
+		"user":         companyUser,
+		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
