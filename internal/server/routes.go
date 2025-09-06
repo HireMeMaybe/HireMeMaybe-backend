@@ -42,9 +42,9 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/auth/google/callback", auth.Callback)
 
-	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
-	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
-	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), controller.UploadResume)
+	r.PUT("/cpsk/profile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK) ,controller.EditCPSKProfile)
+	r.GET("/cpsk/myprofile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK) ,controller.GetMyCPSKProfile)
+	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK), controller.UploadResume)
 
 	r.GET("/file/:id", controller.GetFile)
 
