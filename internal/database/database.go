@@ -57,7 +57,6 @@ func InitializeDatabase() error {
 	if DBinstance != nil {
 		return nil
 	}
-	fmt.Println(envConStr, password, "heyyyyy")
 	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
 	if err != nil {
 		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
