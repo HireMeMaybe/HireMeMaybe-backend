@@ -116,6 +116,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 				Email:    &uInfo.Email,
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
+				Role: model.RoleCPSK,
 			},
 			FirstName: uInfo.FirstName,
 			LastName:  uInfo.LastName,
@@ -189,6 +190,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				Email:    &uInfo.Email,
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
+				Role: model.RoleCompany,
 			},
 			VerifiedStatus: "Unverified",
 		}
