@@ -57,9 +57,9 @@ func main() {
 
 	// Create admin user
 	admin := model.User{
-		Username: username, 
+		Username: username,
 		Password: string(hashedPassword),
-		Role: model.RoleAdmin,
+		Role:     model.RoleAdmin,
 	}
 	if err := db.Create(&admin).Error; err != nil {
 		log.Fatal("failed to create admin: ", err)
