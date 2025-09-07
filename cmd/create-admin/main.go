@@ -4,13 +4,13 @@ package main
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -50,7 +50,7 @@ func main() {
 	password := generateRandomString(8)
 
 	// Hash the password before storing
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := utilities.HashPassword(password)
 	if err != nil {
 		log.Fatal("failed to hash password: ", err)
 	}
@@ -58,7 +58,7 @@ func main() {
 	// Create admin user
 	admin := model.User{
 		Username: username,
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Role:     model.RoleAdmin,
 	}
 	if err := db.Create(&admin).Error; err != nil {
