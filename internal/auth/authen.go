@@ -37,10 +37,11 @@ func init() {
 }
 
 func getUserInfo(c *gin.Context) (uInfo struct {
-	GID       string `json:"sub"`
-	FirstName string `json:"given_name"`
-	LastName  string `json:"family_name"`
-	Email     string `json:"email"`
+	GID            string `json:"sub"`
+	FirstName      string `json:"given_name"`
+	LastName       string `json:"family_name"`
+	Email          string `json:"email"`
+	ProfilePicture string `json:"picture"`
 }, e error) {
 
 	var code struct {
@@ -68,7 +69,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	}
 
 	client := googleOauth.Client(context.Background(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	resp, err := client.Get("https://wwwgoogleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
@@ -113,9 +114,10 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		cpskUser = model.CPSKUser{
 			User: model.User{
-				Email:    &uInfo.Email,
-				GoogleID: uInfo.GID,
-				Username: uInfo.FirstName,
+				Email:          &uInfo.Email,
+				GoogleID:       uInfo.GID,
+				Username:       uInfo.FirstName,
+				ProfilePicture: uInfo.ProfilePicture,
 			},
 			FirstName: uInfo.FirstName,
 			LastName:  uInfo.LastName,
@@ -186,9 +188,10 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 		companyUser = model.Company{
 			User: model.User{
-				Email:    &uInfo.Email,
-				GoogleID: uInfo.GID,
-				Username: uInfo.FirstName,
+				Email:          &uInfo.Email,
+				GoogleID:       uInfo.GID,
+				Username:       uInfo.FirstName,
+				ProfilePicture: uInfo.ProfilePicture,
 			},
 			VerifiedStatus: "Unverified",
 		}
