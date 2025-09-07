@@ -40,6 +40,8 @@ func EditCPSKProfile(c *gin.Context) {
 		})
 		return
 	}
+	// Save resumeID
+	resumeID := cpskUser.ResumeID
 
 	if err := c.ShouldBindJSON(&cpskUser); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -47,6 +49,8 @@ func EditCPSKProfile(c *gin.Context) {
 		})
 		return
 	}
+	// Put saved resumeID to prevent resumeID changing
+	cpskUser.ResumeID = resumeID
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
