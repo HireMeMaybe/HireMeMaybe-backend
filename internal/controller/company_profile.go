@@ -76,6 +76,9 @@ func EditCompanyProfile(c *gin.Context) {
 		})
 		return
 	}
+	// Save ID of image fields
+	logoID := company.LogoID
+	bannerID := company.BannerID
 
 	if err := c.ShouldBindJSON(&company); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -83,6 +86,9 @@ func EditCompanyProfile(c *gin.Context) {
 		})
 		return
 	}
+	// Put saved image ID to prevent image changing
+	company.LogoID = logoID
+	company.BannerID = bannerID
 
 	// Save updated profile to database
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
