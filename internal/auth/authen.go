@@ -69,7 +69,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	}
 
 	client := googleOauth.Client(context.Background(), token)
-	resp, err := client.Get("https://wwwgoogleapis.com/oauth2/v3/userinfo")
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
