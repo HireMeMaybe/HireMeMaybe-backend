@@ -8,10 +8,10 @@ import (
 
 // Each user role string
 var (
-	RoleAdmin  = "admin"
-	RoleCPSK  = "cpsk"
+	RoleAdmin   = "admin"
+	RoleCPSK    = "cpsk"
 	RoleCompany = "company"
-	RoleVisitor = "visitor" 
+	RoleVisitor = "visitor"
 )
 
 // User struct is gorm model for store base user data in DB
@@ -23,7 +23,7 @@ type User struct {
 	GoogleID string    `json:"-" gorm:"<-:create"`
 	Username string    `json:"username" gorm:"<-:create"`
 	Password string    `json:"-"`
-	Role 	 string	   `json:"-"`
+	Role     string    `json:"-"`
 }
 
 // CPSKUser is gorm model for store CPSK student profile data in DB

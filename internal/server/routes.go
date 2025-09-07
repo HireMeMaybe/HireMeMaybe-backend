@@ -33,20 +33,21 @@ func RegisterRoutes() http.Handler {
 	}))
 
 	r.GET("/", HelloWorldHandler)
-	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
 	r.GET("/health", healthHandler)
 
 	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
-
 	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
-
 	r.GET("/auth/google/callback", auth.Callback)
 
-	r.PUT("/cpsk/profile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK) ,controller.EditCPSKProfile)
-	r.GET("/cpsk/myprofile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK) ,controller.GetMyCPSKProfile)
+	r.PUT("/cpsk/profile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK), controller.EditCPSKProfile)
+	r.GET("/cpsk/myprofile", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK), controller.GetMyCPSKProfile)
 	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), middleware.CheckRole(model.RoleCPSK), controller.UploadResume)
 
+	r.GET("/job-post", middleware.RequireAuth())
+	r.POST("/job-post", middleware.RequireAuth(), middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
+
 	r.GET("/file/:id", controller.GetFile)
+
 
 	return r
 }

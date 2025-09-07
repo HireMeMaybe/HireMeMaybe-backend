@@ -1,4 +1,4 @@
-// Package util contain utility code that use across the package 
+// Package util contain utility code that use across the package
 package util
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // ExtractUser will extract user model from gin context and abort with error message
-func ExtractUser(c *gin.Context) (model.User) {
+func ExtractUser(c *gin.Context) model.User {
 	u, _ := c.Get("user")
 	if u == nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

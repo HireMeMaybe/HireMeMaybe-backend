@@ -116,7 +116,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 				Email:    &uInfo.Email,
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
-				Role: model.RoleCPSK,
+				Role:     model.RoleCPSK,
 			},
 			FirstName: uInfo.FirstName,
 			LastName:  uInfo.LastName,
@@ -158,7 +158,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	}
 
 	c.JSON(respStatus, gin.H{
-		"user":        cpskUser,
+		"user":         cpskUser,
 		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
@@ -190,7 +190,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				Email:    &uInfo.Email,
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
-				Role: model.RoleCompany,
+				Role:     model.RoleCompany,
 			},
 			VerifiedStatus: "Unverified",
 		}
@@ -234,7 +234,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	}
 
 	c.JSON(respStatus, gin.H{
-		"user":        companyUser,
+		"user":         companyUser,
 		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one

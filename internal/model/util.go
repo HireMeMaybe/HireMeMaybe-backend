@@ -10,5 +10,6 @@ func init() {
 		&CPSKUser{},
 		&Company{},
 		&File{},
+		&JobPost{},
 	)
 }
