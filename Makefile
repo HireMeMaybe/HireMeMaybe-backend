@@ -12,6 +12,10 @@ build:
 # Run the application
 run:
 	@go run cmd/api/main.go
+
+admin:
+	@go run cmd/create-admin/main.go
+
 # Create DB container
 docker-run:
 	@if docker compose --env-file ./.env up --build 2>/dev/null; then \
