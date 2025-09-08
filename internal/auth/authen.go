@@ -242,13 +242,11 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
-func LocalLoginHandler(c *gin.Context) {
+func LocalRegisterHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
 	}
-
-	var user model.User
 
 	if err := c.ShouldBindJSON(&info); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -257,6 +255,81 @@ func LocalLoginHandler(c *gin.Context) {
 		return
 	}
 
+	var user model.User
+	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+
+	switch {
+	case err == nil:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username already exist",
+		})
+		return
+
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		// Do nothing
+
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
+	}
+
+	if len(info.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Password should longer or equal to 8 characters",
+		})
+		return
+	}
+
+	hashedPassword, err := utilities.HashPassword(info.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed hash password: %s", err.Error()),
+		})
+		return
+	}
+
+	user = model.User{
+		Username: info.Username,
+		Password: hashedPassword,
+	}
+
+	if err := database.DBinstance.Create(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+		})
+		return
+	}
+
+	accessToken, _, err := generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"user":         user,
+		"access_token": accessToken,
+	})
+}
+
+func LocalLoginHandler(c *gin.Context) {
+	var info struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&info); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username or password is not provided",
+		})
+		return
+	}
+
+	var user model.User
 	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
 
 	switch {
@@ -290,12 +363,7 @@ func LocalLoginHandler(c *gin.Context) {
 		return
 	}
 
-	var accessToken string
-
-	// TODO: change this when implementing refresh token
-	var _ string
-
-	accessToken, _, err = generateToken(user.ID)
+	accessToken, _, err := generateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),

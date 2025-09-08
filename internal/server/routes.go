@@ -43,7 +43,8 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/auth/google/callback", auth.Callback)
 
-	r.POST("/auth/login", auth.LocalLogin)
+	r.POST("/auth/login", auth.LocalLoginHandler)
+	r.POST("/auth/register", auth.LocalRegisterHandler)
 
 	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
 	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
