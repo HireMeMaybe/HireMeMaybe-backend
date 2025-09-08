@@ -242,6 +242,9 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
+// LocalRegisterHandler function handles local registration by receiving username and password
+// do nothing if username already exist in the database
+// do nothing if password is shorter than 8 characters
 func LocalRegisterHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
@@ -316,6 +319,9 @@ func LocalRegisterHandler(c *gin.Context) {
 	})
 }
 
+// LocalLoginHandler function handles local login by receiving username and password
+// do nothing if username does not exist in the database
+// do nothing if password is incorrect
 func LocalLoginHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
