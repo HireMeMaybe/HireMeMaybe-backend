@@ -33,7 +33,7 @@ type CPSKUser struct {
 	User             User
 	FirstName        string         `json:"first_name"`
 	LastName         string         `json:"last_name"`
-	Program          *string        `check:"year IN ('CPE', 'SKE')" json:"program"`
+	Program          *string        `json:"program" gorm:"check:program IN ('CPE', 'SKE')"`
 	EducationalLevel *string        `json:"year"`
 	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
 	ResumeID         *int           `json:"resume_id"`
@@ -44,9 +44,13 @@ type CPSKUser struct {
 type Company struct {
 	UserID         uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
 	User           User
-	VerifiedStatus string `check:"verified_status IN ('Pending', 'Verified', 'Unverified')" json:"verified_status"`
+	VerifiedStatus string `json:"verified_status" gorm:"check:verified_status IN ('Pending', 'Verified', 'Unverified')"`
 	Name           string `json:"name"`
 	Overview       string `json:"overview"`
 	Industry       string `json:"industry"`
-	Size           string `json:"size"`
+	Size           string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
+	LogoID         *int   `json:"logo_id"`
+	Logo           File   `json:"-"`
+	BannerID       *int   `json:"banner_id"`
+	Banner         File   `json:"-"`
 }

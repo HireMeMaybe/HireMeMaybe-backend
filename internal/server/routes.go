@@ -44,7 +44,12 @@ func RegisterRoutes() http.Handler {
 
 	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
 	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
-	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), controller.UploadResume)
+	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadResume)
+
+	r.GET("/company/myprofile", middleware.RequireAuth(), controller.GetCompanyProfile)
+	r.PUT("/company/profile", middleware.RequireAuth(), controller.EditCompanyProfile)
+	r.POST("/company/profile/logo", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadLogo)
+	r.POST("/company/profile/banner", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadBanner)
 
 	r.GET("/file/:id", controller.GetFile)
 
