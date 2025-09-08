@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
 	// Load env
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -41,6 +42,8 @@ func RegisterRoutes() http.Handler {
 	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
 
 	r.GET("/auth/google/callback", auth.Callback)
+
+	r.POST("/auth/login", auth.LocalLogin)
 
 	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
 	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)

@@ -242,7 +242,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// Return user that got query from database or newly created one
 }
 
-func LocalLogin(c *gin.Context) {
+func LocalLoginHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -275,6 +275,14 @@ func LocalLogin(c *gin.Context) {
 		})
 		return
 	}
+
+	if user.Password == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Username or password is incorrect",
+		})
+		return
+	}
+
 	if !utilities.VerifyPassword(info.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Username or password is incorrect",
