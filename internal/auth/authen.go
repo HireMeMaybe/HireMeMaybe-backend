@@ -4,6 +4,7 @@ package auth
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
 	"context"
 	"encoding/json"
 	"errors"
@@ -239,6 +240,65 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
+}
+
+func LocalLogin(c *gin.Context) {
+	var info struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	var user model.User
+
+	if err := c.ShouldBindJSON(&info); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username or password is not provided",
+		})
+		return
+	}
+
+	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Username or password is incorrect",
+		})
+		return
+
+	case err == nil:
+		// Do nothing
+
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
+	}
+	if !utilities.VerifyPassword(info.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Username or password is incorrect",
+		})
+		return
+	}
+
+	var accessToken string
+
+	// TODO: change this when implementing refresh token
+	var _ string
+
+	accessToken, _, err = generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user":         user,
+		"access_token": accessToken,
+	})
 }
 
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
