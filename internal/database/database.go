@@ -10,6 +10,7 @@ import (
 	"time"
 
 	// It's something abt database I don't know 😭
+	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
 	_ "github.com/joho/godotenv/autoload"
@@ -72,6 +73,10 @@ func InitializeDatabase() error {
 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		return err
+	}
+
+	if gin.IsDebugging() {
+		DBinstance = DBinstance.Debug()
 	}
 
 	if err := Migrate(); err != nil {
