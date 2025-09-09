@@ -1,15 +1,16 @@
 package middleware
 
 import (
-	"HireMeMaybe-backend/internal/util"
+	"HireMeMaybe-backend/internal/utilities"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+// CheckRole will protect endpoint from user that is not a specific roles
 func CheckRole(role string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := util.ExtractUser(ctx)
+		user := utilities.ExtractUser(ctx)
 
 		if user.Role != role {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{

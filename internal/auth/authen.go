@@ -195,7 +195,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				Role:     model.RoleCompany,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
-			VerifiedStatus: "Unverified",
+			VerifiedStatus: "Pending",
 		}
 
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
