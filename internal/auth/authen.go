@@ -4,7 +4,6 @@ package auth
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"HireMeMaybe-backend/internal/utilities"
 	"context"
 	"encoding/json"
 	"errors"
@@ -194,7 +193,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				Username:       uInfo.FirstName,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
-			VerifiedStatus: "Unverified",
+			VerifiedStatus: "Pending",
 		}
 
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
@@ -240,147 +239,6 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 		"access_token": accessToken,
 	})
 	// Return user that got query from database or newly created one
-}
-
-// LocalRegisterHandler function handles local registration by receiving username and password
-// do nothing if username already exist in the database
-// do nothing if password is shorter than 8 characters
-func LocalRegisterHandler(c *gin.Context) {
-	var info struct {
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&info); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username or password is not provided",
-		})
-		return
-	}
-
-	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
-
-	switch {
-	case err == nil:
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username already exist",
-		})
-		return
-
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		// Do nothing
-
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
-		})
-		return
-	}
-
-	if len(info.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Password should longer or equal to 8 characters",
-		})
-		return
-	}
-
-	hashedPassword, err := utilities.HashPassword(info.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed hash password: %s", err.Error()),
-		})
-		return
-	}
-
-	user = model.User{
-		Username: info.Username,
-		Password: hashedPassword,
-	}
-
-	if err := database.DBinstance.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
-		})
-		return
-	}
-
-	accessToken, _, err := generateToken(user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"user":         user,
-		"access_token": accessToken,
-	})
-}
-
-// LocalLoginHandler function handles local login by receiving username and password
-// do nothing if username does not exist in the database
-// do nothing if password is incorrect
-func LocalLoginHandler(c *gin.Context) {
-	var info struct {
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&info); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username or password is not provided",
-		})
-		return
-	}
-
-	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
-
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
-		})
-		return
-
-	case err == nil:
-		// Do nothing
-
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
-		})
-		return
-	}
-
-	if user.Password == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
-		})
-		return
-	}
-
-	if !utilities.VerifyPassword(info.Password, user.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
-		})
-		return
-	}
-
-	accessToken, _, err := generateToken(user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"user":         user,
-		"access_token": accessToken,
-	})
 }
 
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
