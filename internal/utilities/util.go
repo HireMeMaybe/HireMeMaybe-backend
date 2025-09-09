@@ -1,5 +1,5 @@
-// Package util contain utility code that use across the package
-package util
+// Package utilities contain utility code that use across the package
+package utilities
 
 import (
 	"HireMeMaybe-backend/internal/model"
