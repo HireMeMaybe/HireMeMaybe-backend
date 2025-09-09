@@ -39,16 +39,18 @@ func RegisterRoutes() http.Handler {
 	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
 	r.GET("/auth/google/callback", auth.Callback)
 
-	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
-	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
-	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadResume)
+	needAuth := r.Use(middleware.RequireAuth())
 
-	r.GET("/company/myprofile", middleware.RequireAuth(), controller.GetCompanyProfile)
-	r.PUT("/company/profile", middleware.RequireAuth(), controller.EditCompanyProfile)
-	r.POST("/company/profile/logo", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadLogo)
-	r.POST("/company/profile/banner", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadBanner)
+	needAuth.PUT("/cpsk/profile", controller.EditCPSKProfile)
+	needAuth.GET("/cpsk/myprofile", middleware.CheckRole(model.RoleCPSK), controller.GetMyCPSKProfile)
+	needAuth.POST("/cpsk/profile/resume", middleware.CheckRole(model.RoleCPSK), middleware.SizeLimit(10<<20), controller.UploadResume)
 
-	r.GET("/file/:id", controller.GetFile)
+	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
+	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
+	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+
+	needAuth.GET("/file/:id", controller.GetFile)
 
 	return r
 }
