@@ -42,7 +42,7 @@ func RegisterRoutes() http.Handler {
 
 	needAuth := r.Use(middleware.RequireAuth())
 
-	needAuth.PUT("/cpsk/profile", controller.EditCPSKProfile)
+	needAuth.PUT("/cpsk/profile", middleware.CheckRole(model.RoleCPSK), controller.EditCPSKProfile)
 	needAuth.GET("/cpsk/myprofile", middleware.CheckRole(model.RoleCPSK), controller.GetMyCPSKProfile)
 	needAuth.POST("/cpsk/profile/resume", middleware.CheckRole(model.RoleCPSK), middleware.SizeLimit(10<<20), controller.UploadResume)
 
