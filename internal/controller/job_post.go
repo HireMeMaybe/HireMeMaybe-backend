@@ -6,9 +6,10 @@ import (
 	"HireMeMaybe-backend/internal/util"
 	"fmt"
 	"net/http"
-	// "time"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 )
 
 func CreateJobPostHandler(c *gin.Context) {
@@ -32,6 +33,19 @@ func CreateJobPostHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, jobPost)
 }
 
-// func GetAllPost(c *gin.Context) {
-// 	database.DBinstance.Where("expiring > ?", time.Now()).Order()
-// }
+func GetAllPost(c *gin.Context) {
+
+	var allPost [][]model.JobPost
+
+	err := database.DBinstance.
+		Where("expiring > ?", time.Now()).
+		Order(clause.OrderByColumn{
+			Column: clause.Column{Name: "post_time"},
+		}).
+		Find(&allPost).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprint("Failed to fetch job post: ", err.Error()),
+		})
+	}
+}

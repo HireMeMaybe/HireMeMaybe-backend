@@ -48,7 +48,6 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/file/:id", controller.GetFile)
 
-
 	return r
 }
 
