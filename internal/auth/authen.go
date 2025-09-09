@@ -37,10 +37,11 @@ func init() {
 }
 
 func getUserInfo(c *gin.Context) (uInfo struct {
-	GID       string `json:"sub"`
-	FirstName string `json:"given_name"`
-	LastName  string `json:"family_name"`
-	Email     string `json:"email"`
+	GID            string `json:"sub"`
+	FirstName      string `json:"given_name"`
+	LastName       string `json:"family_name"`
+	Email          string `json:"email"`
+	ProfilePicture string `json:"picture"`
 }, e error) {
 
 	var code struct {
@@ -117,6 +118,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
 				Role:     model.RoleCPSK,
+				ProfilePicture: uInfo.ProfilePicture,
 			},
 			FirstName: uInfo.FirstName,
 			LastName:  uInfo.LastName,
@@ -191,6 +193,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				GoogleID: uInfo.GID,
 				Username: uInfo.FirstName,
 				Role:     model.RoleCompany,
+				ProfilePicture: uInfo.ProfilePicture,
 			},
 			VerifiedStatus: "Unverified",
 		}
@@ -225,7 +228,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(user.ID)
+	accessToken, _, err = generateToken(companyUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),

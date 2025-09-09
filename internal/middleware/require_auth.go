@@ -55,7 +55,7 @@ func RequireAuth() gin.HandlerFunc {
 
 		if err := database.DBinstance.Where("id = ?", userID).First(&foundUser).Error; err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to retrieve user data",
+				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
