@@ -53,4 +53,6 @@ type Company struct {
 	Logo           File    `json:"-"`
 	BannerID       *int    `json:"banner_id"`
 	Banner         File    `json:"-"`
+	// JobPost holds the company's job posts
+	JobPost []JobPost `gorm:"foreignKey:CompanyID" json:"job_post"`
 }
