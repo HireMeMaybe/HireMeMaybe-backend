@@ -1,3 +1,4 @@
+// Command-line tool to clean the database by dropping all tables in the public schema.
 package main
 
 import (
@@ -28,7 +29,14 @@ func main() {
 		return
 	}
 
-	database.InitializeDatabase()
+	// Initialize database and check for errors
+	if err := database.InitializeDatabase(); err != nil {
+		log.Fatalf("Database failed to initialize: %v", err)
+	}
+
+	if database.DBinstance == nil {
+		log.Fatalf("Database instance is nil after initialization")
+	}
 
 	// SQL command to drop all tables
 	sql := `

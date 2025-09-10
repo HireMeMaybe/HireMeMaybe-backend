@@ -3,7 +3,7 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"HireMeMaybe-backend/internal/util"
+	"HireMeMaybe-backend/internal/utilities"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,7 +15,7 @@ import (
 // GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
 func GetCompanyProfile(c *gin.Context) {
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 
@@ -36,7 +36,7 @@ func GetCompanyProfile(c *gin.Context) {
 // EditCompanyProfile function overide company profile, save into database
 // ,and response edited profile as JSON format.
 func EditCompanyProfile(c *gin.Context) {
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 

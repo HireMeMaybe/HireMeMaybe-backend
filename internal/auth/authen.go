@@ -114,10 +114,10 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		cpskUser = model.CPSKUser{
 			User: model.User{
-				Email:    &uInfo.Email,
-				GoogleID: uInfo.GID,
-				Username: uInfo.FirstName,
-				Role:     model.RoleCPSK,
+				Email:          &uInfo.Email,
+				GoogleID:       uInfo.GID,
+				Username:       uInfo.FirstName,
+				Role:           model.RoleCPSK,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
 			FirstName: uInfo.FirstName,
@@ -189,10 +189,10 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 		companyUser = model.Company{
 			User: model.User{
-				Email:    &uInfo.Email,
-				GoogleID: uInfo.GID,
-				Username: uInfo.FirstName,
-				Role:     model.RoleCompany,
+				Email:          &uInfo.Email,
+				GoogleID:       uInfo.GID,
+				Username:       uInfo.FirstName,
+				Role:           model.RoleCompany,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
 			VerifiedStatus: "Pending",

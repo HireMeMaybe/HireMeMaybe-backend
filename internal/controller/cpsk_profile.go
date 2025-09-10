@@ -4,7 +4,7 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"HireMeMaybe-backend/internal/util"
+	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
 	"net/http"
 
@@ -18,7 +18,7 @@ func EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
 	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
@@ -52,7 +52,7 @@ func EditCPSKProfile(c *gin.Context) {
 // GetMyCPSKProfile retrieves a user's CPSK profile from the database and returns it as
 // a JSON response.
 func GetMyCPSKProfile(c *gin.Context) {
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	cpskUser := model.CPSKUser{}
 

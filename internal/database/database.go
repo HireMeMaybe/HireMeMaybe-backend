@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	// It's something abt database I don't know 😭
 	"github.com/gin-gonic/gin"
+	// It's something abt database I don't know 😭
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
 	_ "github.com/joho/godotenv/autoload"

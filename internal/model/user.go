@@ -1,3 +1,4 @@
+// Package model defines the data structures and relationships for user management in the application.
 package model
 
 import (

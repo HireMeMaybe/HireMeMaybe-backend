@@ -3,7 +3,7 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"HireMeMaybe-backend/internal/util"
+	"HireMeMaybe-backend/internal/utilities"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,13 +14,17 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// CreateJobPostHandler handles the creation of a new job post by a company user.
 func CreateJobPostHandler(c *gin.Context) {
 	// Get user
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	// construct job post from request
 	var jobPost model.JobPost
-	c.ShouldBindJSON(&jobPost)
+	if err := c.ShouldBindJSON(&jobPost); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %s", err.Error())})
+		return
+	}
 
 	// save job post
 	jobPost.CompanyID = user.ID
@@ -35,6 +39,7 @@ func CreateJobPostHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, jobPost)
 }
 
+// GetAllPost fetches all non-expired job posts from the database and returns them as a JSON response.
 func GetAllPost(c *gin.Context) {
 
 	var allPost []model.JobPost
@@ -57,8 +62,8 @@ func GetAllPost(c *gin.Context) {
 
 // EditJobPost allows a company user to update a job post they own.
 func EditJobPost(c *gin.Context) {
-	// Use ExtractUser utility to get authenticated user
-	user := util.ExtractUser(c)
+	// Use ExtractUser itiesity to get authenticated user
+	user := utilities.ExtractUser(c)
 
 	// Get job post id from path
 	id := c.Param("id")
@@ -110,7 +115,7 @@ func EditJobPost(c *gin.Context) {
 
 // DeleteJobPost allows a company user to delete a job post they own.
 func DeleteJobPost(c *gin.Context) {
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 	id := c.Param("id")
 
 	job := model.JobPost{}

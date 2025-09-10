@@ -3,7 +3,7 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"HireMeMaybe-backend/internal/util"
+	"HireMeMaybe-backend/internal/utilities"
 	"errors"
 	"fmt"
 	"io"
@@ -21,7 +21,7 @@ import (
 func UploadResume(c *gin.Context) {
 	var cpskUser = model.CPSKUser{}
 
-	user := util.ExtractUser(c)
+	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
 	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {

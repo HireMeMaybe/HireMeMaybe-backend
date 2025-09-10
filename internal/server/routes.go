@@ -7,7 +7,6 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -74,27 +73,4 @@ func HelloWorldHandler(c *gin.Context) {
 
 func healthHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, database.Health())
-}
-
-func thisNeedAuth(c *gin.Context) {
-
-	u, _ := c.Get("user")
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
-		})
-		return
-	}
-
-	user, ok := u.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Welcome user %s", user.ID),
-	})
 }
