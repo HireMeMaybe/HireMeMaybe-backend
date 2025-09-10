@@ -42,7 +42,7 @@ type CPSKUser struct {
 
 // Company is gorm model for store company relate data in DB
 type Company struct {
-	UserID         uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
+	UserID         uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
 	User           User
 	VerifiedStatus string  `json:"verified_status" gorm:"check:verified_status IN ('Pending', 'Verified', 'Unverified')"`
 	Name           string  `json:"name"`

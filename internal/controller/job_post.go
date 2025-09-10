@@ -24,7 +24,7 @@ func CreateJobPostHandler(c *gin.Context) {
 
 	// save job post
 	jobPost.CompanyID = user.ID
-	if err := database.DBinstance.Create(&jobPost); err != nil {
+	if err := database.DBinstance.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprint("Failed to create job post: ", err),
 		})
@@ -37,10 +37,10 @@ func CreateJobPostHandler(c *gin.Context) {
 
 func GetAllPost(c *gin.Context) {
 
-	var allPost [][]model.JobPost
+	var allPost []model.JobPost
 
 	err := database.DBinstance.
-		Where("expiring > ?", time.Now()).
+		Where("expiring > ? OR expiring IS NULL", time.Now()).
 		Order(clause.OrderByColumn{
 			Column: clause.Column{Name: "post_time"},
 		}).
@@ -49,7 +49,10 @@ func GetAllPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprint("Failed to fetch job post: ", err.Error()),
 		})
+		return
 	}
+
+	c.JSON(http.StatusOK, allPost)
 }
 
 // EditJobPost allows a company user to update a job post they own.

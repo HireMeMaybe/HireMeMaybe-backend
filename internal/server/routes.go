@@ -47,9 +47,17 @@ func RegisterRoutes() http.Handler {
 	needAuth.POST("/cpsk/profile/resume", middleware.CheckRole(model.RoleCPSK), middleware.SizeLimit(10<<20), controller.UploadResume)
 
 	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+	needAuth.GET("/company/profile/:company_id", controller.GetCompanyByID)
+	needAuth.GET("/company/:company_id", controller.GetCompanyByID) // New route: same handler, different path
 	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
 	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
 	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+
+	// Job post endpoints (company only)
+	needAuth.GET("/jobpost", controller.GetAllPost)
+	needAuth.POST("/jobpost", middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
+	needAuth.PUT("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.EditJobPost)
+	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.DeleteJobPost)
 
 	needAuth.GET("/file/:id", controller.GetFile)
 
