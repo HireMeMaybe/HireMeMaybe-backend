@@ -14,6 +14,7 @@ var (
 	RoleVisitor = "visitor"
 )
 
+// Each status for company
 var (
 	StatusPending    = "Pending"
 	StatusVerified   = "Verified"
