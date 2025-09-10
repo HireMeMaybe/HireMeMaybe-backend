@@ -99,7 +99,7 @@ func LocalRegisterHandler(c *gin.Context) {
 				Password: hashedPassword,
 				Role:     model.RoleCompany,
 			},
-			VerifiedStatus: "Pending",
+			VerifiedStatus: model.StatusPending,
 		}
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{

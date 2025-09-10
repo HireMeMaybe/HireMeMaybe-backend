@@ -14,6 +14,13 @@ var (
 	RoleVisitor = "visitor"
 )
 
+// Each status for company
+var (
+	StatusPending    = "Pending"
+	StatusVerified   = "Verified"
+	StatusUnverified = "Unverified"
+)
+
 // User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
