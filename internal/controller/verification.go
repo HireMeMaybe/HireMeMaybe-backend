@@ -44,6 +44,7 @@ func GetCompanies(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"results": companyUser})
 }
 
+// VerifyCompany function allow admin to change status of given company id to Verified or Unverified
 func VerifyCompany(c *gin.Context) {
 	var info struct {
 		CompanyID string `json:"company_id" binding:"required"`
