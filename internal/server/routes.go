@@ -57,6 +57,8 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/file/:id", controller.GetFile)
 
+	r.GET("/get-companies", middleware.RequireAuth(), middleware.CheckRole(model.RoleAdmin), controller.GetCompanies)
+
 	return r
 }
 
