@@ -19,6 +19,21 @@ func CreateJobPostHandler(c *gin.Context) {
 	// Get user
 	user := utilities.ExtractUser(c)
 
+	// Ensure that user is a verified company
+	var companyUser model.Company
+	if err := database.DBinstance.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Only company users can create job posts"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve company information: %s", err.Error())})
+		return
+	}
+	if companyUser.VerifiedStatus != model.StatusVerified {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only verified companies can create job posts"})
+		return
+	}
+
 	// construct job post from request
 	var jobPost model.JobPost
 	if err := c.ShouldBindJSON(&jobPost); err != nil {
