@@ -40,7 +40,6 @@ func RequireAuth() gin.HandlerFunc {
 		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
-		fmt.Println(claims)
 
 		if claims.ExpiresAt.Before(time.Now()) {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

@@ -7,7 +7,6 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -34,28 +33,35 @@ func RegisterRoutes() http.Handler {
 	}))
 
 	r.GET("/", HelloWorldHandler)
-	r.GET("/needauth", middleware.RequireAuth(), thisNeedAuth)
 	r.GET("/health", healthHandler)
 
 	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
-
 	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
-
 	r.GET("/auth/google/callback", auth.Callback)
 
 	r.POST("/auth/login", auth.LocalLoginHandler)
 	r.POST("/auth/register", auth.LocalRegisterHandler)
 
-	r.PUT("/cpsk/profile", middleware.RequireAuth(), controller.EditCPSKProfile)
-	r.GET("/cpsk/myprofile", middleware.RequireAuth(), controller.GetMyCPSKProfile)
-	r.POST("/cpsk/profile/resume", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadResume)
+	needAuth := r.Use(middleware.RequireAuth())
 
-	r.GET("/company/myprofile", middleware.RequireAuth(), controller.GetCompanyProfile)
-	r.PUT("/company/profile", middleware.RequireAuth(), controller.EditCompanyProfile)
-	r.POST("/company/profile/logo", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadLogo)
-	r.POST("/company/profile/banner", middleware.RequireAuth(), middleware.SizeLimit(10<<20), controller.UploadBanner)
+	needAuth.PUT("/cpsk/profile", middleware.CheckRole(model.RoleCPSK), controller.EditCPSKProfile)
+	needAuth.GET("/cpsk/myprofile", middleware.CheckRole(model.RoleCPSK), controller.GetMyCPSKProfile)
+	needAuth.POST("/cpsk/profile/resume", middleware.CheckRole(model.RoleCPSK), middleware.SizeLimit(10<<20), controller.UploadResume)
 
-	r.GET("/file/:id", controller.GetFile)
+	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+	needAuth.GET("/company/profile/:company_id", controller.GetCompanyByID)
+	needAuth.GET("/company/:company_id", controller.GetCompanyByID) // New route: same handler, different path
+	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
+	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
+	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+
+	// Job post endpoints (company only)
+	needAuth.GET("/jobpost", controller.GetAllPost)
+	needAuth.POST("/jobpost", middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
+	needAuth.PUT("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.EditJobPost)
+	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany, model.RoleAdmin), controller.DeleteJobPost)
+
+	needAuth.GET("/file/:id", controller.GetFile)
 
 	r.GET("/get-companies", middleware.RequireAuth(), middleware.CheckRole(model.RoleAdmin), controller.GetCompanies)
 	r.PUT("/verify-company", middleware.RequireAuth(), middleware.CheckRole(model.RoleAdmin), controller.VerifyCompany)
@@ -73,27 +79,4 @@ func HelloWorldHandler(c *gin.Context) {
 
 func healthHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, database.Health())
-}
-
-func thisNeedAuth(c *gin.Context) {
-
-	u, _ := c.Get("user")
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
-		})
-		return
-	}
-
-	user, ok := u.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Welcome user %s", user.ID),
-	})
 }

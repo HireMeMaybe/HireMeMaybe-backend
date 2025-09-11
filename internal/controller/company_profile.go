@@ -3,6 +3,8 @@ package controller
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,21 +15,7 @@ import (
 // GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
 func GetCompanyProfile(c *gin.Context) {
-	u, _ := c.Get("user")
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
-		})
-		return
-	}
-
-	user, ok := u.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
-		})
-		return
-	}
+	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 
@@ -48,21 +36,7 @@ func GetCompanyProfile(c *gin.Context) {
 // EditCompanyProfile function overide company profile, save into database
 // ,and response edited profile as JSON format.
 func EditCompanyProfile(c *gin.Context) {
-	u, _ := c.Get("user")
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
-		})
-		return
-	}
-
-	user, ok := u.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
-		})
-		return
-	}
+	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 
@@ -97,6 +71,32 @@ func EditCompanyProfile(c *gin.Context) {
 		Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, company)
+}
+
+// GetCompanyByID retrieves a company by its user ID (company_id) and preloads JobPost, Logo, Banner and User.
+func GetCompanyByID(c *gin.Context) {
+	companyID := c.Param("company_id")
+
+	company := model.Company{}
+
+	// Retrieve company profile from database with JobPost preloaded.
+	if err := database.DBinstance.Preload("User").
+		Preload("Logo").
+		Preload("Banner").
+		Preload("JobPost").
+		Where("user_id = ?", companyID).
+		First(&company).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Company not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to retrieve company information from database: %s", err.Error()),
 		})
 		return
 	}

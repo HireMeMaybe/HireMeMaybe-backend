@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	// It's something abt database I don't know 😭
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
@@ -72,6 +73,10 @@ func InitializeDatabase() error {
 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		return err
+	}
+
+	if gin.IsDebugging() {
+		DBinstance = DBinstance.Debug()
 	}
 
 	if err := Migrate(); err != nil {

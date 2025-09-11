@@ -1,3 +1,4 @@
+// Package model defines the data structures and relationships for user management in the application.
 package model
 
 import (
@@ -49,7 +50,7 @@ type CPSKUser struct {
 
 // Company is gorm model for store company relate data in DB
 type Company struct {
-	UserID         uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
+	UserID         uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
 	User           User
 	VerifiedStatus string  `json:"verified_status" gorm:"check:verified_status IN ('Pending', 'Verified', 'Unverified')"`
 	Name           string  `json:"name"`
@@ -60,4 +61,6 @@ type Company struct {
 	Logo           File    `json:"-"`
 	BannerID       *int    `json:"banner_id"`
 	Banner         File    `json:"-"`
+	// JobPost holds the company's job posts
+	JobPost []JobPost `gorm:"foreignKey:CompanyID" json:"job_post"`
 }
