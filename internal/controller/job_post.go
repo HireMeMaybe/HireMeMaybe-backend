@@ -97,7 +97,7 @@ func EditJobPost(c *gin.Context) {
 
 	// Verify ownership: the job post must belong to the requesting company user
 	// Compare as strings to avoid type mismatches
-	if job.CompanyID.String() != user.ID.String() {
+	if job.CompanyID.String() != user.ID.String() && user.Role != model.RoleAdmin {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to edit this job post"})
 		return
 	}
@@ -144,8 +144,11 @@ func DeleteJobPost(c *gin.Context) {
 	}
 
 	if job.CompanyID.String() != user.ID.String() {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to delete this job post"})
-		return
+		// Allow admins to bypass ownership check
+		if user.Role != model.RoleAdmin {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to delete this job post"})
+			return
+		}
 	}
 
 	if err := database.DBinstance.Delete(&job).Error; err != nil {

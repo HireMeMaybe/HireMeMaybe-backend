@@ -59,7 +59,7 @@ func RegisterRoutes() http.Handler {
 	needAuth.GET("/jobpost", controller.GetAllPost)
 	needAuth.POST("/jobpost", middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
 	needAuth.PUT("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.EditJobPost)
-	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.DeleteJobPost)
+	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany, model.RoleAdmin), controller.DeleteJobPost)
 
 	needAuth.GET("/file/:id", controller.GetFile)
 
