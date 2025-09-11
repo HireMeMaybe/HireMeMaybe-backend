@@ -50,9 +50,10 @@ func EditCompanyProfile(c *gin.Context) {
 		})
 		return
 	}
-	// Save ID of image fields
+	// Save unintended to change field
 	logoID := company.LogoID
 	bannerID := company.BannerID
+	status := company.VerifiedStatus
 
 	if err := c.ShouldBindJSON(&company); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -60,9 +61,10 @@ func EditCompanyProfile(c *gin.Context) {
 		})
 		return
 	}
-	// Put saved image ID to prevent image changing
+	// Put saved unintended field to prevent change
 	company.LogoID = logoID
 	company.BannerID = bannerID
+	company.VerifiedStatus = status
 
 	// Save updated profile to database
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
