@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ApplicationHandler handles the creation of a new job application by a CPSK user.
 func ApplicationHandler(c *gin.Context) {
 	// ExtractUser(c)
 	user := utilities.ExtractUser(c)
@@ -22,7 +23,7 @@ func ApplicationHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %s", err.Error())})
 		return
 	}
-	
+
 	// Set user CPSKID and Application status to application
 	application.CPSKID = user.ID
 

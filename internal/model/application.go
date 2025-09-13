@@ -30,7 +30,7 @@ type Application struct {
 	PostID  uint    `gorm:"not null;index" json:"post_id" binding:"required"`
 	JobPost JobPost `gorm:"foreignKey:PostID;references:ID" json:"-"`
 
-	AnswerID uint             `json:"answer_id"`
+	AnswerID uint              `json:"answer_id"`
 	Answer   ApplicationAnswer `gorm:"foreignKey:AnswerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"answer"`
 
 	ResumeID *int `json:"resume_id" binding:"required"`

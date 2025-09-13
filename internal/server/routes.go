@@ -46,7 +46,7 @@ func RegisterRoutes() http.Handler {
 
 	// CPSK routes: apply role check once for all CPSK endpoints
 	needCPSK := needAuth.Use(middleware.CheckRole(model.RoleCPSK))
-	
+
 	needCPSK.PUT("/cpsk/profile", controller.EditCPSKProfile)
 	needCPSK.GET("/cpsk/myprofile", controller.GetMyCPSKProfile)
 	needCPSK.POST("/cpsk/profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
@@ -57,7 +57,7 @@ func RegisterRoutes() http.Handler {
 	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
 	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
 	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
-	
+
 	// Job post endpoints (company only)
 	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
 
