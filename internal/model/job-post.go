@@ -22,4 +22,6 @@ type JobPost struct {
 	Tags     pq.StringArray `gorm:"type:text[]" json:"tags"`
 	PostTime time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"post_time"`
 	Expiring *time.Time     `gorm:"type:timestamp" json:"expiring,omitempty"`
+
+	Applications []Application `gorm:"foreignKey:PostID" json:"applications"`
 }

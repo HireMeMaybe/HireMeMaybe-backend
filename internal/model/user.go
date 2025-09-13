@@ -37,7 +37,7 @@ type User struct {
 
 // CPSKUser is gorm model for store CPSK student profile data in DB
 type CPSKUser struct {
-	UserID           uuid.UUID `json:"id" binding:"required" gorm:"primaryKey;<-:create"`
+	UserID           uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
 	User             User
 	FirstName        string         `json:"first_name"`
 	LastName         string         `json:"last_name"`
@@ -46,6 +46,9 @@ type CPSKUser struct {
 	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
 	ResumeID         *int           `json:"resume_id"`
 	Resume           File           `json:"-"`
+
+	// List of job applications made by the CPSK user
+	Applications []Application `gorm:"foreignKey:CPSKID" json:"applications"`
 }
 
 // Company is gorm model for store company relate data in DB
@@ -61,6 +64,7 @@ type Company struct {
 	Logo           File    `json:"-"`
 	BannerID       *int    `json:"banner_id"`
 	Banner         File    `json:"-"`
+
 	// JobPost holds the company's job posts
 	JobPost []JobPost `gorm:"foreignKey:CompanyID" json:"job_post"`
 }
