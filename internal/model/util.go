@@ -12,6 +12,6 @@ func init() {
 		&File{},
 		&JobPost{},
 		&Application{},
-		&AplicationAnswer{},
+		&ApplicationAnswer{},
 	)
 }

@@ -18,8 +18,8 @@ var (
 
 // Application represents a job application record
 type Application struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	AppliedAt time.Time `gorm:"type:timestamp" json:"applied_at"`
+	ID        uint      `gorm:"primaryKey;autoIncrement;->" json:"id"`
+	AppliedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"applied_at"`
 	Status    string    `gorm:"type:text" json:"status"`
 
 	// CPSKID references CPSKUser.UserID (uuid)
@@ -27,19 +27,19 @@ type Application struct {
 	CPSKUser CPSKUser  `gorm:"foreignKey:CPSKID;references:UserID" json:"-"`
 
 	// PostID references JobPost.ID
-	PostID  uint    `gorm:"not null;index" json:"post_id"`
+	PostID  uint    `gorm:"not null;index" json:"post_id" binding:"required"`
 	JobPost JobPost `gorm:"foreignKey:PostID;references:ID" json:"-"`
 
 	AnswerID uint             `json:"answer_id"`
-	Answer   AplicationAnswer `gorm:"foreignKey:AnswerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"answer"`
+	Answer   ApplicationAnswer `gorm:"foreignKey:AnswerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"answer"`
 
-	ResumeID *int `json:"resume_id"`
+	ResumeID *int `json:"resume_id" binding:"required"`
 	Resume   File `gorm:"foreignKey:ResumeID;references:ID" json:"-"`
 }
 
-// AplicationAnswer represents additional answer for a job application
-type AplicationAnswer struct {
-	ID                   uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+// ApplicationAnswer represents additional answer for a job application
+type ApplicationAnswer struct {
+	ID                   uint           `gorm:"primaryKey;autoIncrement;<-:create" json:"id"`
 	RightToWork          string         `json:"right_to_work"`
 	ExpectedSalary       string         `json:"expected_salary"`
 	YearOfExperience     uint           `json:"year_of_experience"`
