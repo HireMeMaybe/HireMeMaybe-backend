@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -45,7 +46,15 @@ func ApplicationHandler(c *gin.Context) {
 
 	// Save application to database
 	if err := database.DBinstance.Create(&application).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create application"})
+		var pqErr *pgconn.PgError
+		// If the error is a foreign key violation, mean PostID or ResumeID is invalid
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23503" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid PostID or ResumeID: %s", err.Error())})
+				return
+			}
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create application: %s", err.Error())})
 		return
 	}
 
