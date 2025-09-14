@@ -92,10 +92,10 @@ func InitializeDatabase() error {
 func createAdmin() {
 	// Create admin user if not exist
 
-	admin_username := os.Getenv("ADMIN_USERNAME")
-	admin_password := os.Getenv("ADMIN_PASSWORD")
+	adminUsername := os.Getenv("ADMIN_USERNAME")
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
 
-	if admin_username == "" || admin_password == "" {
+	if adminUsername == "" || adminPassword == "" {
 		log.Println("Admin username or password not set, skipping admin creation")
 		return
 	}
@@ -105,7 +105,7 @@ func createAdmin() {
 	var count int64
 	DBinstance.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count)
 	if count == 0 {
-		utilities.CreateAdmin(admin_password, admin_username, DBinstance)
+		utilities.CreateAdmin(adminPassword, adminUsername, DBinstance)
 	}
 
 }

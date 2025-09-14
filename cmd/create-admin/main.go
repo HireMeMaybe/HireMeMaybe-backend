@@ -51,7 +51,7 @@ func main() {
 
 	// Hash the password before storing
 	utilities.CreateAdmin(password, username, db)
-	
+
 	// Print credentials (only show plain password here!)
 	fmt.Println("Admin credentials generated successfully!")
 	fmt.Println("======================================")
@@ -61,5 +61,3 @@ func main() {
 
 	os.Exit(0)
 }
-
-

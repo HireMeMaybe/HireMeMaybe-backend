@@ -28,6 +28,7 @@ func ExtractUser(c *gin.Context) model.User {
 	return user
 }
 
+// CreateAdmin creates an admin user with the given password and username in the provided database.
 func CreateAdmin(password string, username string, db *gorm.DB) {
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
