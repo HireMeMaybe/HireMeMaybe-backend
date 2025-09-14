@@ -18,6 +18,7 @@ import (
 	"gorm.io/gorm"
 
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
 )
 
 // Service represents a service that interacts with a database.
@@ -83,7 +84,30 @@ func InitializeDatabase() error {
 		return err
 	}
 
+	createAdmin()
+
 	return nil
+}
+
+func createAdmin() {
+	// Create admin user if not exist
+
+	admin_username := os.Getenv("ADMIN_USERNAME")
+	admin_password := os.Getenv("ADMIN_PASSWORD")
+
+	if admin_username == "" || admin_password == "" {
+		log.Println("Admin username or password not set, skipping admin creation")
+		return
+	}
+
+	// Check if admin user already exists
+
+	var count int64
+	DBinstance.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count)
+	if count == 0 {
+		utilities.CreateAdmin(admin_password, admin_username, DBinstance)
+	}
+
 }
 
 // Migrate database
