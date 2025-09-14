@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -93,13 +95,18 @@ func LocalRegisterHandler(c *gin.Context) {
 			"access_token": accessToken,
 		})
 	case "company":
+		verified := model.StatusPending
+		if strings.ToLower(strings.TrimSpace(os.Getenv("BYPASS_VERIFICATION"))) == "true" {
+			verified = model.StatusVerified
+		}
+
 		companyUser := model.Company{
 			User: model.User{
 				Username: info.Username,
 				Password: hashedPassword,
 				Role:     model.RoleCompany,
 			},
-			VerifiedStatus: model.StatusPending,
+			VerifiedStatus: verified,
 		}
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
