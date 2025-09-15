@@ -44,28 +44,34 @@ func RegisterRoutes() http.Handler {
 
 	needAuth := r.Use(middleware.RequireAuth())
 
-	needAuth.PUT("/cpsk/profile", middleware.CheckRole(model.RoleCPSK), controller.EditCPSKProfile)
-	needAuth.GET("/cpsk/myprofile", middleware.CheckRole(model.RoleCPSK), controller.GetMyCPSKProfile)
-	needAuth.POST("/cpsk/profile/resume", middleware.CheckRole(model.RoleCPSK), middleware.SizeLimit(10<<20), controller.UploadResume)
-
-	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+	
 	needAuth.GET("/company/profile/:company_id", controller.GetCompanyByID)
 	needAuth.GET("/company/:company_id", controller.GetCompanyByID) // New route: same handler, different path
 	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
 	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
 	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
-
+	
 	// Job post endpoints (company only)
+	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+	
 	needAuth.GET("/jobpost", controller.GetAllPost)
 	needAuth.POST("/jobpost", middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
+	
 	needAuth.PUT("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.EditJobPost)
 	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany, model.RoleAdmin), controller.DeleteJobPost)
-
+	
 	needAuth.GET("/file/:id", controller.GetFile)
-
-	r.GET("/get-companies", middleware.RequireAuth(), middleware.CheckRole(model.RoleAdmin), controller.GetCompanies)
-	r.PUT("/verify-company", middleware.RequireAuth(), middleware.CheckRole(model.RoleAdmin), controller.VerifyCompany)
-
+	
+	needAuth.GET("/get-companies", middleware.CheckRole(model.RoleAdmin), controller.GetCompanies)
+	needAuth.PUT("/verify-company", middleware.CheckRole(model.RoleAdmin), controller.VerifyCompany)
+	
+	// CPSK routes: apply role check once for all CPSK endpoints
+	needCPSK := needAuth.Use(middleware.CheckRole(model.RoleCPSK))
+	
+	needCPSK.PUT("/cpsk/profile", controller.EditCPSKProfile)
+	needCPSK.GET("/cpsk/myprofile", controller.GetMyCPSKProfile)
+	needCPSK.POST("/cpsk/profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
+	needCPSK.POST("/application", controller.ApplicationHandler)
 	return r
 }
 

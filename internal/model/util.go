@@ -11,5 +11,7 @@ func init() {
 		&Company{},
 		&File{},
 		&JobPost{},
+		&Application{},
+		&ApplicationAnswer{},
 	)
 }

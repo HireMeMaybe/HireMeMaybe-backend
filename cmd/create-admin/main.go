@@ -50,25 +50,12 @@ func main() {
 	password := generateRandomString(8)
 
 	// Hash the password before storing
-	hashedPassword, err := utilities.HashPassword(password)
-	if err != nil {
-		log.Fatal("failed to hash password: ", err)
-	}
-
-	// Create admin user
-	admin := model.User{
-		Username: username,
-		Password: hashedPassword,
-		Role:     model.RoleAdmin,
-	}
-	if err := db.Create(&admin).Error; err != nil {
-		log.Fatal("failed to create admin: ", err)
-	}
+	utilities.CreateAdmin(password, username, db)
 
 	// Print credentials (only show plain password here!)
 	fmt.Println("Admin credentials generated successfully!")
 	fmt.Println("======================================")
-	fmt.Printf("Username: %s\n", admin.Username)
+	fmt.Printf("Username: %s\n", username)
 	fmt.Printf("Password: %s\n", password)
 	fmt.Println("======================================")
 

@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	// Auto load .env file
@@ -187,6 +188,11 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 
+		verified := model.StatusPending
+		if strings.ToLower(strings.TrimSpace(os.Getenv("BYPASS_VERIFICATION"))) == "true" {
+			verified = model.StatusVerified
+		}
+
 		companyUser = model.Company{
 			User: model.User{
 				Email:          &uInfo.Email,
@@ -195,7 +201,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 				Role:           model.RoleCompany,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
-			VerifiedStatus: model.StatusPending,
+			VerifiedStatus: verified,
 		}
 
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {

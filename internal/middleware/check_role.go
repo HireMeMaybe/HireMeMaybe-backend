@@ -21,10 +21,10 @@ func CheckRole(roles ...string) gin.HandlerFunc {
 }
 
 func contains(slice []string, s string) bool {
-    for _, v := range slice {
-        if v == s {
-            return true
-        }
-    }
-    return false
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
