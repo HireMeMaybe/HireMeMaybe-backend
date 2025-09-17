@@ -55,12 +55,14 @@ func CreateJobPostHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, jobPost)
 }
 
-// GetPosts fetches all non-expired job posts from the database and returns them as a JSON response.
+// GetPosts fetches all non-expired job posts that match query from the database
+// and returns them as a JSON response.
 func GetPosts(c *gin.Context) {
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
 	rawTag := c.Query("tag")
 	rawSalary := c.Query("salary")
+	rawExp := c.Query("exp")
 	rawCompany := c.Query("company")
 	rawIndustry := c.Query("industry")
 	rawLocation := c.Query("location")
@@ -84,6 +86,10 @@ func GetPosts(c *gin.Context) {
 
 	if rawSalary != "" {
 		result = result.Where("salary = ?", rawSalary)
+	}
+
+	if rawExp != "" {
+		result = result.Where("exp_lvl = ?", rawExp)
 	}
 
 	if rawCompany != "" || rawIndustry != "" {

@@ -16,6 +16,7 @@ type JobPost struct {
 	Title    string         `gorm:"type:text" json:"title"`
 	Desc     string         `gorm:"type:text" json:"desc"`
 	Req      string         `gorm:"type:text" json:"req"`
+	ExpLvl   string         `gorm:"type:text" json:"exp_lvl"`
 	Location string         `gorm:"type:text" json:"location"`
 	Type     string         `gorm:"type:text" json:"type"`
 	Salary   string         `gorm:"type:text" json:"salary"`
