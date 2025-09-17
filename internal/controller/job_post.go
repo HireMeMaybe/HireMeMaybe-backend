@@ -86,12 +86,16 @@ func GetPosts(c *gin.Context) {
 		result = result.Where("salary = ?", rawSalary)
 	}
 
+	if rawCompany != "" || rawIndustry != "" {
+		result = result.Preload("Company").Joins("JOIN companies ON companies.user_id = job_posts.company_id")
+	}
+
 	if rawCompany != "" {
-		result = result.Preload("Company").Where("name ILIKE ?", "%"+rawCompany+"%")
+		result = result.Where("name ILIKE ?", "%"+rawCompany+"%")
 	}
 
 	if rawIndustry != "" {
-		result = result.Preload("Company").Where("industry ILIKE ?", "%"+rawIndustry+"%")
+		result = result.Where("industry ILIKE ?", "%"+rawIndustry+"%")
 	}
 
 	if rawLocation != "" {
