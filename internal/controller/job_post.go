@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,25 +55,72 @@ func CreateJobPostHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, jobPost)
 }
 
-// GetAllPost fetches all non-expired job posts from the database and returns them as a JSON response.
-func GetAllPost(c *gin.Context) {
+// GetPosts fetches all non-expired job posts that match query from the database
+// and returns them as a JSON response.
+func GetPosts(c *gin.Context) {
+	rawSearch := c.Query("search")
+	rawJobType := c.Query("type")
+	rawTag := c.Query("tag")
+	rawSalary := c.Query("salary")
+	rawExp := c.Query("exp")
+	rawCompany := c.Query("company")
+	rawIndustry := c.Query("industry")
+	rawLocation := c.Query("location")
+	rawDesc := c.Query("desc")
 
-	var allPost []model.JobPost
+	var posts []model.JobPost
 
-	err := database.DBinstance.
-		Where("expiring > ? OR expiring IS NULL", time.Now()).
-		Order(clause.OrderByColumn{
-			Column: clause.Column{Name: "post_time"},
-		}).
-		Find(&allPost).Error
-	if err != nil {
+	result := database.DBinstance.Where("expiring > ? OR expiring IS NULL", time.Now())
+
+	if rawSearch != "" {
+		result = result.Where("title ILIKE ?", "%"+rawSearch+"%")
+	}
+
+	if rawJobType != "" {
+		result = result.Where("type ILIKE ?", "%"+rawJobType+"%")
+	}
+
+	if rawTag != "" {
+		result = result.Where("? ILIKE ANY(tags)", rawTag)
+	}
+
+	if rawSalary != "" {
+		result = result.Where("salary = ?", rawSalary)
+	}
+
+	if rawExp != "" {
+		result = result.Where("exp_lvl = ?", rawExp)
+	}
+
+	if rawCompany != "" || rawIndustry != "" {
+		result = result.Preload("Company").Joins("JOIN companies ON companies.user_id = job_posts.company_id")
+	}
+
+	if rawCompany != "" {
+		result = result.Where("name ILIKE ?", "%"+rawCompany+"%")
+	}
+
+	if rawIndustry != "" {
+		result = result.Where("industry ILIKE ?", "%"+rawIndustry+"%")
+	}
+
+	if rawLocation != "" {
+		result = result.Where("location ILIKE ?", "%"+rawLocation+"%")
+	}
+
+	result = result.Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "post_time"},
+		Desc:   strings.ToLower(rawDesc) == "true",
+	}).
+		Find(&posts)
+	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprint("Failed to fetch job post: ", err.Error()),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, allPost)
+	c.JSON(http.StatusOK, posts)
 }
 
 // EditJobPost allows a company user to update a job post they own.

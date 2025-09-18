@@ -23,6 +23,7 @@ func GetCompanyProfile(c *gin.Context) {
 	if err := database.DBinstance.Preload("User").
 		Preload("Logo").
 		Preload("Banner").
+		Preload("JobPost").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
