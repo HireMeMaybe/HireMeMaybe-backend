@@ -17,27 +17,22 @@ import (
 	// Auto load .env file
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
 )
 
-var googleOauth *oauth2.Config
+type OauthLoginHandler struct {
+	DB *database.DBinstanceStruct
+	OauthConfig *oauth2.Config
+}
 
-func init() {
-	googleOauth = &oauth2.Config{
-		ClientID:     os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
-		ClientSecret: os.Getenv("CPSK_GOOGLE_AUTH_SECRET"),
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
-			"https://www.googleapis.com/auth/userinfo.profile",
-			"https://www.googleapis.com/auth/userinfo.openid",
-		},
-		Endpoint:    google.Endpoint,
-		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
+func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config) *OauthLoginHandler {
+	return &OauthLoginHandler{
+		DB: db,
+		OauthConfig: oauthConfig,
 	}
 }
 
-func getUserInfo(c *gin.Context) (uInfo struct {
+func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (uInfo struct {
 	GID            string `json:"sub"`
 	FirstName      string `json:"given_name"`
 	LastName       string `json:"family_name"`
@@ -58,7 +53,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	}
 
 	// Exchange code with google and get userinfo
-	token, err := googleOauth.Exchange(
+	token, err := h.OauthConfig.Exchange(
 		context.Background(),
 		code.Code,
 	)
@@ -69,7 +64,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 		return uInfo, err
 	}
 
-	client := googleOauth.Client(context.Background(), token)
+	client := h.OauthConfig.Client(context.Background(), token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -96,9 +91,9 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 // CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
-func CPSKGoogleLoginHandler(c *gin.Context) {
+func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 
-	uInfo, err := getUserInfo(c)
+	uInfo, err := h.getUserInfo(c)
 	if err != nil {
 		return
 	}
@@ -108,9 +103,8 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 	// Check does user are already in DB or not
 	var user model.User
 	var cpskUser model.CPSKUser
-	database.DBinstance = database.DBinstance.Debug()
-	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
 
+	err = h.DB.Where("google_id = ?", uInfo.GID).First(&user).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		cpskUser = model.CPSKUser{
@@ -125,7 +119,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 			LastName:  uInfo.LastName,
 		}
 
-		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
+		if err := h.DB.Create(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to create user: %v", err.Error()),
 			})
@@ -134,7 +128,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 		respStatus = http.StatusCreated
 	case err == nil:
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+		if err := h.DB.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
 			})
@@ -170,9 +164,9 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 // CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
-func CompanyGoogleLoginHandler(c *gin.Context) {
+func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 
-	uInfo, err := getUserInfo(c)
+	uInfo, err := h.getUserInfo(c)
 	if err != nil {
 		return
 	}
@@ -182,8 +176,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	// Check does user are already in DB or not
 	var user model.User
 	var companyUser model.Company
-	database.DBinstance = database.DBinstance.Debug()
-	err = database.DBinstance.Where("google_id = ?", uInfo.GID).First(&user).Error
+	err = h.DB.Where("google_id = ?", uInfo.GID).First(&user).Error
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -204,7 +197,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 			VerifiedStatus: verified,
 		}
 
-		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
+		if err := h.DB.Create(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
@@ -215,7 +208,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 	case err == nil:
 
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+		if err := h.DB.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
@@ -251,7 +244,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
 // in a JSON response.
-func Callback(c *gin.Context) {
+func (h *OauthLoginHandler) Callback(c *gin.Context) {
 	code := c.Query("code")
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,

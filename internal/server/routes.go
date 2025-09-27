@@ -4,7 +4,6 @@ package server
 import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/controller"
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
 	"net/http"
@@ -13,17 +12,35 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 
 	// Load env
 	_ "github.com/joho/godotenv/autoload"
 )
 
 // RegisterRoutes will register each http endpoint routes to bound Server instance
-func RegisterRoutes() http.Handler {
+func (s *MyServer) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
 	allowOrginsStr := os.Getenv("ALLOW_ORIGIN")
 	allowOrgins := strings.Split(allowOrginsStr, ",")
+
+	googleOauth := &oauth2.Config{
+		ClientID:     os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
+		ClientSecret: os.Getenv("CPSK_GOOGLE_AUTH_SECRET"),
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.openid",
+		},
+		Endpoint:    google.Endpoint,
+		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
+	}
+
+	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth)
+	lAuth := auth.NewLocalAuthHandler(s.DB)
+	controller := controller.NewJobController(s.DB)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     allowOrgins, // Add your frontend URL
@@ -32,17 +49,17 @@ func RegisterRoutes() http.Handler {
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
-	r.GET("/", HelloWorldHandler)
-	r.GET("/health", healthHandler)
+	r.GET("/", s.HelloWorldHandler)
+	r.GET("/health", s.healthHandler)
 
-	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
-	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
-	r.GET("/auth/google/callback", auth.Callback)
+	r.POST("/auth/google/cpsk", gAuth.CPSKGoogleLoginHandler)
+	r.POST("/auth/google/company", gAuth.CompanyGoogleLoginHandler)
+	r.GET("/auth/google/callback", gAuth.Callback)
 
-	r.POST("/auth/login", auth.LocalLoginHandler)
-	r.POST("/auth/register", auth.LocalRegisterHandler)
+	r.POST("/auth/login", lAuth.LocalLoginHandler)
+	r.POST("/auth/register", lAuth.LocalRegisterHandler)
 
-	needAuth := r.Use(middleware.RequireAuth())
+	needAuth := r.Use(middleware.RequireAuth(s.DB))
 
 	needAuth.GET("/company/profile/:company_id", controller.GetCompanyByID)
 	needAuth.GET("/company/:company_id", controller.GetCompanyByID) // New route: same handler, different path
@@ -75,13 +92,13 @@ func RegisterRoutes() http.Handler {
 }
 
 // HelloWorldHandler handle request by return message "Hello World"
-func HelloWorldHandler(c *gin.Context) {
+func (s *MyServer) HelloWorldHandler(c *gin.Context) {
 	resp := make(map[string]string)
 	resp["message"] = "Hello World"
 
 	c.JSON(http.StatusOK, resp)
 }
 
-func healthHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, database.Health())
+func (s *MyServer) healthHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, s.DB.Health())
 }

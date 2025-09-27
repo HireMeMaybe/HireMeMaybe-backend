@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -18,13 +17,13 @@ import (
 
 // UploadResume function handles the process of uploading a resume file for a user and updating the
 // user's information in the database.
-func UploadResume(c *gin.Context) {
+func (jc *JobController) UploadResume(c *gin.Context) {
 	var cpskUser = model.CPSKUser{}
 
 	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
@@ -59,7 +58,7 @@ func UploadResume(c *gin.Context) {
 	cpskUser.Resume.Content = fileBytes
 	cpskUser.Resume.Extension = "pdf"
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
@@ -70,7 +69,7 @@ func UploadResume(c *gin.Context) {
 }
 
 // companyUpload function handles process of reading files from company upload.
-func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
+func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	var company = model.Company{}
 
 	u, _ := c.Get("user")
@@ -90,7 +89,7 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	}
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&company).Error; err != nil {
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
@@ -147,9 +146,9 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 }
 
 // UploadLogo function handles company's logo uploading and updating company profile in database.
-func UploadLogo(c *gin.Context) {
+func (jc *JobController) UploadLogo(c *gin.Context) {
 
-	company, fileBytes := companyUpload(c, "logo")
+	company, fileBytes := jc.companyUpload(c, "logo")
 
 	if fileBytes == nil {
 		return
@@ -158,7 +157,7 @@ func UploadLogo(c *gin.Context) {
 	company.Logo.Content = fileBytes
 	company.Logo.Extension = "jpg"
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
@@ -169,8 +168,8 @@ func UploadLogo(c *gin.Context) {
 }
 
 // UploadBanner function handles company's banner uploading and updating company profile in database.
-func UploadBanner(c *gin.Context) {
-	company, fileBytes := companyUpload(c, "banner")
+func (jc *JobController) UploadBanner(c *gin.Context) {
+	company, fileBytes := jc.companyUpload(c, "banner")
 
 	if fileBytes == nil {
 		return
@@ -179,7 +178,7 @@ func UploadBanner(c *gin.Context) {
 	company.Banner.Content = fileBytes
 	company.Banner.Extension = "jpg"
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
@@ -191,11 +190,11 @@ func UploadBanner(c *gin.Context) {
 
 // GetFile function retrieves a file from the database and sends it as a downloadable attachment in
 // the response.
-func GetFile(c *gin.Context) {
+func (jc *JobController) GetFile(c *gin.Context) {
 	var file model.File
 	id := c.Param("id")
 
-	if err := database.DBinstance.First(&file, id).Error; err != nil {
+	if err := jc.DB.First(&file, id).Error; err != nil {
 		c.String(http.StatusNotFound, "File not found")
 		return
 	}
@@ -218,3 +217,4 @@ func GetFile(c *gin.Context) {
 		return
 	}
 }
+

@@ -3,10 +3,12 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +41,15 @@ import (
 // 	GetORM() *gorm.DB
 // }
 
-// Service contain sql.DB instance and gorm instance
+type DBinstanceStruct struct {
+	*gorm.DB
+	Constr  string
+
+	// cached raw DB and mutex for lazy-init
+	sqlDB *sql.DB
+    mu    sync.RWMutex
+}
+
 
 var (
 	database      = os.Getenv("DB_DATABASE")
@@ -50,14 +60,50 @@ var (
 	useEnvConnStr = os.Getenv("USE_CONNECTION_STR")
 	envConStr     = os.Getenv("DB_CONNECTION_STR")
 	// DBinstance is instance or GORM orm as an interface to database
-	DBinstance *gorm.DB
+	dbInstance      *DBinstanceStruct
 )
 
 // InitializeDatabase constrct new Database service with ORM
-func InitializeDatabase() error {
+// func InitializeDatabase() error {
+// 	// Reuse Connection
+// 	if DBinstance != nil {
+// 		return nil
+// 	}
+// 	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
+// 	if err != nil {
+// 		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
+// 	}
+
+// 	var connStr string
+// 	if useEnvConnStr {
+// 		connStr = envConStr
+// 	} else {
+// 		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+// 	}
+
+// 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if gin.IsDebugging() {
+// 		DBinstance = DBinstance.Debug()
+// 	}
+
+// 	if err := Migrate(); err != nil {
+// 		return err
+// 	}
+
+// 	createAdmin()
+
+// 	return nil
+// }
+
+func NewDBInstance() (*DBinstanceStruct, error) {
+
 	// Reuse Connection
-	if DBinstance != nil {
-		return nil
+	if dbInstance != nil {
+		return dbInstance, nil
 	}
 	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
 	if err != nil {
@@ -71,25 +117,63 @@ func InitializeDatabase() error {
 		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 	}
 
-	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
+	gdb, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	newDb := &DBinstanceStruct{
+		DB:    gdb,
+		Constr: connStr,
 	}
 
 	if gin.IsDebugging() {
-		DBinstance = DBinstance.Debug()
+		gdb = gdb.Debug()
 	}
 
-	if err := Migrate(); err != nil {
-		return err
+	if err := newDb.Migrate(); err != nil {
+		return nil, err
 	}
 
-	createAdmin()
+	newDb.createAdmin()
 
-	return nil
+	return newDb, nil
 }
 
-func createAdmin() {
+// Raw returns the underlying *sql.DB, caching it after the first successful retrieval.
+// It is safe for concurrent use.
+func (d *DBinstanceStruct) Raw() (*sql.DB, error) {
+    if d == nil {
+        return nil, fmt.Errorf("DBinstanceStruct is nil")
+    }
+
+    // fast path: cached value
+    d.mu.RLock()
+    if d.sqlDB != nil {
+        raw := d.sqlDB
+        d.mu.RUnlock()
+        return raw, nil
+    }
+    d.mu.RUnlock()
+
+    // slow path: initialize
+    d.mu.Lock()
+    defer d.mu.Unlock()
+    if d.sqlDB != nil {
+        return d.sqlDB, nil
+    }
+    if d.DB == nil {
+        return nil, fmt.Errorf("gorm DB is nil")
+    }
+    raw, err := d.DB.DB()
+    if err != nil {
+        return nil, err
+    }
+    d.sqlDB = raw
+    return raw, nil
+}
+
+func (d *DBinstanceStruct) createAdmin() {
 	// Create admin user if not exist
 
 	adminUsername := os.Getenv("ADMIN_USERNAME")
@@ -103,16 +187,16 @@ func createAdmin() {
 	// Check if admin user already exists
 
 	var count int64
-	DBinstance.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count)
+	d.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count)
 	if count == 0 {
-		utilities.CreateAdmin(adminPassword, adminUsername, DBinstance)
+		utilities.CreateAdmin(adminPassword, adminUsername, d.DB)
 	}
 
 }
 
 // Migrate database
-func Migrate() error {
-	err := DBinstance.AutoMigrate(model.MigrateAble...)
+func (d *DBinstanceStruct) Migrate() error {
+	err := d.AutoMigrate(model.MigrateAble...)
 	if err != nil {
 		return err
 	}
@@ -121,13 +205,13 @@ func Migrate() error {
 
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
-func Health() map[string]string {
+func (d *DBinstanceStruct) Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	stats := make(map[string]string)
 
-	oriDB, err := DBinstance.DB()
+	oriDB, err := d.Raw()
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -182,9 +266,9 @@ func Health() map[string]string {
 // It logs a message indicating the disconnection from the specific database.
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
-func Close() error {
-	log.Printf("Disconnected from database: %s", database)
-	oriDB, err := DBinstance.DB()
+func (d *DBinstanceStruct) Close() error {
+	log.Printf("Disconnected from database: %s", d.Constr)
+	oriDB, err := d.Raw()
 	if err != nil {
 		return err
 	}

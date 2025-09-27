@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -14,13 +13,13 @@ import (
 
 // GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
-func GetCompanyProfile(c *gin.Context) {
+func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 
 	// Retrieve company profile from database.
-	if err := database.DBinstance.Preload("User").
+	if err := jc.DB.Preload("User").
 		Preload("Logo").
 		Preload("Banner").
 		Preload("JobPost").
@@ -36,13 +35,13 @@ func GetCompanyProfile(c *gin.Context) {
 
 // EditCompanyProfile function overide company profile, save into database
 // ,and response edited profile as JSON format.
-func EditCompanyProfile(c *gin.Context) {
+func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
 
 	// Retrieve company profile from database
-	if err := database.DBinstance.
+	if err := jc.DB.
 		Preload("User").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
@@ -68,7 +67,7 @@ func EditCompanyProfile(c *gin.Context) {
 	company.VerifiedStatus = status
 
 	// Save updated profile to database
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
@@ -80,13 +79,13 @@ func EditCompanyProfile(c *gin.Context) {
 }
 
 // GetCompanyByID retrieves a company by its user ID (company_id) and preloads JobPost, Logo, Banner and User.
-func GetCompanyByID(c *gin.Context) {
+func (jc *JobController) GetCompanyByID(c *gin.Context) {
 	companyID := c.Param("company_id")
 
 	company := model.Company{}
 
 	// Retrieve company profile from database with JobPost preloaded.
-	if err := database.DBinstance.Preload("User").
+	if err := jc.DB.Preload("User").
 		Preload("Logo").
 		Preload("Banner").
 		Preload("JobPost").
@@ -103,3 +102,4 @@ func GetCompanyByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, company)
 }
+

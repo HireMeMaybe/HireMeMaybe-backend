@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -16,13 +15,13 @@ import (
 )
 
 // CreateJobPostHandler handles the creation of a new job post by a company user.
-func CreateJobPostHandler(c *gin.Context) {
+func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	// Get user
 	user := utilities.ExtractUser(c)
 
 	// Ensure that user is a verified company
 	var companyUser model.Company
-	if err := database.DBinstance.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
+	if err := jc.DB.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Only company users can create job posts"})
 			return
@@ -44,7 +43,7 @@ func CreateJobPostHandler(c *gin.Context) {
 
 	// save job post
 	jobPost.CompanyID = user.ID
-	if err := database.DBinstance.Create(&jobPost).Error; err != nil {
+	if err := jc.DB.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprint("Failed to create job post: ", err),
 		})
@@ -57,7 +56,7 @@ func CreateJobPostHandler(c *gin.Context) {
 
 // GetPosts fetches all non-expired job posts that match query from the database
 // and returns them as a JSON response.
-func GetPosts(c *gin.Context) {
+func (jc *JobController) GetPosts(c *gin.Context) {
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
 	rawTag := c.Query("tag")
@@ -70,7 +69,7 @@ func GetPosts(c *gin.Context) {
 
 	var posts []model.JobPost
 
-	result := database.DBinstance.Where("expiring > ? OR expiring IS NULL", time.Now())
+	result := jc.DB.Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
 		result = result.Where("title ILIKE ?", "%"+rawSearch+"%")
@@ -124,7 +123,7 @@ func GetPosts(c *gin.Context) {
 }
 
 // EditJobPost allows a company user to update a job post they own.
-func EditJobPost(c *gin.Context) {
+func (jc *JobController) EditJobPost(c *gin.Context) {
 	// Use ExtractUser itiesity to get authenticated user
 	user := utilities.ExtractUser(c)
 
@@ -134,7 +133,7 @@ func EditJobPost(c *gin.Context) {
 	job := model.JobPost{}
 
 	// Find existing job post
-	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Job post not found"})
 			return
@@ -162,13 +161,13 @@ func EditJobPost(c *gin.Context) {
 	updated.CompanyID = job.CompanyID
 
 	// Update fields on the existing job record without saving associations
-	if err := database.DBinstance.Model(&job).Updates(updated).Error; err != nil {
+	if err := jc.DB.Model(&job).Updates(updated).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update job post: %s", err.Error())})
 		return
 	}
 
 	// Reload the job post to return the latest data
-	if err := database.DBinstance.Where("id = ?", job.ID).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", job.ID).First(&job).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve updated job post: %s", err.Error())})
 		return
 	}
@@ -177,12 +176,12 @@ func EditJobPost(c *gin.Context) {
 }
 
 // DeleteJobPost allows a company user to delete a job post they own.
-func DeleteJobPost(c *gin.Context) {
+func (jc *JobController) DeleteJobPost(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 	id := c.Param("id")
 
 	job := model.JobPost{}
-	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Job post not found"})
 			return
@@ -199,10 +198,11 @@ func DeleteJobPost(c *gin.Context) {
 		}
 	}
 
-	if err := database.DBinstance.Delete(&job).Error; err != nil {
+	if err := jc.DB.Delete(&job).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to delete job post: %s", err.Error())})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Job post deleted"})
 }
+

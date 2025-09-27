@@ -11,18 +11,30 @@ import (
 	"HireMeMaybe-backend/internal/database"
 )
 
+type MyServer struct {
+	DB   *database.DBinstanceStruct
+	port int
+}
+
 // NewServer construct new Server instance
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 
-	if err := database.InitializeDatabase(); err != nil {
+	db, err := database.NewDBInstance()
+	// Initialize database and check for errors
+	if err != nil {
 		log.Fatalf("Database failed to initialized: %s", err)
 	}
 
 	// Declare Server config
+	myServer := &MyServer{
+		DB:   db,
+		port: port,
+	}
+
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      RegisterRoutes(),
+		Handler:      myServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

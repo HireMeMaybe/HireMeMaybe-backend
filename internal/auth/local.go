@@ -14,10 +14,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// LocalRegisterHandler holds DB reference for handler methods.
+type LocalRegisterHandler struct {
+	DB *database.DBinstanceStruct
+}
+
+func NewLocalAuthHandler(db *database.DBinstanceStruct) *LocalRegisterHandler {
+	return &LocalRegisterHandler{
+		DB: db,
+	}
+}
+
 // LocalRegisterHandler function handles local registration by receiving username and password
 // do nothing if username already exist in the database
 // do nothing if password is shorter than 8 characters
-func LocalRegisterHandler(c *gin.Context) {
+func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -32,7 +43,7 @@ func LocalRegisterHandler(c *gin.Context) {
 	}
 
 	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+	err := lh.DB.Where("username = ?", info.Username).First(&user).Error
 
 	switch {
 	case err == nil:
@@ -75,7 +86,7 @@ func LocalRegisterHandler(c *gin.Context) {
 				Role:     model.RoleCPSK,
 			},
 		}
-		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
+		if err := lh.DB.Create(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
@@ -108,7 +119,7 @@ func LocalRegisterHandler(c *gin.Context) {
 			},
 			VerifiedStatus: verified,
 		}
-		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
+		if err := lh.DB.Create(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
@@ -137,7 +148,7 @@ func LocalRegisterHandler(c *gin.Context) {
 // LocalLoginHandler function handles local login by receiving username and password
 // do nothing if username does not exist in the database
 // do nothing if password is incorrect
-func LocalLoginHandler(c *gin.Context) {
+func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	var info struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -151,7 +162,7 @@ func LocalLoginHandler(c *gin.Context) {
 	}
 
 	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+	err := lh.DB.Where("username = ?", info.Username).First(&user).Error
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -187,7 +198,7 @@ func LocalLoginHandler(c *gin.Context) {
 	switch user.Role {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
@@ -208,7 +219,7 @@ func LocalLoginHandler(c *gin.Context) {
 		})
 	case model.RoleCompany:
 		var companyUser model.Company
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})

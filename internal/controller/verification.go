@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"errors"
 	"fmt"
@@ -14,7 +13,7 @@ import (
 
 // GetCompanies function query the result from the database based on given query "status"
 // which mean VerifiedStatus is the condition for the query
-func GetCompanies(c *gin.Context) {
+func (jc *JobController) GetCompanies(c *gin.Context) {
 	rawQ := c.Query("status")
 	var q []string
 	if rawQ == "" {
@@ -28,7 +27,7 @@ func GetCompanies(c *gin.Context) {
 
 	var companyUser []model.Company
 
-	err := database.DBinstance.
+	err := jc.DB.
 		Preload("User").
 		Where("verified_status IN ?", q).
 		Find(&companyUser).
@@ -45,7 +44,7 @@ func GetCompanies(c *gin.Context) {
 }
 
 // VerifyCompany function allow admin to change status of given company id to Verified or Unverified
-func VerifyCompany(c *gin.Context) {
+func (jc *JobController) VerifyCompany(c *gin.Context) {
 	var info struct {
 		CompanyID string `json:"company_id" binding:"required"`
 		Status    string `json:"status" binding:"required,oneof=Verified Unverified"`
@@ -59,7 +58,7 @@ func VerifyCompany(c *gin.Context) {
 	}
 
 	var company model.Company
-	err := database.DBinstance.Preload("User").Where("user_id = ?", info.CompanyID).First(&company).Error
+	err := jc.DB.Preload("User").Where("user_id = ?", info.CompanyID).First(&company).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		c.JSON(http.StatusNotFound, gin.H{
@@ -77,7 +76,7 @@ func VerifyCompany(c *gin.Context) {
 	}
 	company.VerifiedStatus = info.Status
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
@@ -87,3 +86,4 @@ func VerifyCompany(c *gin.Context) {
 
 	c.JSON(http.StatusOK, company)
 }
+

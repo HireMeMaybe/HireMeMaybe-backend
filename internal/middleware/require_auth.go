@@ -17,7 +17,7 @@ import (
 // RequireAuth function is a middleware in Go that validates a Bearer token in the Authorization
 // header and checks if the user associated with the token exists and is not expired before allowing
 // access to the endpoint.
-func RequireAuth() gin.HandlerFunc {
+func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		const BearerSchema = "Bearer "
 		authHeader := ctx.GetHeader("Authorization")
@@ -52,7 +52,7 @@ func RequireAuth() gin.HandlerFunc {
 
 		var foundUser model.User
 
-		if err := database.DBinstance.Where("id = ?", userID).First(&foundUser).Error; err != nil {
+		if err := db.Where("id = ?", userID).First(&foundUser).Error; err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
