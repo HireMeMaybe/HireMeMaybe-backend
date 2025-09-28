@@ -20,7 +20,7 @@ type MyServer struct {
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 
-	db, err := database.NewDBInstance()
+	db, err := database.GetMainDB()
 	// Initialize database and check for errors
 	if err != nil {
 		log.Fatalf("Database failed to initialized: %s", err)

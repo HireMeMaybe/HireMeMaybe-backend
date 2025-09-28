@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 
-	db, err := database.NewDBInstance()
+	db, err := database.GetMainDB()
 	// Initialize database and check for errors
 	if err != nil {
 		log.Fatalf("Database failed to initialize: %v", err)

@@ -37,7 +37,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&info); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username, password, and Role (Only 'cpsk' or 'company) must be provided",
+			"error": "Invalid Role, only 'cpsk' or 'company' is allowed",
 		})
 		return
 	}

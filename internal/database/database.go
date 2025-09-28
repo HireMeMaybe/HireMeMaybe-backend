@@ -41,14 +41,40 @@ import (
 // 	GetORM() *gorm.DB
 // }
 
+// DBinstanceStruct is a struct that holds the GORM DB instance and related information.
 type DBinstanceStruct struct {
 	*gorm.DB
-	Constr  string
-
+	// Config
+	Config *DBConfig
 	// cached raw DB and mutex for lazy-init
 	sqlDB *sql.DB
     mu    sync.RWMutex
 }
+
+// DBConfig holds the configuration parameters for connecting to a database.
+type DBConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DBName   string
+	Constr   string
+	useConstr bool
+}
+
+func (d *DBConfig) GetDsn() string {
+	if d.useConstr {
+		if d.Constr == "" {
+			log.Fatal("DB_CONNECTION_STR is empty")
+		}
+		return d.Constr
+	}
+	if d.Host == "" || d.Port == "" || d.User == "" || d.Password == "" || d.DBName == "" {
+		log.Fatal("Database configuration is incomplete")
+	}
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", d.User, d.Password, d.Host, d.Port, d.DBName)
+}
+
 
 
 var (
@@ -63,59 +89,10 @@ var (
 	dbInstance      *DBinstanceStruct
 )
 
-// InitializeDatabase constrct new Database service with ORM
-// func InitializeDatabase() error {
-// 	// Reuse Connection
-// 	if DBinstance != nil {
-// 		return nil
-// 	}
-// 	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
-// 	if err != nil {
-// 		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
-// 	}
 
-// 	var connStr string
-// 	if useEnvConnStr {
-// 		connStr = envConStr
-// 	} else {
-// 		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-// 	}
+func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 
-// 	DBinstance, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if gin.IsDebugging() {
-// 		DBinstance = DBinstance.Debug()
-// 	}
-
-// 	if err := Migrate(); err != nil {
-// 		return err
-// 	}
-
-// 	createAdmin()
-
-// 	return nil
-// }
-
-func NewDBInstance() (*DBinstanceStruct, error) {
-
-	// Reuse Connection
-	if dbInstance != nil {
-		return dbInstance, nil
-	}
-	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
-	if err != nil {
-		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
-	}
-
-	var connStr string
-	if useEnvConnStr {
-		connStr = envConStr
-	} else {
-		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-	}
+	connStr := config.GetDsn()
 
 	gdb, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
@@ -124,13 +101,15 @@ func NewDBInstance() (*DBinstanceStruct, error) {
 
 	newDb := &DBinstanceStruct{
 		DB:    gdb,
-		Constr: connStr,
+		Config: config,
 	}
 
 	if gin.IsDebugging() {
 		gdb = gdb.Debug()
 	}
-
+	
+	newDb.installExtension()
+	
 	if err := newDb.Migrate(); err != nil {
 		return nil, err
 	}
@@ -138,6 +117,30 @@ func NewDBInstance() (*DBinstanceStruct, error) {
 	newDb.createAdmin()
 
 	return newDb, nil
+}
+
+func GetMainDB() (*DBinstanceStruct, error) {
+	// Reuse Connection
+	if dbInstance != nil {
+		return dbInstance, nil
+	}
+
+	useEnvConnStr, err := strconv.ParseBool(useEnvConnStr)
+	if err != nil {
+		log.Fatalf("USE_CONNECTION_STR environments variables are invalid %v", err)
+	}
+
+	config := &DBConfig{
+		Host:     host,
+		Port:     port,
+		User:     username,
+		Password: password,
+		DBName:   database,
+		useConstr: useEnvConnStr,
+		Constr:   envConStr,
+	}
+
+	return NewDBInstance(config)
 }
 
 // Raw returns the underlying *sql.DB, caching it after the first successful retrieval.
@@ -267,10 +270,19 @@ func (d *DBinstanceStruct) Health() map[string]string {
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
 func (d *DBinstanceStruct) Close() error {
-	log.Printf("Disconnected from database: %s", d.Constr)
+	log.Printf("Disconnected from database: %s", d.Config.Constr)
 	oriDB, err := d.Raw()
 	if err != nil {
 		return err
 	}
 	return oriDB.Close()
+}
+
+func (d *DBinstanceStruct) installExtension() error {
+	err := d.WithContext(context.Background()).Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`).Error
+	if err != nil {
+		return err
+	}
+	log.Println("uuid-ossp extension installed or already exists")
+	return nil
 }

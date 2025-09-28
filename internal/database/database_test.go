@@ -10,7 +10,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	teardown, err := StartTestDB()
+	teardown, _, err := GetTestDB()
 	if err != nil {
 		log.Fatalf("could not start postgres container: %v", err)
 	}
@@ -23,14 +23,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	_, err := NewDBInstance()
+	_, _, err := GetTestDB()
 	if err != nil {
 		t.Fatalf("Database failed to initialize: %s", err)
 	}
 }
 
 func TestHealth(t *testing.T) {
-	db, err := NewDBInstance()
+	_, db, err := GetTestDB()
 	if err != nil {
 		t.Fatalf("Database failed to initialize: %s", err)
 	}
@@ -50,7 +50,7 @@ func TestHealth(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	db, err := NewDBInstance()
+	_, db, err := GetTestDB()
 	if err != nil {
 		t.Fatalf("Database failed to initialize: %s", err)
 	}

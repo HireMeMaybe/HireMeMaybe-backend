@@ -38,7 +38,7 @@ func generateUniqueUsername(db *gorm.DB) string {
 
 func main() {
 
-	db, err := database.NewDBInstance()
+	db, err := database.GetMainDB()
 	if err != nil {
 		log.Fatal("Fail to initialize database: ", err)
 	}
