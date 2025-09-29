@@ -1,17 +1,16 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
+
 	"os"
 	"testing"
 	"time"
 
 	"HireMeMaybe-backend/internal/database"
+	"HireMeMaybe-backend/internal/utilities"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -43,35 +42,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func doRequest(handler *LocalRegisterHandler, body interface{}) (*httptest.ResponseRecorder, error) {
-	b, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	rec := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(rec)
-	req, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
-	c.Request = req
-	handler.LocalRegisterHandler(c)
-	return rec, nil
-}
-
-// Helper to perform login
-func doLoginRequest(handler *LocalRegisterHandler, body interface{}) (*httptest.ResponseRecorder, error) {
-	b, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	rec := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(rec)
-	req, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
-	c.Request = req
-	handler.LocalLoginHandler(c)
-	return rec, nil
-}
-
 // Helper: validate access token in response and return claims.
 func assertValidAccessToken(t *testing.T, resp map[string]interface{}) *jwt.RegisteredClaims {
 	t.Helper()
@@ -94,12 +64,10 @@ func TestRegisterCPSK(t *testing.T) {
 		"password": "password123",
 		"role":     "cpsk",
 	}
-	rec, err := doRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code, "unexpected status, body: %s", rec.Body.String())
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	assert.Contains(t, resp, "access_token")
 
 	claims := assertValidAccessToken(t, resp)
@@ -126,12 +94,10 @@ func TestRegisterCompany(t *testing.T) {
 		"password": "companyPass123",
 		"role":     "company",
 	}
-	rec, err := doRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code, "unexpected status, body: %s", rec.Body.String())
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	assert.Contains(t, resp, "access_token")
 
 	claims := assertValidAccessToken(t, resp)
@@ -159,12 +125,10 @@ func TestRegisterPasswordTooShort(t *testing.T) {
 		"password": "1234567", // 7 chars
 		"role":     "cpsk",
 	}
-	rec, err := doRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	errMsg, _ := resp["error"].(string)
 	assert.Contains(t, errMsg, "Password should longer or equal to 8 characters")
 }
@@ -178,12 +142,10 @@ func TestRegisterDuplicateUsername(t *testing.T) {
 		"password": "password123",
 		"role":     "cpsk",
 	}
-	rec, err := doRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	
 	errMsg, _ := resp["error"].(string)
 	assert.Equal(t, "Username already exist", errMsg)
 }
@@ -197,12 +159,10 @@ func TestRegisterInvalidRole(t *testing.T) {
 		"password": "password123",
 		"role":     "admin", // not allowed
 	}
-	rec, err := doRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	errMsg, _ := resp["error"].(string)
 	assert.Contains(t, errMsg, "Invalid Role, only 'cpsk' or 'company' is allowed")
 }
@@ -213,12 +173,9 @@ func TestLoginCPSKSuccess(t *testing.T) {
 		"username": database.TestUserCPSK1.Username,
 		"password": database.TestSeedPassword,
 	}
-	rec, err := doLoginRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
-
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	assert.Contains(t, resp, "access_token")
 
 	claims := assertValidAccessToken(t, resp)
@@ -237,12 +194,10 @@ func TestLoginCompanySuccess(t *testing.T) {
 		"username": database.TestUserCompany1.Username,
 		"password": database.TestSeedPassword,
 	}
-	rec, err := doLoginRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	assert.Contains(t, resp, "access_token")
 
 	claims := assertValidAccessToken(t, resp)
@@ -261,12 +216,10 @@ func TestLoginWrongPassword(t *testing.T) {
 		"username": database.TestUserCPSK1.Username,
 		"password": "WrongPass999!",
 	}
-	rec, err := doLoginRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	errMsg, _ := resp["error"].(string)
 	assert.Equal(t, "Username or password is incorrect", errMsg)
 }
@@ -277,12 +230,10 @@ func TestLoginUserNotFound(t *testing.T) {
 		"username": "non_existent_user_xyz",
 		"password": "SomePassword1!",
 	}
-	rec, err := doLoginRequest(handler, payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
-	var resp map[string]interface{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	errMsg, _ := resp["error"].(string)
 	assert.Equal(t, "Username or password is incorrect", errMsg)
 }
