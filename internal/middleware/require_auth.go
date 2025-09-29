@@ -5,13 +5,13 @@ import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // RequireAuth function is a middleware in Go that validates a Bearer token in the Authorization
@@ -32,7 +32,14 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
+		
 		if !token.Valid {
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Access token expired",
+				})
+				return
+			}
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Sprintf("Failed to validate token: %s", err.Error()),
 			})
@@ -41,29 +48,22 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
-		if claims.ExpiresAt.Before(time.Now()) {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Access token expired",
-			})
-			return
-		}
 
 		userID := claims.Subject
 
 		var foundUser model.User
 
 		if err := db.Where("id = ?", userID).First(&foundUser).Error; err != nil {
+
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "User not exist",
+				})
+				return
+			}
+
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
-			})
-			return
-		}
-
-		var defaultUUID uuid.UUID
-
-		if foundUser.ID.String() == defaultUUID.String() {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "User not exist",
 			})
 			return
 		}

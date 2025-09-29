@@ -14,8 +14,8 @@ import (
 
 var secretKey = os.Getenv("SECRET_KEY")
 
-// TODO: generate refresh token
-func generateToken(uuid uuid.UUID) (string, string, error) {
+// GenerateToken creates a JWT with default 1 hour duration.
+func GenerateToken(uuid uuid.UUID) (string, string, error) {
 
 	generatedAccessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "HireMeMaybe",
@@ -30,6 +30,22 @@ func generateToken(uuid uuid.UUID) (string, string, error) {
 	}
 
 	return signedToken, "", nil
+}
+
+// GenerateTokenWithDuration creates a JWT that expires after the provided duration (can be negative for tests).
+func GenerateTokenWithDuration(id uuid.UUID, d time.Duration) (string, error) {
+	exp := time.Now().Add(d)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    "HireMeMaybe",
+		Subject:   id.String(),
+		ExpiresAt: jwt.NewNumericDate(exp),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	})
+	signed, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+	return signed, nil
 }
 
 // ValidatedToken parses and validates a JWT token using a secret key.
