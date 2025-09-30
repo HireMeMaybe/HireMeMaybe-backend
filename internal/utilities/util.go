@@ -10,6 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// ErrorResponse type for swagger docs
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 // ExtractUser will extract user model from gin context and abort with error message
 func ExtractUser(c *gin.Context) model.User {
 	u, _ := c.Get("user")

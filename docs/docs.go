@@ -15,7 +15,86 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/google/cpsk": {
+        "/auth/google/callback": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Retrieves a query parameter named \"code\" from the request and returns it in a JSON response",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authentication code from google",
+                        "name": "Code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.code"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google/company": {
+            "post": {
+                "description": "Checks and creates user in the database, generates an access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handles Google login authentication for company role, exchanges code for user",
+                "parameters": [
+                    {
+                        "description": "Authentication code from google",
+                        "name": "Code",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.code"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login success",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.companyResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Register success",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.companyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Fail to receive token or fetch user info",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google/cpsk": {
             "post": {
                 "description": "Checks and creates user in the database, generates an access token",
                 "consumes": [
@@ -31,37 +110,135 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Authentication code from google",
-                        "name": "code",
+                        "name": "Code",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_auth.Code"
+                            "$ref": "#/definitions/internal_auth.code"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Login",
+                        "description": "Login success",
                         "schema": {
-                            "$ref": "#/definitions/internal_auth.CPSKResponse"
+                            "$ref": "#/definitions/internal_auth.cpskResponse"
                         }
                     },
                     "201": {
-                        "description": "Register",
+                        "description": "Register success",
                         "schema": {
-                            "$ref": "#/definitions/internal_auth.CPSKResponse"
+                            "$ref": "#/definitions/internal_auth.cpskResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Fail to receive token or fetch user info",
                         "schema": {
-                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Database error",
                         "schema": {
-                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Username must exist and password match",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handles local login by receiving username and password",
+                "parameters": [
+                    {
+                        "description": "Credentials for login",
+                        "name": "Info",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.loginInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "If role is cpsk",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.cpskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Info provided not met the condition",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Username not exist or password incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database or password hashing error",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Username must not already exist and password must longer or equal to 8 characters long",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handles local registration by receiving username and password",
+                "parameters": [
+                    {
+                        "description": "role can be only 'cpsk' or 'company'",
+                        "name": "Info",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.registerInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "If role is cpsk",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.cpskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Info provided not met the condition",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database or password hashing error",
+                        "schema": {
+                            "$ref": "#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse"
                         }
                     }
                 }
@@ -166,6 +343,95 @@ const docTemplate = `{
                 }
             }
         },
+        "HireMeMaybe-backend_internal_model.Company": {
+            "type": "object",
+            "properties": {
+                "banner_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "industry": {
+                    "type": "string"
+                },
+                "job_post": {
+                    "description": "JobPost holds the company's job posts",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/HireMeMaybe-backend_internal_model.JobPost"
+                    }
+                },
+                "logo_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "overview": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/HireMeMaybe-backend_internal_model.User"
+                },
+                "verified_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "HireMeMaybe-backend_internal_model.JobPost": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/HireMeMaybe-backend_internal_model.Application"
+                    }
+                },
+                "company_id": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "exp_lvl": {
+                    "type": "string"
+                },
+                "expiring": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "post_time": {
+                    "type": "string"
+                },
+                "req": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "HireMeMaybe-backend_internal_model.User": {
             "type": "object",
             "properties": {
@@ -195,6 +461,14 @@ const docTemplate = `{
                 }
             }
         },
+        "HireMeMaybe-backend_internal_utilities.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -207,7 +481,26 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_auth.CPSKResponse": {
+        "internal_auth.code": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.companyResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/HireMeMaybe-backend_internal_model.Company"
+                }
+            }
+        },
+        "internal_auth.cpskResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -218,21 +511,40 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_auth.Code": {
+        "internal_auth.loginInfo": {
             "type": "object",
             "required": [
-                "code"
+                "password",
+                "username"
             ],
             "properties": {
-                "code": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
         },
-        "internal_auth.ErrorResponse": {
+        "internal_auth.registerInfo": {
             "type": "object",
+            "required": [
+                "password",
+                "role",
+                "username"
+            ],
             "properties": {
-                "error": {
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "cpsk",
+                        "company"
+                    ]
+                },
+                "username": {
                     "type": "string"
                 }
             }

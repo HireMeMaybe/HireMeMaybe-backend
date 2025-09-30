@@ -65,6 +65,65 @@ definitions:
       year:
         type: string
     type: object
+  HireMeMaybe-backend_internal_model.Company:
+    properties:
+      banner_id:
+        type: integer
+      id:
+        type: string
+      industry:
+        type: string
+      job_post:
+        description: JobPost holds the company's job posts
+        items:
+          $ref: '#/definitions/HireMeMaybe-backend_internal_model.JobPost'
+        type: array
+      logo_id:
+        type: integer
+      name:
+        type: string
+      overview:
+        type: string
+      size:
+        type: string
+      user:
+        $ref: '#/definitions/HireMeMaybe-backend_internal_model.User'
+      verified_status:
+        type: string
+    type: object
+  HireMeMaybe-backend_internal_model.JobPost:
+    properties:
+      applications:
+        items:
+          $ref: '#/definitions/HireMeMaybe-backend_internal_model.Application'
+        type: array
+      company_id:
+        type: string
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      post_time:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+    type: object
   HireMeMaybe-backend_internal_model.User:
     properties:
       createdAt:
@@ -84,6 +143,11 @@ definitions:
       username:
         type: string
     type: object
+  HireMeMaybe-backend_internal_utilities.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -92,24 +156,50 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
-  internal_auth.CPSKResponse:
+  internal_auth.code:
+    properties:
+      code:
+        type: string
+    type: object
+  internal_auth.companyResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/HireMeMaybe-backend_internal_model.Company'
+    type: object
+  internal_auth.cpskResponse:
     properties:
       access_token:
         type: string
       user:
         $ref: '#/definitions/HireMeMaybe-backend_internal_model.CPSKUser'
     type: object
-  internal_auth.Code:
+  internal_auth.loginInfo:
     properties:
-      code:
+      password:
+        type: string
+      username:
         type: string
     required:
-    - code
+    - password
+    - username
     type: object
-  internal_auth.ErrorResponse:
+  internal_auth.registerInfo:
     properties:
-      error:
+      password:
         type: string
+      role:
+        enum:
+        - cpsk
+        - company
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
     type: object
 info:
   contact: {}
@@ -118,7 +208,25 @@ info:
   title: HireMeMaybe API service
   version: "1.0"
 paths:
-  /google/cpsk:
+  /auth/google/callback:
+    get:
+      parameters:
+      - description: Authentication code from google
+        in: query
+        name: Code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth.code'
+      summary: Retrieves a query parameter named "code" from the request and returns
+        it in a JSON response
+      tags:
+      - auth
+  /auth/google/company:
     post:
       consumes:
       - application/json
@@ -126,31 +234,131 @@ paths:
       parameters:
       - description: Authentication code from google
         in: body
-        name: code
+        name: Code
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.Code'
+          $ref: '#/definitions/internal_auth.code'
       produces:
       - application/json
       responses:
         "200":
-          description: Login
+          description: Login success
           schema:
-            $ref: '#/definitions/internal_auth.CPSKResponse'
+            $ref: '#/definitions/internal_auth.companyResponse'
         "201":
-          description: Register
+          description: Register success
           schema:
-            $ref: '#/definitions/internal_auth.CPSKResponse'
+            $ref: '#/definitions/internal_auth.companyResponse'
         "400":
-          description: Bad Request
+          description: Fail to receive token or fetch user info
           schema:
-            $ref: '#/definitions/internal_auth.ErrorResponse'
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Database error
           schema:
-            $ref: '#/definitions/internal_auth.ErrorResponse'
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+      summary: Handles Google login authentication for company role, exchanges code
+        for user
+      tags:
+      - auth
+  /auth/google/cpsk:
+    post:
+      consumes:
+      - application/json
+      description: Checks and creates user in the database, generates an access token
+      parameters:
+      - description: Authentication code from google
+        in: body
+        name: Code
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.code'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login success
+          schema:
+            $ref: '#/definitions/internal_auth.cpskResponse'
+        "201":
+          description: Register success
+          schema:
+            $ref: '#/definitions/internal_auth.cpskResponse'
+        "400":
+          description: Fail to receive token or fetch user info
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
       summary: Handles Google login authentication for cpsk role, exchanges code for
         user
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Username must exist and password match
+      parameters:
+      - description: Credentials for login
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.loginInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If role is cpsk
+          schema:
+            $ref: '#/definitions/internal_auth.cpskResponse'
+        "400":
+          description: Info provided not met the condition
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+        "401":
+          description: Username not exist or password incorrect
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+        "500":
+          description: Database or password hashing error
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+      summary: Handles local login by receiving username and password
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Username must not already exist and password must longer or equal
+        to 8 characters long
+      parameters:
+      - description: role can be only 'cpsk' or 'company'
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.registerInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If role is cpsk
+          schema:
+            $ref: '#/definitions/internal_auth.cpskResponse'
+        "400":
+          description: Info provided not met the condition
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+        "500":
+          description: Database or password hashing error
+          schema:
+            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+      summary: Handles local registration by receiving username and password
       tags:
       - auth
 swagger: "2.0"

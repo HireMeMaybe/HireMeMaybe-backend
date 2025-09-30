@@ -4,6 +4,7 @@ package auth
 import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
 	"context"
 	"encoding/json"
 	"errors"
@@ -23,22 +24,23 @@ import (
 
 var googleOauth *oauth2.Config
 
-type Code struct {
-	Code string `json:"code" binding:"required"`
+type code struct {
+	Code string `json:"code"`
 }
 
-type CPSKResponse struct {
+type cpskResponse struct {
 	User        model.CPSKUser `json:"user"`
 	AccessToken string         `json:"access_token"`
 }
 
-type CompanyResponse struct {
+type companyResponse struct {
 	User        model.Company `json:"user"`
 	AccessToken string        `json:"access_token"`
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
+type userResponse struct {
+	User        model.User `json:"user"`
+	AccessToken string     `json:"access_token"`
 }
 
 func init() {
@@ -63,12 +65,14 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	ProfilePicture string `json:"picture"`
 }, e error) {
 
-	var code Code
+	var code struct {
+		Code string `json:"code" binding:"required"`
+	}
 
 	// check does body has code
 	if err := c.ShouldBindJSON(&code); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("No authorization code provided: %v", err.Error()),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("No authorization code provided: %v", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -79,8 +83,8 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 		code.Code,
 	)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to receive token: %v", err.Error()),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to receive token: %v", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -88,8 +92,8 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	client := googleOauth.Client(context.Background(), token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -101,8 +105,8 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Failed to decode user info: %v", err.Error()),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to decode user info: %v", err.Error()),
 		})
 		return uInfo, err
 	}
@@ -117,12 +121,12 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param code body Code true "Authentication code from google"
-// @Success 200 {object} CPSKResponse "Login"
-// @Success 201 {object} CPSKResponse "Register"
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /google/cpsk [post]
+// @Param Code body code true "Authentication code from google"
+// @Success 200 {object} cpskResponse "Login success"
+// @Success 201 {object} cpskResponse "Register success"
+// @Failure 400 {object} utilities.ErrorResponse "Fail to receive token or fetch user info"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /auth/google/cpsk [post]
 func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := getUserInfo(c)
@@ -153,8 +157,8 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		}
 
 		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %v", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %v", err.Error()),
 			})
 			return
 		}
@@ -162,14 +166,14 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 		respStatus = http.StatusCreated
 	case err == nil:
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
 			})
 			return
 		}
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %v", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Database error: %v", err.Error()),
 		})
 		return
 	}
@@ -181,15 +185,15 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	accessToken, _, err = generateToken(cpskUser.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 		})
 		return
 	}
 
-	c.JSON(respStatus, gin.H{
-		"user":         cpskUser,
-		"access_token": accessToken,
+	c.JSON(respStatus, cpskResponse{
+		User:        cpskUser,
+		AccessToken: accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
@@ -197,6 +201,17 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 // CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
+// @Summary Handles Google login authentication for company role, exchanges code for user
+// @Description Checks and creates user in the database, generates an access token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param Code body code true "Authentication code from google"
+// @Success 200 {object} companyResponse "Login success"
+// @Success 201 {object} companyResponse "Register success"
+// @Failure 400 {object} utilities.ErrorResponse "Fail to receive token or fetch user info"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /auth/google/company [post]
 func CompanyGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := getUserInfo(c)
@@ -232,8 +247,8 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 		}
 
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
@@ -243,15 +258,15 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 	case err == nil:
 
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
 
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Database error: %s", err.Error()),
 		})
 		return
 	}
@@ -263,24 +278,30 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 
 	accessToken, _, err = generateToken(companyUser.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 		})
 		return
 	}
 
-	c.JSON(respStatus, gin.H{
-		"user":         companyUser,
-		"access_token": accessToken,
+	c.JSON(respStatus, companyResponse{
+		User:        companyUser,
+		AccessToken: accessToken,
 	})
 	// Return user that got query from database or newly created one
 }
 
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
 // in a JSON response.
+// @Summary Retrieves a query parameter named "code" from the request and returns it in a JSON response
+// @Tags auth
+// @Produce json
+// @Param Code query string false "Authentication code from google"
+// @Success 200 {object} code
+// @Router /auth/google/callback [get]
 func Callback(c *gin.Context) {
-	code := c.Query("code")
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
+	aCode := c.Query("code")
+	c.JSON(http.StatusOK, code{
+		Code: aCode,
 	})
 }
