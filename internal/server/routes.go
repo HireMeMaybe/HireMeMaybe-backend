@@ -17,6 +17,9 @@ import (
 	// Load env
 	_ "github.com/joho/godotenv/autoload"
 
+	// Init swagger doc
+	_ "HireMeMaybe-backend/docs"
+
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )

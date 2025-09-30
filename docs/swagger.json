@@ -7,5 +7,228 @@
         "version": "1.0"
     },
     "basePath": "/api/v1",
-    "paths": {}
+    "paths": {
+        "/google/cpsk": {
+            "post": {
+                "description": "Checks and creates user in the database, generates an access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handles Google login authentication for cpsk role, exchanges code for user",
+                "parameters": [
+                    {
+                        "description": "Authentication code from google",
+                        "name": "code",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.Code"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.CPSKResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Register",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.CPSKResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "HireMeMaybe-backend_internal_model.Application": {
+            "type": "object",
+            "required": [
+                "post_id",
+                "resume_id"
+            ],
+            "properties": {
+                "answer": {
+                    "$ref": "#/definitions/HireMeMaybe-backend_internal_model.ApplicationAnswer"
+                },
+                "answer_id": {
+                    "type": "integer"
+                },
+                "applied_at": {
+                    "type": "string"
+                },
+                "cpsk_id": {
+                    "description": "CPSKID references CPSKUser.UserID (uuid)",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "post_id": {
+                    "description": "PostID references JobPost.ID",
+                    "type": "integer"
+                },
+                "resume_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "HireMeMaybe-backend_internal_model.ApplicationAnswer": {
+            "type": "object",
+            "properties": {
+                "expected_salary": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "programming_languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "right_to_work": {
+                    "type": "string"
+                },
+                "year_of_experience": {
+                    "type": "integer"
+                }
+            }
+        },
+        "HireMeMaybe-backend_internal_model.CPSKUser": {
+            "type": "object",
+            "properties": {
+                "applications": {
+                    "description": "List of job applications made by the CPSK user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/HireMeMaybe-backend_internal_model.Application"
+                    }
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "program": {
+                    "type": "string"
+                },
+                "resume_id": {
+                    "type": "integer"
+                },
+                "soft_skill": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "$ref": "#/definitions/HireMeMaybe-backend_internal_model.User"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "HireMeMaybe-backend_internal_model.User": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "profile_picture": {
+                    "type": "string"
+                },
+                "tel": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_auth.CPSKResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/HireMeMaybe-backend_internal_model.CPSKUser"
+                }
+            }
+        },
+        "internal_auth.Code": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

@@ -23,6 +23,24 @@ import (
 
 var googleOauth *oauth2.Config
 
+type Code struct {
+	Code string `json:"code" binding:"required"`
+}
+
+type CPSKResponse struct {
+	User        model.CPSKUser `json:"user"`
+	AccessToken string         `json:"access_token"`
+}
+
+type CompanyResponse struct {
+	User        model.Company `json:"user"`
+	AccessToken string        `json:"access_token"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func init() {
 	googleOauth = &oauth2.Config{
 		ClientID:     os.Getenv("CPSK_GOOGLE_AUTH_CLIENT"),
@@ -45,9 +63,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 	ProfilePicture string `json:"picture"`
 }, e error) {
 
-	var code struct {
-		Code string `json:"code" binding:"required"`
-	}
+	var code Code
 
 	// check does body has code
 	if err := c.ShouldBindJSON(&code); err != nil {
@@ -96,6 +112,17 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 // CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
+// @Summary Handles Google login authentication for cpsk role, exchanges code for user
+// @Description Checks and creates user in the database, generates an access token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param code body Code true "Authentication code from google"
+// @Success 200 {object} CPSKResponse "Login"
+// @Success 201 {object} CPSKResponse "Register"
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /google/cpsk [post]
 func CPSKGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := getUserInfo(c)
