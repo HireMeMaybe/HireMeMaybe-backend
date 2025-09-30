@@ -21,10 +21,11 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// RegisterRoutes will register each http endpoint routes to bound Server instance
 // @title HireMeMaybe API service
 // @version 1.0
+// @BasePath /api/v1
 // @description This is HireMeMaybe API service that provide data for HireMeMaybe web app
-// RegisterRoutes will register each http endpoint routes to bound Server instance
 func RegisterRoutes() http.Handler {
 	r := gin.Default()
 
