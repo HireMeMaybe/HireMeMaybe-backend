@@ -93,7 +93,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		accessToken, _, err := generateToken(cpskUser.UserID)
+		accessToken, _, err := GenerateStandardToken(cpskUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -126,7 +126,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		accessToken, _, err := generateToken(companyUser.UserID)
+		accessToken, _, err := GenerateStandardToken(companyUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -205,7 +205,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		accessToken, _, err := generateToken(cpskUser.UserID)
+		accessToken, _, err := GenerateStandardToken(cpskUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -226,7 +226,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		accessToken, _, err := generateToken(companyUser.UserID)
+		accessToken, _, err := GenerateStandardToken(companyUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -239,7 +239,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			"access_token": accessToken,
 		})
 	default:
-		accessToken, _, err := generateToken(user.ID)
+		accessToken, _, err := GenerateStandardToken(user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),

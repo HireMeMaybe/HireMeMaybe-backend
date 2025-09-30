@@ -40,6 +40,14 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 				})
 				return
 			}
+
+			if errors.Is(err, jwt.ErrTokenInvalidIssuer) {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Invalid token issuer",
+				})
+				return
+			}
+
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Sprintf("Failed to validate token: %s", err.Error()),
 			})
@@ -48,6 +56,12 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
+		if claims.Issuer != auth.JwtIssuer {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid token issuer",
+			})
+			return
+		}
 
 		userID := claims.Subject
 

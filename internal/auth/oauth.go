@@ -146,7 +146,7 @@ func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(cpskUser.UserID)
+	accessToken, _, err = GenerateStandardToken(cpskUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -227,7 +227,7 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 	// TODO: change this when implementing refresh token
 	var _ string
 
-	accessToken, _, err = generateToken(companyUser.UserID)
+	accessToken, _, err = GenerateStandardToken(companyUser.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
