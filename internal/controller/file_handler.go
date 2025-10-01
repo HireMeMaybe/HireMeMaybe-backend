@@ -18,9 +18,9 @@ import (
 
 // UploadResume function handles the process of uploading a resume file for a user and updating the
 // user's information in the database.
-// @Summary Upload resume file
+// @Summary Upload resume file for CPSK
 // @Description Only file that smaller than 10 MB with .pdf extension is permitted
-// @Tags File
+// @Tags CPSK
 // @Accept mpfd
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
@@ -177,6 +177,20 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string)
 }
 
 // UploadLogo function handles company's logo uploading and updating company profile in database.
+// @Summary Upload logo file for company
+// @Description Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension is permitted
+// @Tags Company
+// @Accept mpfd
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param logo formData file true "Upload your logo file"
+// @Success 200 {object} model.Company "Successfully upload logo"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
+// @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /company/profile/logo [post]
 func UploadLogo(c *gin.Context) {
 
 	company, fileBytes, fileExtension := companyUpload(c, "logo")
@@ -199,6 +213,20 @@ func UploadLogo(c *gin.Context) {
 }
 
 // UploadBanner function handles company's banner uploading and updating company profile in database.
+// @Summary Upload banner file for company
+// @Description Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension is permitted
+// @Tags Company
+// @Accept mpfd
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param banner formData file true "Upload your banner file"
+// @Success 200 {object} model.Company "Successfully upload banner"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
+// @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /company/profile/banner [post]
 func UploadBanner(c *gin.Context) {
 	company, fileBytes, fileExtension := companyUpload(c, "banner")
 
@@ -221,6 +249,17 @@ func UploadBanner(c *gin.Context) {
 
 // GetFile function retrieves a file from the database and sends it as a downloadable attachment in
 // the response.
+// @Summary Retrieve dowloadable attachment
+// @Tags File
+// @Produce octet-stream
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param id path string true "ID of wanted file"
+// @Success 200 {string} binary "Successfully retrieve file"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 404 {object} utilities.ErrorResponse "Given file id not found"
+// @Failure 500 {object} utilities.ErrorResponse "Fail to send file content"
+// @Router /file/{id} [get]
 func GetFile(c *gin.Context) {
 	var file model.File
 	id := c.Param("id")

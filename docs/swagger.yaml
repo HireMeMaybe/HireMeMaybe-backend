@@ -525,6 +525,102 @@ paths:
       summary: Retrieve company profile from database by given ID
       tags:
       - Company
+  /company/profile/banner:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension
+        is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your banner file
+        in: formData
+        name: banner
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload banner
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload banner file for company
+      tags:
+      - Company
+  /company/profile/logo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension
+        is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your logo file
+        in: formData
+        name: logo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload logo
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload logo file for company
+      tags:
+      - Company
   /cpsk/profile/resume:
     post:
       consumes:
@@ -569,7 +665,47 @@ paths:
           description: Database error
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
-      summary: Upload resume file
+      summary: Upload resume file for CPSK
+      tags:
+      - CPSK
+  /file/{id}:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of wanted file
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Successfully retrieve file
+          schema:
+            type: string
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Given file id not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Fail to send file content
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve dowloadable attachment
       tags:
       - File
 swagger: "2.0"
