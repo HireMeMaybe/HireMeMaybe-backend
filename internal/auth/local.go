@@ -30,7 +30,7 @@ type loginInfo struct {
 // do nothing if password is shorter than 8 characters
 // @Summary Handles local registration by receiving username and password
 // @Description Username must not already exist and password must longer or equal to 8 characters long
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param Info body registerInfo true "role can be only 'cpsk' or 'company'"
@@ -157,7 +157,7 @@ func LocalRegisterHandler(c *gin.Context) {
 // do nothing if password is incorrect
 // @Summary Handles local login by receiving username and password
 // @Description Username must exist and password match
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param Info body loginInfo true "Credentials for login"

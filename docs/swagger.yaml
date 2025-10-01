@@ -1,9 +1,62 @@
 basePath: /api/v1
 definitions:
-  HireMeMaybe-backend_internal_model.Application:
+  auth.code:
+    properties:
+      code:
+        type: string
+    type: object
+  auth.companyResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.Company'
+    type: object
+  auth.cpskResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.CPSKUser'
+    type: object
+  auth.loginInfo:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  auth.registerInfo:
+    properties:
+      password:
+        type: string
+      role:
+        enum:
+        - cpsk
+        - company
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  model.Application:
     properties:
       answer:
-        $ref: '#/definitions/HireMeMaybe-backend_internal_model.ApplicationAnswer'
+        $ref: '#/definitions/model.ApplicationAnswer'
       answer_id:
         type: integer
       applied_at:
@@ -24,7 +77,7 @@ definitions:
     - post_id
     - resume_id
     type: object
-  HireMeMaybe-backend_internal_model.ApplicationAnswer:
+  model.ApplicationAnswer:
     properties:
       expected_salary:
         type: string
@@ -39,12 +92,12 @@ definitions:
       year_of_experience:
         type: integer
     type: object
-  HireMeMaybe-backend_internal_model.CPSKUser:
+  model.CPSKUser:
     properties:
       applications:
         description: List of job applications made by the CPSK user
         items:
-          $ref: '#/definitions/HireMeMaybe-backend_internal_model.Application'
+          $ref: '#/definitions/model.Application'
         type: array
       first_name:
         type: string
@@ -61,11 +114,11 @@ definitions:
           type: string
         type: array
       user:
-        $ref: '#/definitions/HireMeMaybe-backend_internal_model.User'
+        $ref: '#/definitions/model.User'
       year:
         type: string
     type: object
-  HireMeMaybe-backend_internal_model.Company:
+  model.Company:
     properties:
       banner_id:
         type: integer
@@ -76,7 +129,7 @@ definitions:
       job_post:
         description: JobPost holds the company's job posts
         items:
-          $ref: '#/definitions/HireMeMaybe-backend_internal_model.JobPost'
+          $ref: '#/definitions/model.JobPost'
         type: array
       logo_id:
         type: integer
@@ -87,15 +140,15 @@ definitions:
       size:
         type: string
       user:
-        $ref: '#/definitions/HireMeMaybe-backend_internal_model.User'
+        $ref: '#/definitions/model.User'
       verified_status:
         type: string
     type: object
-  HireMeMaybe-backend_internal_model.JobPost:
+  model.JobPost:
     properties:
       applications:
         items:
-          $ref: '#/definitions/HireMeMaybe-backend_internal_model.Application'
+          $ref: '#/definitions/model.Application'
         type: array
       company_id:
         type: string
@@ -124,7 +177,7 @@ definitions:
       type:
         type: string
     type: object
-  HireMeMaybe-backend_internal_model.User:
+  model.User:
     properties:
       createdAt:
         type: string
@@ -143,63 +196,10 @@ definitions:
       username:
         type: string
     type: object
-  HireMeMaybe-backend_internal_utilities.ErrorResponse:
+  utilities.ErrorResponse:
     properties:
       error:
         type: string
-    type: object
-  gorm.DeletedAt:
-    properties:
-      time:
-        type: string
-      valid:
-        description: Valid is true if Time is not NULL
-        type: boolean
-    type: object
-  internal_auth.code:
-    properties:
-      code:
-        type: string
-    type: object
-  internal_auth.companyResponse:
-    properties:
-      access_token:
-        type: string
-      user:
-        $ref: '#/definitions/HireMeMaybe-backend_internal_model.Company'
-    type: object
-  internal_auth.cpskResponse:
-    properties:
-      access_token:
-        type: string
-      user:
-        $ref: '#/definitions/HireMeMaybe-backend_internal_model.CPSKUser'
-    type: object
-  internal_auth.loginInfo:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  internal_auth.registerInfo:
-    properties:
-      password:
-        type: string
-      role:
-        enum:
-        - cpsk
-        - company
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - role
-    - username
     type: object
 info:
   contact: {}
@@ -221,11 +221,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_auth.code'
+            $ref: '#/definitions/auth.code'
       summary: Retrieves a query parameter named "code" from the request and returns
         it in a JSON response
       tags:
-      - auth
+      - Auth
   /auth/google/company:
     post:
       consumes:
@@ -237,30 +237,30 @@ paths:
         name: Code
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.code'
+          $ref: '#/definitions/auth.code'
       produces:
       - application/json
       responses:
         "200":
           description: Login success
           schema:
-            $ref: '#/definitions/internal_auth.companyResponse'
+            $ref: '#/definitions/auth.companyResponse'
         "201":
           description: Register success
           schema:
-            $ref: '#/definitions/internal_auth.companyResponse'
+            $ref: '#/definitions/auth.companyResponse'
         "400":
           description: Fail to receive token or fetch user info
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database error
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
       summary: Handles Google login authentication for company role, exchanges code
         for user
       tags:
-      - auth
+      - Auth
   /auth/google/cpsk:
     post:
       consumes:
@@ -272,30 +272,30 @@ paths:
         name: Code
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.code'
+          $ref: '#/definitions/auth.code'
       produces:
       - application/json
       responses:
         "200":
           description: Login success
           schema:
-            $ref: '#/definitions/internal_auth.cpskResponse'
+            $ref: '#/definitions/auth.cpskResponse'
         "201":
           description: Register success
           schema:
-            $ref: '#/definitions/internal_auth.cpskResponse'
+            $ref: '#/definitions/auth.cpskResponse'
         "400":
           description: Fail to receive token or fetch user info
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database error
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
       summary: Handles Google login authentication for cpsk role, exchanges code for
         user
       tags:
-      - auth
+      - Auth
   /auth/login:
     post:
       consumes:
@@ -307,29 +307,29 @@ paths:
         name: Info
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.loginInfo'
+          $ref: '#/definitions/auth.loginInfo'
       produces:
       - application/json
       responses:
         "200":
           description: If role is cpsk
           schema:
-            $ref: '#/definitions/internal_auth.cpskResponse'
+            $ref: '#/definitions/auth.cpskResponse'
         "400":
           description: Info provided not met the condition
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
         "401":
           description: Username not exist or password incorrect
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database or password hashing error
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
       summary: Handles local login by receiving username and password
       tags:
-      - auth
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -342,23 +342,23 @@ paths:
         name: Info
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.registerInfo'
+          $ref: '#/definitions/auth.registerInfo'
       produces:
       - application/json
       responses:
         "200":
           description: If role is cpsk
           schema:
-            $ref: '#/definitions/internal_auth.cpskResponse'
+            $ref: '#/definitions/auth.cpskResponse'
         "400":
           description: Info provided not met the condition
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database or password hashing error
           schema:
-            $ref: '#/definitions/HireMeMaybe-backend_internal_utilities.ErrorResponse'
+            $ref: '#/definitions/utilities.ErrorResponse'
       summary: Handles local registration by receiving username and password
       tags:
-      - auth
+      - Auth
 swagger: "2.0"

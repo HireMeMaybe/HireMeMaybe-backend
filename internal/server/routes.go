@@ -25,10 +25,6 @@ import (
 )
 
 // RegisterRoutes will register each http endpoint routes to bound Server instance
-// @title HireMeMaybe API service
-// @version 1.0
-// @BasePath /api/v1
-// @description This is HireMeMaybe API service that provide data for HireMeMaybe web app
 func RegisterRoutes() http.Handler {
 	r := gin.Default()
 

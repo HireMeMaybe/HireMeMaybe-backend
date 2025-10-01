@@ -118,7 +118,7 @@ func getUserInfo(c *gin.Context) (uInfo struct {
 // information with the access token.
 // @Summary Handles Google login authentication for cpsk role, exchanges code for user
 // @Description Checks and creates user in the database, generates an access token
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param Code body code true "Authentication code from google"
@@ -203,7 +203,7 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 // information with the access token.
 // @Summary Handles Google login authentication for company role, exchanges code for user
 // @Description Checks and creates user in the database, generates an access token
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param Code body code true "Authentication code from google"
@@ -294,7 +294,7 @@ func CompanyGoogleLoginHandler(c *gin.Context) {
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
 // in a JSON response.
 // @Summary Retrieves a query parameter named "code" from the request and returns it in a JSON response
-// @Tags auth
+// @Tags Auth
 // @Produce json
 // @Param Code query string false "Authentication code from google"
 // @Success 200 {object} code
