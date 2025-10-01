@@ -4,6 +4,7 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,6 +15,15 @@ import (
 
 // GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
+// @Summary Retrieve company profile from database
+// @Tags Company
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Success 200 {object} model.Company "Successfully retrieve company profile"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /company/myprofile [get]
 func GetCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
@@ -26,52 +36,61 @@ func GetCompanyProfile(c *gin.Context) {
 		Preload("JobPost").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 	}
 
 	c.JSON(http.StatusOK, company)
 }
 
-// EditCompanyProfile function overide company profile, save into database
+// EditCompanyProfile function overwrite company profile, save into database
 // ,and response edited profile as JSON format.
+// @Summary Edit company profile
+// @Description Overwrite company profile and save into database
+// @Description Sensitive field like id, file, verified status, and job post can't be overwritten
+// @Tags Company
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param company_profile body model.EditableCompanyInfo true "Company info to be written"
+// @Success 200 {object} model.Company "Successfully overwrite"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /company/profile [put]
 func EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
+	editable := model.EditableCompanyInfo{}
 
 	// Retrieve company profile from database
 	if err := database.DBinstance.
 		Preload("User").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Fail to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Fail to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
-	// Save unintended to change field
-	logoID := company.LogoID
-	bannerID := company.BannerID
-	status := company.VerifiedStatus
 
-	if err := c.ShouldBindJSON(&company); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information: %s", err.Error()),
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&editable); err != nil {
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
 	}
-	// Put saved unintended field to prevent change
-	company.LogoID = logoID
-	company.BannerID = bannerID
-	company.VerifiedStatus = status
+	utilities.CopyNonZero(&company.EditableCompanyInfo, &editable)
 
 	// Save updated profile to database
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -80,6 +99,18 @@ func EditCompanyProfile(c *gin.Context) {
 }
 
 // GetCompanyByID retrieves a company by its user ID (company_id) and preloads JobPost, Logo, Banner and User.
+// @Summary Retrieve company profile from database by given ID
+// @Tags Company
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param company_id path string true "ID of company"
+// @Success 200 {object} model.Company "Successfully retrieve company profile"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"S
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 404 {object} utilities.ErrorResponse "Company not exist"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /company/profile/{company_id} [get]
+// @Router /company/{company_id} [get]
 func GetCompanyByID(c *gin.Context) {
 	companyID := c.Param("company_id")
 
@@ -93,11 +124,11 @@ func GetCompanyByID(c *gin.Context) {
 		Where("user_id = ?", companyID).
 		First(&company).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Company not found"})
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Company not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve company information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve company information from database: %s", err.Error()),
 		})
 		return
 	}

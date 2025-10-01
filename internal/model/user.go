@@ -22,6 +22,14 @@ var (
 	StatusUnverified = "Unverified"
 )
 
+// Company field that allow overwrite
+type EditableCompanyInfo struct {
+	Name     string  `json:"name"`
+	Overview string  `json:"overview"`
+	Industry string  `json:"industry"`
+	Size     *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
+}
+
 // User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
@@ -55,15 +63,12 @@ type CPSKUser struct {
 type Company struct {
 	UserID         uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
 	User           User
-	VerifiedStatus string  `json:"verified_status" gorm:"check:verified_status IN ('Pending', 'Verified', 'Unverified')"`
-	Name           string  `json:"name"`
-	Overview       string  `json:"overview"`
-	Industry       string  `json:"industry"`
-	Size           *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
-	LogoID         *int    `json:"logo_id"`
-	Logo           File    `json:"-"`
-	BannerID       *int    `json:"banner_id"`
-	Banner         File    `json:"-"`
+	VerifiedStatus string `json:"verified_status" gorm:"check:verified_status IN ('Pending', 'Verified', 'Unverified')"`
+	EditableCompanyInfo
+	LogoID   *int `json:"logo_id"`
+	Logo     File `json:"-"`
+	BannerID *int `json:"banner_id"`
+	Banner   File `json:"-"`
 
 	// JobPost holds the company's job posts
 	JobPost []JobPost `gorm:"foreignKey:CompanyID" json:"job_post"`
