@@ -32,9 +32,25 @@ func UploadResume(c *gin.Context) {
 	}
 
 	rawFile, err := c.FormFile("resume")
+	var maxBytesError *http.MaxBytesError
+	if errors.As(err, &maxBytesError) {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
+		})
+		return
+	}
+
+	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
+	if extension != ".pdf" {
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{
+			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
 		return
 	}
@@ -57,7 +73,7 @@ func UploadResume(c *gin.Context) {
 	}
 
 	cpskUser.Resume.Content = fileBytes
-	cpskUser.Resume.Extension = "pdf"
+	cpskUser.Resume.Extension = ".pdf"
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -70,7 +86,7 @@ func UploadResume(c *gin.Context) {
 }
 
 // companyUpload function handles process of reading files from company upload.
-func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
+func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string) {
 	var company = model.Company{}
 
 	u, _ := c.Get("user")
@@ -78,7 +94,7 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User information not provided",
 		})
-		return company, nil
+		return company, nil, ""
 	}
 
 	user, ok := u.(model.User)
@@ -86,7 +102,7 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to assert type",
 		})
-		return company, nil
+		return company, nil, ""
 	}
 
 	// Retrieve original profile from DB
@@ -94,7 +110,7 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
-		return company, nil
+		return company, nil, ""
 	}
 
 	rawFile, err := c.FormFile(fName)
@@ -103,13 +119,13 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
 			"error": err.Error(),
 		})
-		return company, nil
+		return company, nil, ""
 	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
 		})
-		return company, nil
+		return company, nil, ""
 	}
 
 	allowedExtensions := map[string]bool{
@@ -123,13 +139,13 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 		c.JSON(http.StatusUnsupportedMediaType, gin.H{
 			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
-		return company, nil
+		return company, nil, ""
 	}
 
 	f, err := rawFile.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
-		return company, nil
+		return company, nil, ""
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -140,23 +156,23 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte) {
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot read file"})
-		return company, nil
+		return company, nil, ""
 	}
 
-	return company, fileBytes
+	return company, fileBytes, extension
 }
 
 // UploadLogo function handles company's logo uploading and updating company profile in database.
 func UploadLogo(c *gin.Context) {
 
-	company, fileBytes := companyUpload(c, "logo")
+	company, fileBytes, fileExtension := companyUpload(c, "logo")
 
 	if fileBytes == nil {
 		return
 	}
 
 	company.Logo.Content = fileBytes
-	company.Logo.Extension = "jpg"
+	company.Logo.Extension = fileExtension
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -170,14 +186,14 @@ func UploadLogo(c *gin.Context) {
 
 // UploadBanner function handles company's banner uploading and updating company profile in database.
 func UploadBanner(c *gin.Context) {
-	company, fileBytes := companyUpload(c, "banner")
+	company, fileBytes, fileExtension := companyUpload(c, "banner")
 
 	if fileBytes == nil {
 		return
 	}
 
 	company.Banner.Content = fileBytes
-	company.Banner.Extension = "jpg"
+	company.Banner.Extension = fileExtension
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -201,7 +217,7 @@ func GetFile(c *gin.Context) {
 	}
 
 	// Set Content-Disposition with file name and extension
-	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+fmt.Sprint(file.ID)+"."+file.Extension)
+	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+fmt.Sprint(file.ID)+file.Extension)
 	c.Writer.Header().Set("Content-Type", "application/octet-stream")
 	c.Writer.Header().Set("Content-Length", fmt.Sprint(len(file.Content)))
 
