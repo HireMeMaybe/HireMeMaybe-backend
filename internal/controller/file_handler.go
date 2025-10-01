@@ -18,6 +18,20 @@ import (
 
 // UploadResume function handles the process of uploading a resume file for a user and updating the
 // user's information in the database.
+// @Summary Upload resume file
+// @Description Only file that smaller than 10 MB with .pdf extension is permitted
+// @Tags File
+// @Accept mpfd
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param resume formData file true "Upload your resume file"
+// @Success 200 {object} model.CPSKUser "Successfully upload resume"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
+// @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /cpsk/profile/resume [post]
 func UploadResume(c *gin.Context) {
 	var cpskUser = model.CPSKUser{}
 
@@ -25,8 +39,8 @@ func UploadResume(c *gin.Context) {
 
 	// Retrieve original profile from DB
 	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
@@ -34,30 +48,30 @@ func UploadResume(c *gin.Context) {
 	rawFile, err := c.FormFile("resume")
 	var maxBytesError *http.MaxBytesError
 	if errors.As(err, &maxBytesError) {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-			"error": err.Error(),
+		c.JSON(http.StatusRequestEntityTooLarge, utilities.ErrorResponse{
+			Error: err.Error(),
 		})
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
 		})
 		return
 	}
 
 	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
 	if extension != ".pdf" {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{
-			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
+		c.JSON(http.StatusUnsupportedMediaType, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
 		return
 	}
 
 	f, err := rawFile.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{Error: "Cannot open file"})
 		return
 	}
 	defer func() {
@@ -68,7 +82,7 @@ func UploadResume(c *gin.Context) {
 
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot read file"})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{Error: "Cannot read file"})
 		return
 	}
 
@@ -76,8 +90,8 @@ func UploadResume(c *gin.Context) {
 	cpskUser.Resume.Extension = ".pdf"
 
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}

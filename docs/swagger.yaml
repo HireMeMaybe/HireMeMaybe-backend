@@ -525,4 +525,51 @@ paths:
       summary: Retrieve company profile from database by given ID
       tags:
       - Company
+  /cpsk/profile/resume:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .pdf extension is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your resume file
+        in: formData
+        name: resume
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload resume
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload resume file
+      tags:
+      - File
 swagger: "2.0"

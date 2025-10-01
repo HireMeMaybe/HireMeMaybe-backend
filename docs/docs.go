@@ -470,6 +470,76 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/cpsk/profile/resume": {
+            "post": {
+                "description": "Only file that smaller than 10 MB with .pdf extension is permitted",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "File"
+                ],
+                "summary": "Upload resume file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Upload your resume file",
+                        "name": "resume",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully upload resume",
+                        "schema": {
+                            "$ref": "#/definitions/model.CPSKUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "File size is larger than 10 MB",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "415": {
+                        "description": "File extension is not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
