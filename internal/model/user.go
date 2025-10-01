@@ -22,7 +22,7 @@ var (
 	StatusUnverified = "Unverified"
 )
 
-// Company field that allow overwrite
+// EditableCompanyInfo is part of company field that allow overwrite
 type EditableCompanyInfo struct {
 	Name     string  `json:"name"`
 	Overview string  `json:"overview"`

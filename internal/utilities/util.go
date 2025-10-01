@@ -52,7 +52,7 @@ func CreateAdmin(password string, username string, db *gorm.DB) {
 	}
 }
 
-// Copy non-zero value
+// CopyNonZero is a function that copy non-zero value from src to dst struct
 func CopyNonZero(dst, src interface{}) {
 	dv := reflect.ValueOf(dst).Elem()
 	sv := reflect.ValueOf(src).Elem()
