@@ -733,6 +733,174 @@
                     }
                 }
             }
+        },
+        "/jobpost": {
+            "get": {
+                "description": "Every query are not required, but they have specific use defined in their description",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Get non-expired job posts based on query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search from job post title with substring matching and case insensitive",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Job type field with substring matching and case insensitive",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search if tags field contain tag param, no substring matching and case insensitive",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Salary field, must exactly match to get result",
+                        "name": "salary",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Exp_lvl field, must exactly match to get result",
+                        "name": "exp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search from company name with substring matching and case insensitive",
+                        "name": "company",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search from industry of company with substring matching and case insensitive",
+                        "name": "industry",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search from location with substring matching and case insensitive",
+                        "name": "location",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sorting by post time in descending if true, otherwise ascendind",
+                        "name": "desc",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Return non-expired job post(s)",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.JobPost"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Create jobpost based on given json structure",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Input jobpost information",
+                        "name": "Jobpost",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EditableJobPostInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully create job post",
+                        "schema": {
+                            "$ref": "#/definitions/model.JobPost"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as verified company",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -965,6 +1133,41 @@
                     "type": "string"
                 },
                 "size": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.EditableJobPostInfo": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "exp_lvl": {
+                    "type": "string"
+                },
+                "expiring": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "req": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }

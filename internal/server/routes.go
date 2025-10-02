@@ -76,13 +76,13 @@ func RegisterRoutes() http.Handler {
 				jobPostRoute.GET("", controller.GetPosts)
 				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany))
 				jobPostRoute.POST("", controller.CreateJobPostHandler)
-				jobPostRoute.PUT(":id", controller.EditJobPost)
 
 			}
 
 			needCompanyAdmin := needAuth.Group("")
 			{
 				needCompanyAdmin.Use(middleware.CheckRole(model.RoleAdmin, model.RoleCompany))
+				needCompanyAdmin.PUT("jobpost/:id", controller.EditJobPost)
 				needCompanyAdmin.DELETE("jobpost/:id", controller.DeleteJobPost)
 			}
 

@@ -4,6 +4,7 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,6 +17,18 @@ import (
 )
 
 // CreateJobPostHandler handles the creation of a new job post by a company user.
+// @Summary Create jobpost based on given json structure
+// @Tags Jobpost
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param Jobpost body model.EditableJobPostInfo true "Input jobpost information"
+// @Success 201 {object} model.JobPost "Successfully create job post"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /jobpost [post]
 func CreateJobPostHandler(c *gin.Context) {
 	// Get user
 	user := utilities.ExtractUser(c)
@@ -24,29 +37,37 @@ func CreateJobPostHandler(c *gin.Context) {
 	var companyUser model.Company
 	if err := database.DBinstance.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Only company users can create job posts"})
+			c.JSON(http.StatusForbidden, utilities.ErrorResponse{Error: "Only company users can create job posts"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve company information: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve company information: %s", err.Error()),
+		})
 		return
 	}
 	if companyUser.VerifiedStatus != model.StatusVerified {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Only verified companies can create job posts"})
+		c.JSON(http.StatusForbidden, utilities.ErrorResponse{
+			Error: "Only verified companies can create job posts",
+		})
 		return
 	}
 
 	// construct job post from request
-	var jobPost model.JobPost
-	if err := c.ShouldBindJSON(&jobPost); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %s", err.Error())})
+	jobPost := model.JobPost{}
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&jobPost.EditableJobPostInfo); err != nil {
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
+		})
 		return
 	}
 
 	// save job post
 	jobPost.CompanyID = user.ID
 	if err := database.DBinstance.Create(&jobPost).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprint("Failed to create job post: ", err),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprint("Failed to create job post: ", err),
 		})
 		return
 	}
@@ -57,6 +78,25 @@ func CreateJobPostHandler(c *gin.Context) {
 
 // GetPosts fetches all non-expired job posts that match query from the database
 // and returns them as a JSON response.
+// @Summary Get non-expired job posts based on query
+// @Description Every query are not required, but they have specific use defined in their description
+// @Tags Jobpost
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param search query string false "Search from job post title with substring matching and case insensitive"
+// @Param type query string false "Job type field with substring matching and case insensitive"
+// @Param tag query string false "Search if tags field contain tag param, no substring matching and case insensitive"
+// @Param salary query string false "Salary field, must exactly match to get result"
+// @Param exp query string false "Exp_lvl field, must exactly match to get result"
+// @Param company query string false "Search from company name with substring matching and case insensitive"
+// @Param industry query string false "Search from industry of company with substring matching and case insensitive"
+// @Param location query string false "Search from location with substring matching and case insensitive"
+// @Param desc query boolean false "Sorting by post time in descending if true, otherwise ascendind"
+// @Success 201 {array} model.JobPost "Return non-expired job post(s)"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /jobpost [get]
 func GetPosts(c *gin.Context) {
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
@@ -114,8 +154,8 @@ func GetPosts(c *gin.Context) {
 	}).
 		Find(&posts)
 	if err := result.Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprint("Failed to fetch job post: ", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
 		})
 		return
 	}
@@ -145,7 +185,7 @@ func EditJobPost(c *gin.Context) {
 
 	// Verify ownership: the job post must belong to the requesting company user
 	// Compare as strings to avoid type mismatches
-	if job.CompanyID.String() != user.ID.String() && user.Role != model.RoleAdmin {
+	if job.CompanyID.String() != user.ID.String() {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to edit this job post"})
 		return
 	}

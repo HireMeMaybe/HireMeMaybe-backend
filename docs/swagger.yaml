@@ -155,6 +155,29 @@ definitions:
       size:
         type: string
     type: object
+  model.EditableJobPostInfo:
+    properties:
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      location:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+    type: object
   model.JobPost:
     properties:
       applications:
@@ -708,4 +731,119 @@ paths:
       summary: Retrieve dowloadable attachment
       tags:
       - File
+  /jobpost:
+    get:
+      description: Every query are not required, but they have specific use defined
+        in their description
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search from job post title with substring matching and case insensitive
+        in: query
+        name: search
+        type: string
+      - description: Job type field with substring matching and case insensitive
+        in: query
+        name: type
+        type: string
+      - description: Search if tags field contain tag param, no substring matching
+          and case insensitive
+        in: query
+        name: tag
+        type: string
+      - description: Salary field, must exactly match to get result
+        in: query
+        name: salary
+        type: string
+      - description: Exp_lvl field, must exactly match to get result
+        in: query
+        name: exp
+        type: string
+      - description: Search from company name with substring matching and case insensitive
+        in: query
+        name: company
+        type: string
+      - description: Search from industry of company with substring matching and case
+          insensitive
+        in: query
+        name: industry
+        type: string
+      - description: Search from location with substring matching and case insensitive
+        in: query
+        name: location
+        type: string
+      - description: Sorting by post time in descending if true, otherwise ascendind
+        in: query
+        name: desc
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Return non-expired job post(s)
+          schema:
+            items:
+              $ref: '#/definitions/model.JobPost'
+            type: array
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get non-expired job posts based on query
+      tags:
+      - Jobpost
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Input jobpost information
+        in: body
+        name: Jobpost
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableJobPostInfo'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully create job post
+          schema:
+            $ref: '#/definitions/model.JobPost'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as verified company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create jobpost based on given json structure
+      tags:
+      - Jobpost
 swagger: "2.0"
