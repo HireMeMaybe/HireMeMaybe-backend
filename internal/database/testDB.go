@@ -24,6 +24,7 @@ var teardown func(context.Context, ...testcontainers.TerminateOption) error
 
 // Exported test users & profiles
 var (
+	TestAdminUser    m.User
 	TestUserCPSK1    m.User
 	TestUserCPSK2    m.User
 	TestUserCompany1 m.User
@@ -112,8 +113,8 @@ func seedTestData(db *DBinstanceStruct) error {
 	}
 
 	// Base data
-	tels := []*string{ptr("0100000001"), ptr("0100000002"), ptr("0200000001"), ptr("0200000002")}
-	emails := []*string{ptr("student1@example.com"), ptr("student2@example.com"), ptr("company1@example.com"), ptr("company2@example.com")}
+	tels := []*string{ptr("0100000001"), ptr("0100000002"), ptr("0200000001"), ptr("0200000002"), ptr("0300000001")}
+	emails := []*string{ptr("student1@example.com"), ptr("student2@example.com"), ptr("company1@example.com"), ptr("company2@example.com"), ptr("admin@example.com")}
 	userSpecs := []struct {
 		username string
 		email    *string
@@ -124,6 +125,7 @@ func seedTestData(db *DBinstanceStruct) error {
 		{"cpsk_student_2", emails[1], tels[1], m.RoleCPSK},
 		{"company_user_1", emails[2], tels[2], m.RoleCompany},
 		{"company_user_2", emails[3], tels[3], m.RoleCompany},
+		{"admin_user", emails[4], tels[4], m.RoleAdmin},
 	}
 
 	// Pre-hash shared password for all seeded users
@@ -160,6 +162,8 @@ func seedTestData(db *DBinstanceStruct) error {
 			TestUserCompany1 = u
 		case "company_user_2":
 			TestUserCompany2 = u
+		case "admin_user":
+			TestAdminUser = u
 		}
 	}
 
