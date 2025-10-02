@@ -63,7 +63,6 @@ func EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.Company{}
-	editable := model.EditableCompanyInfo{}
 
 	// Retrieve company profile from database
 	if err := database.DBinstance.
@@ -78,13 +77,12 @@ func EditCompanyProfile(c *gin.Context) {
 
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&editable); err != nil {
+	if err := decoder.Decode(&company.EditableCompanyInfo); err != nil {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
 	}
-	utilities.CopyNonZero(&company.EditableCompanyInfo, &editable)
 
 	// Save updated profile to database
 	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
