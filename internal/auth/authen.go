@@ -152,10 +152,9 @@ func CPSKGoogleLoginHandler(c *gin.Context) {
 				Role:           model.RoleCPSK,
 				ProfilePicture: uInfo.ProfilePicture,
 			},
-			FirstName: uInfo.FirstName,
-			LastName:  uInfo.LastName,
 		}
-
+		cpskUser.FirstName = uInfo.FirstName
+		cpskUser.LastName = uInfo.LastName
 		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to create user: %v", err.Error()),
