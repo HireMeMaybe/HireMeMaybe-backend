@@ -816,7 +816,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Return non-expired job post(s)",
                         "schema": {
                             "type": "array",
@@ -846,6 +846,7 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "description": "Only verified company have access to this endpoint",
                 "consumes": [
                     "application/json"
                 ],
@@ -855,7 +856,7 @@ const docTemplate = `{
                 "tags": [
                     "Jobpost"
                 ],
-                "summary": "Create jobpost based on given json structure",
+                "summary": "Create job post based on given json structure",
                 "parameters": [
                     {
                         "type": "string",
@@ -896,6 +897,150 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Not logged in as verified company",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobpost/{id}": {
+            "put": {
+                "description": "Only company that own the post or admin have access to this endpoint",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Edit job post based on given json structure",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of desired job post",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Input jobpost information",
+                        "name": "Jobpost",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EditableJobPostInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully update job post",
+                        "schema": {
+                            "$ref": "#/definitions/model.JobPost"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not have permission to edit",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Only company that own the post or admin have access to this endpoint",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Delete given job post ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of desired job post",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully delete job post",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not have permission to delete this post",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1262,6 +1407,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "utilities.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }

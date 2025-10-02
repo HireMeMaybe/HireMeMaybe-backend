@@ -15,6 +15,11 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// MessageResponse type for swagger docs
+type MessageResponse struct {
+	Message string `json:"message"`
+}
+
 // ExtractUser will extract user model from gin context and abort with error message
 func ExtractUser(c *gin.Context) model.User {
 	u, _ := c.Get("user")

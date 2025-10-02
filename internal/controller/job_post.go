@@ -17,7 +17,8 @@ import (
 )
 
 // CreateJobPostHandler handles the creation of a new job post by a company user.
-// @Summary Create jobpost based on given json structure
+// @Summary Create job post based on given json structure
+// @Description Only verified company have access to this endpoint
 // @Tags Jobpost
 // @Accept json
 // @Produce json
@@ -92,7 +93,7 @@ func CreateJobPostHandler(c *gin.Context) {
 // @Param industry query string false "Search from industry of company with substring matching and case insensitive"
 // @Param location query string false "Search from location with substring matching and case insensitive"
 // @Param desc query boolean false "Sorting by post time in descending if true, otherwise ascendind"
-// @Success 201 {array} model.JobPost "Return non-expired job post(s)"
+// @Success 200 {array} model.JobPost "Return non-expired job post(s)"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
@@ -164,6 +165,21 @@ func GetPosts(c *gin.Context) {
 }
 
 // EditJobPost allows a company user to update a job post they own.
+// @Summary Edit job post based on given json structure
+// @Description Only company that own the post or admin have access to this endpoint
+// @Tags Jobpost
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param id path integer true "ID of desired job post"
+// @Param Jobpost body model.EditableJobPostInfo true "Input jobpost information"
+// @Success 200 {object} model.JobPost "Successfully update job post"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit"
+// @Failure 404 {object} utilities.ErrorResponse "Post not found"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /jobpost/{id} [put]
 func EditJobPost(c *gin.Context) {
 	// Use ExtractUser itiesity to get authenticated user
 	user := utilities.ExtractUser(c)
@@ -176,40 +192,48 @@ func EditJobPost(c *gin.Context) {
 	// Find existing job post
 	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Job post not found"})
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve job post: %s", err.Error()),
+		})
 		return
 	}
 
 	// Verify ownership: the job post must belong to the requesting company user
 	// Compare as strings to avoid type mismatches
 	if job.CompanyID.String() != user.ID.String() {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to edit this job post"})
+		c.JSON(http.StatusForbidden, utilities.ErrorResponse{
+			Error: "You are not allowed to edit this job post",
+		})
 		return
 	}
 
 	// Bind incoming JSON to a temporary struct to avoid overwriting ownership fields
 	updated := model.JobPost{}
-	if err := c.ShouldBindJSON(&updated); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to parse request body: %s", err.Error())})
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&updated.EditableJobPostInfo); err != nil {
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to parse request body: %s", err.Error()),
+		})
 		return
 	}
 
-	// Preserve ID and CompanyID
-	updated.ID = job.ID
-	updated.CompanyID = job.CompanyID
-
 	// Update fields on the existing job record without saving associations
 	if err := database.DBinstance.Model(&job).Updates(updated).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update job post: %s", err.Error()),
+		})
 		return
 	}
 
 	// Reload the job post to return the latest data
 	if err := database.DBinstance.Where("id = ?", job.ID).First(&job).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve updated job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve updated job post: %s", err.Error()),
+		})
 		return
 	}
 
@@ -217,6 +241,19 @@ func EditJobPost(c *gin.Context) {
 }
 
 // DeleteJobPost allows a company user to delete a job post they own.
+// @Summary Delete given job post ID
+// @Description Only company that own the post or admin have access to this endpoint
+// @Tags Jobpost
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param id path integer true "ID of desired job post"
+// @Success 200 {object} utilities.MessageResponse "Successfully delete job post"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to delete this post"
+// @Failure 404 {object} utilities.ErrorResponse "Post not found"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /jobpost/{id} [delete]
 func DeleteJobPost(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 	id := c.Param("id")
@@ -224,25 +261,31 @@ func DeleteJobPost(c *gin.Context) {
 	job := model.JobPost{}
 	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Job post not found"})
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve job post: %s", err.Error()),
+		})
 		return
 	}
 
 	if job.CompanyID.String() != user.ID.String() {
 		// Allow admins to bypass ownership check
 		if user.Role != model.RoleAdmin {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to delete this job post"})
+			c.JSON(http.StatusForbidden, utilities.ErrorResponse{
+				Error: "You are not allowed to delete this job post",
+			})
 			return
 		}
 	}
 
 	if err := database.DBinstance.Delete(&job).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to delete job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to delete job post: %s", err.Error()),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Job post deleted"})
+	c.JSON(http.StatusOK, utilities.MessageResponse{Message: "Job post deleted"})
 }

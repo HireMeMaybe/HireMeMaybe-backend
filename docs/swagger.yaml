@@ -235,6 +235,11 @@ definitions:
       error:
         type: string
     type: object
+  utilities.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
 info:
   contact: {}
   description: This is HireMeMaybe API service that provide data for HireMeMaybe web
@@ -783,7 +788,7 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
+        "200":
           description: Return non-expired job post(s)
           schema:
             items:
@@ -807,6 +812,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: Only verified company have access to this endpoint
       parameters:
       - default: Bearer <your access token>
         description: Insert your access token
@@ -843,7 +849,104 @@ paths:
           description: Database error
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
-      summary: Create jobpost based on given json structure
+      summary: Create job post based on given json structure
+      tags:
+      - Jobpost
+  /jobpost/{id}:
+    delete:
+      description: Only company that own the post or admin have access to this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of desired job post
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully delete job post
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not have permission to delete this post
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Delete given job post ID
+      tags:
+      - Jobpost
+    put:
+      consumes:
+      - application/json
+      description: Only company that own the post or admin have access to this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of desired job post
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Input jobpost information
+        in: body
+        name: Jobpost
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableJobPostInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully update job post
+          schema:
+            $ref: '#/definitions/model.JobPost'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not have permission to edit
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Edit job post based on given json structure
       tags:
       - Jobpost
 swagger: "2.0"
