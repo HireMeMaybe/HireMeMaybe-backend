@@ -635,6 +635,125 @@ const docTemplate = `{
                 }
             }
         },
+        "/cpsk/myprofile": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CPSK"
+                ],
+                "summary": "Retrieve CPSK profile from database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieve CPSK profile",
+                        "schema": {
+                            "$ref": "#/definitions/model.CPSKUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as CPSK",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cpsk/profile": {
+            "put": {
+                "description": "Overwrite CPSK profile and save into database\nSensitive field like id, file, and application can't be overwritten",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CPSK"
+                ],
+                "summary": "Edit CPSK profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "CPSK info to be written",
+                        "name": "cpsk_profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EditableCPSKInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully overwrite",
+                        "schema": {
+                            "$ref": "#/definitions/model.CPSKUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header or request body",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as CPSK",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cpsk/profile/resume": {
             "post": {
                 "description": "Only file that smaller than 10 MB with .pdf extension is permitted",
@@ -1446,6 +1565,29 @@ const docTemplate = `{
                     "$ref": "#/definitions/model.User"
                 },
                 "verified_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.EditableCPSKInfo": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "program": {
+                    "type": "string"
+                },
+                "soft_skill": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "year": {
                     "type": "string"
                 }
             }

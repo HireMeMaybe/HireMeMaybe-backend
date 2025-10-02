@@ -154,6 +154,21 @@ definitions:
       verified_status:
         type: string
     type: object
+  model.EditableCPSKInfo:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      program:
+        type: string
+      soft_skill:
+        items:
+          type: string
+        type: array
+      year:
+        type: string
+    type: object
   model.EditableCompanyInfo:
     properties:
       industry:
@@ -675,6 +690,87 @@ paths:
       summary: Upload logo file for company
       tags:
       - Company
+  /cpsk/myprofile:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve CPSK profile
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve CPSK profile from database
+      tags:
+      - CPSK
+  /cpsk/profile:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Overwrite CPSK profile and save into database
+        Sensitive field like id, file, and application can't be overwritten
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CPSK info to be written
+        in: body
+        name: cpsk_profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableCPSKInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully overwrite
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header or request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Edit CPSK profile
+      tags:
+      - CPSK
   /cpsk/profile/resume:
     post:
       consumes:
