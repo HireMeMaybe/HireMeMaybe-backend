@@ -282,6 +282,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Not logged in as company",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Database error",
                         "schema": {
@@ -342,6 +348,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Not logged in as company",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Database error",
                         "schema": {
@@ -396,6 +408,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as company",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -466,6 +484,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as company",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -656,6 +680,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as CPSK",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }

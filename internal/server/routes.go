@@ -64,6 +64,7 @@ func RegisterRoutes() http.Handler {
 			{
 				companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
 				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
+				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
 				companyRoute.PUT("profile", controller.EditCompanyProfile)
 				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
 				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)

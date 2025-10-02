@@ -474,6 +474,10 @@ paths:
           description: Invalid token
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database error
           schema:
@@ -514,6 +518,10 @@ paths:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
           description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -596,6 +604,10 @@ paths:
           description: Invalid token
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
         "413":
           description: File size is larger than 10 MB
           schema:
@@ -644,6 +656,10 @@ paths:
           description: Invalid token
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
         "413":
           description: File size is larger than 10 MB
           schema:
@@ -689,6 +705,10 @@ paths:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
           description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "413":

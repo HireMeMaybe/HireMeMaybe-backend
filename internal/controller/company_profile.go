@@ -22,6 +22,7 @@ import (
 // @Success 200 {object} model.Company "Successfully retrieve company profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/myprofile [get]
 func GetCompanyProfile(c *gin.Context) {
@@ -57,6 +58,7 @@ func GetCompanyProfile(c *gin.Context) {
 // @Success 200 {object} model.Company "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile [put]
 func EditCompanyProfile(c *gin.Context) {
