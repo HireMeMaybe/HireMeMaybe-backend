@@ -1,26 +1,33 @@
 package auth
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-
-	"github.com/gin-gonic/gin"
+	"testing"
 )
 
-// Helper to perform login
-func SimulateLoginRequest(loginHandler func(*gin.Context), credentials interface{}) (*httptest.ResponseRecorder, map[string]interface{}, string, error) {
-	rec, resp, err := utilities.SimulateAPICall(loginHandler, "/login", http.MethodPost, credentials)
+func GetAccessToken(
+	t *testing.T,
+	db *database.DBinstanceStruct,
+	username string, 
+	password string,
+) (string, error) {
+	t.Helper()
+	handler := NewLocalAuthHandler(db)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler, "/login", http.MethodPost, map[string]string{
+		"username": username,
+		"password": password,
+	})
 	if err != nil {
-		return nil, nil, "", err
+		return "", err
 	}
 	if rec.Code != http.StatusOK {
-		return rec, resp, "", fmt.Errorf("Login Failed: status %d, body: %s", rec.Code, rec.Body.String())
+		return "", fmt.Errorf("Login Failed: status %d, body: %s", rec.Code, rec.Body.String())
 	}
 	if resp["access_token"] == nil {
-		return rec, resp, "", fmt.Errorf("Login Failed: no access_token in response: %s", rec.Body.String())
+		return "", fmt.Errorf("Login Failed: no access_token in response: %s", rec.Body.String())
 	}
-
-	return rec, resp, resp["access_token"].(string), nil
+	return resp["access_token"].(string), nil
 }
