@@ -22,6 +22,15 @@ var (
 	StatusUnverified = "Unverified"
 )
 
+// EditableCPSKInfo is part of CPSK field that allow overwrite
+type EditableCPSKInfo struct {
+	FirstName        string         `json:"first_name"`
+	LastName         string         `json:"last_name"`
+	Program          *string        `json:"program" gorm:"check:program IN ('CPE', 'SKE')"`
+	EducationalLevel *string        `json:"year"`
+	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
+}
+
 // EditableCompanyInfo is part of company field that allow overwrite
 type EditableCompanyInfo struct {
 	Name     string  `json:"name"`
@@ -45,15 +54,11 @@ type User struct {
 
 // CPSKUser is gorm model for store CPSK student profile data in DB
 type CPSKUser struct {
-	UserID           uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
-	User             User
-	FirstName        string         `json:"first_name"`
-	LastName         string         `json:"last_name"`
-	Program          *string        `json:"program" gorm:"check:program IN ('CPE', 'SKE')"`
-	EducationalLevel *string        `json:"year"`
-	SoftSkill        pq.StringArray `gorm:"type:text[]" json:"soft_skill"`
-	ResumeID         *int           `json:"resume_id"`
-	Resume           File           `json:"-"`
+	UserID uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
+	User   User
+	EditableCPSKInfo
+	ResumeID *int `json:"resume_id"`
+	Resume   File `json:"-"`
 
 	// List of job applications made by the CPSK user
 	Applications []Application `gorm:"foreignKey:CPSKID" json:"applications"`
