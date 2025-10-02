@@ -45,6 +45,16 @@ definitions:
     - role
     - username
     type: object
+  controller.verificationInfo:
+    properties:
+      company_id:
+        type: string
+      status:
+        type: string
+    required:
+    - company_id
+    - status
+    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -736,6 +746,51 @@ paths:
       summary: Retrieve dowloadable attachment
       tags:
       - File
+  /get-companies:
+    get:
+      description: |-
+        Only admin can access this endpoints
+        If no query given, the server will return all companies
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Only pending, unverified, or verified with case insensitive
+        example: pending+unverified
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Company'
+            type: array
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get companies based on given status
+      tags:
+      - Admin
   /jobpost:
     get:
       description: Every query are not required, but they have specific use defined
@@ -949,4 +1004,51 @@ paths:
       summary: Edit job post based on given json structure
       tags:
       - Jobpost
+  /verify-company:
+    put:
+      description: Only admin can access this endpoints
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Company ID and status with only case insensitive unverified,
+          or verified
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/controller.verificationInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header, or Invalid request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Given company ID not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Verify, or unverify companies
+      tags:
+      - Admin
 swagger: "2.0"

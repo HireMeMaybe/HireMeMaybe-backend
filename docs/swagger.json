@@ -734,6 +734,70 @@
                 }
             }
         },
+        "/get-companies": {
+            "get": {
+                "description": "Only admin can access this endpoints\nIf no query given, the server will return all companies",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get companies based on given status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "pending+unverified",
+                        "description": "Only pending, unverified, or verified with case insensitive",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Company"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not logged in as admin",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/jobpost": {
             "get": {
                 "description": "Every query are not required, but they have specific use defined in their description",
@@ -1046,6 +1110,75 @@
                     }
                 }
             }
+        },
+        "/verify-company": {
+            "put": {
+                "description": "Only admin can access this endpoints",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Verify, or unverify companies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Company ID and status with only case insensitive unverified, or verified",
+                        "name": "Info",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.verificationInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Company"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not logged in as admin",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Given company ID not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1113,6 +1246,21 @@
                     ]
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.verificationInfo": {
+            "type": "object",
+            "required": [
+                "company_id",
+                "status"
+            ],
+            "properties": {
+                "company_id": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
