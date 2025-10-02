@@ -8,6 +8,72 @@
     },
     "basePath": "/api/v1",
     "paths": {
+        "/application": {
+            "post": {
+                "description": "Only CPSK user can access this endpoint",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Application"
+                ],
+                "summary": "Create job application",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Application information",
+                        "name": "application",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Application"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully apply job post",
+                        "schema": {
+                            "$ref": "#/definitions/model.CPSKUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, request body",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as CPSK",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/google/callback": {
             "get": {
                 "produces": [

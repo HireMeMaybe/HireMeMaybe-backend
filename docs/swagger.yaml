@@ -272,6 +272,50 @@ info:
   title: HireMeMaybe API service
   version: "1.0"
 paths:
+  /application:
+    post:
+      consumes:
+      - application/json
+      description: Only CPSK user can access this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Application information
+        in: body
+        name: application
+        required: true
+        schema:
+          $ref: '#/definitions/model.Application'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully apply job post
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header, request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create job application
+      tags:
+      - Application
   /auth/google/callback:
     get:
       parameters:
