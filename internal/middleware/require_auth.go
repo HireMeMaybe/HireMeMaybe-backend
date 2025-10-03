@@ -5,6 +5,7 @@ import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
 	"net/http"
 	"time"
@@ -23,8 +24,8 @@ func RequireAuth() gin.HandlerFunc {
 		authHeader := ctx.GetHeader("Authorization")
 
 		if len(authHeader) <= len(BearerSchema) {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid authorization header",
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, utilities.ErrorResponse{
+				Error: "Invalid authorization header",
 			})
 			return
 		}
@@ -32,9 +33,9 @@ func RequireAuth() gin.HandlerFunc {
 		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
-		if !token.Valid {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": fmt.Sprintf("Failed to validate token: %s", err.Error()),
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to validate token: %s", err.Error()),
 			})
 			return
 		}
@@ -42,8 +43,8 @@ func RequireAuth() gin.HandlerFunc {
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
 		if claims.ExpiresAt.Before(time.Now()) {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Access token expired",
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: "Access token expired",
 			})
 			return
 		}
@@ -53,8 +54,8 @@ func RequireAuth() gin.HandlerFunc {
 		var foundUser model.User
 
 		if err := database.DBinstance.Where("id = ?", userID).First(&foundUser).Error; err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
@@ -62,8 +63,8 @@ func RequireAuth() gin.HandlerFunc {
 		var defaultUUID uuid.UUID
 
 		if foundUser.ID.String() == defaultUUID.String() {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "User not exist",
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: "User not exist",
 			})
 			return
 		}

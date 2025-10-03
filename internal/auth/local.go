@@ -14,19 +14,37 @@ import (
 	"gorm.io/gorm"
 )
 
+type registerInfo struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	Role     string `json:"role" binding:"required,oneof=cpsk company"`
+}
+
+type loginInfo struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 // LocalRegisterHandler function handles local registration by receiving username and password
 // do nothing if username already exist in the database
 // do nothing if password is shorter than 8 characters
+// @Summary Handles local registration by receiving username and password
+// @Description Username must not already exist and password must longer or equal to 8 characters long
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param Info body registerInfo true "role can be only 'cpsk' or 'company'"
+// @Success 200 {object} companyResponse "If role is company"
+// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
+// @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
+// @Router /auth/register [post]
 func LocalRegisterHandler(c *gin.Context) {
-	var info struct {
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-		Role     string `json:"role" binding:"required,oneof=cpsk company"`
-	}
+	var info registerInfo
 
 	if err := c.ShouldBindJSON(&info); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username, password, and Role (Only 'cpsk' or 'company) must be provided",
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "Username, password, and Role (Only 'cpsk' or 'company) must be provided",
 		})
 		return
 	}
@@ -36,8 +54,8 @@ func LocalRegisterHandler(c *gin.Context) {
 
 	switch {
 	case err == nil:
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username already exist",
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "Username already exist",
 		})
 		return
 
@@ -45,23 +63,23 @@ func LocalRegisterHandler(c *gin.Context) {
 		// Do nothing
 
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Database error: %s", err.Error()),
 		})
 		return
 	}
 
 	if len(info.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Password should longer or equal to 8 characters",
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "Password should longer or equal to 8 characters",
 		})
 		return
 	}
 
 	hashedPassword, err := utilities.HashPassword(info.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed hash password: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed hash password: %s", err.Error()),
 		})
 		return
 	}
@@ -76,23 +94,23 @@ func LocalRegisterHandler(c *gin.Context) {
 			},
 		}
 		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
 
 		accessToken, _, err := generateToken(cpskUser.UserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
-			"user":         cpskUser,
-			"access_token": accessToken,
+		c.JSON(http.StatusCreated, cpskResponse{
+			User:        cpskUser,
+			AccessToken: accessToken,
 		})
 	case "company":
 		verified := model.StatusPending
@@ -109,23 +127,23 @@ func LocalRegisterHandler(c *gin.Context) {
 			VerifiedStatus: verified,
 		}
 		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
 
 		accessToken, _, err := generateToken(companyUser.UserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
-			"user":         companyUser,
-			"access_token": accessToken,
+		c.JSON(http.StatusCreated, companyResponse{
+			User:        companyUser,
+			AccessToken: accessToken,
 		})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -137,15 +155,24 @@ func LocalRegisterHandler(c *gin.Context) {
 // LocalLoginHandler function handles local login by receiving username and password
 // do nothing if username does not exist in the database
 // do nothing if password is incorrect
+// @Summary Handles local login by receiving username and password
+// @Description Username must exist and password match
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param Info body loginInfo true "Credentials for login"
+// @Success 200 {object} companyResponse "If role is company"
+// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
+// @Failure 401 {object} utilities.ErrorResponse "Username not exist or password incorrect"
+// @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
+// @Router /auth/login [post]
 func LocalLoginHandler(c *gin.Context) {
-	var info struct {
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
+	var info loginInfo
 
 	if err := c.ShouldBindJSON(&info); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username or password is not provided",
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "Username or password is not provided",
 		})
 		return
 	}
@@ -155,8 +182,8 @@ func LocalLoginHandler(c *gin.Context) {
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
+			Error: "Username or password is incorrect",
 		})
 		return
 
@@ -164,22 +191,22 @@ func LocalLoginHandler(c *gin.Context) {
 		// Do nothing
 
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Database error: %s", err.Error()),
 		})
 		return
 	}
 
 	if user.Password == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
+			Error: "Username or password is incorrect",
 		})
 		return
 	}
 
 	if !utilities.VerifyPassword(info.Password, user.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Username or password is incorrect",
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
+			Error: "Username or password is incorrect",
 		})
 		return
 	}
@@ -188,57 +215,57 @@ func LocalLoginHandler(c *gin.Context) {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
 
 		accessToken, _, err := generateToken(cpskUser.UserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"user":         cpskUser,
-			"access_token": accessToken,
+		c.JSON(http.StatusOK, cpskResponse{
+			User:        cpskUser,
+			AccessToken: accessToken,
 		})
 	case model.RoleCompany:
 		var companyUser model.Company
 		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
 
 		accessToken, _, err := generateToken(companyUser.UserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"user":         companyUser,
-			"access_token": accessToken,
+		c.JSON(http.StatusOK, companyResponse{
+			User:        companyUser,
+			AccessToken: accessToken,
 		})
 	default:
 		accessToken, _, err := generateToken(user.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to generate access token: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"user":         user,
-			"access_token": accessToken,
+		c.JSON(http.StatusOK, userResponse{
+			User:        user,
+			AccessToken: accessToken,
 		})
 	}
 }

@@ -1,0 +1,1214 @@
+basePath: /api/v1
+definitions:
+  auth.code:
+    properties:
+      code:
+        type: string
+    type: object
+  auth.companyResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.Company'
+    type: object
+  auth.cpskResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.CPSKUser'
+    type: object
+  auth.loginInfo:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  auth.registerInfo:
+    properties:
+      password:
+        type: string
+      role:
+        enum:
+        - cpsk
+        - company
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  controller.verificationInfo:
+    properties:
+      company_id:
+        type: string
+      status:
+        type: string
+    required:
+    - company_id
+    - status
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  model.Application:
+    properties:
+      answer:
+        $ref: '#/definitions/model.ApplicationAnswer'
+      answer_id:
+        type: integer
+      applied_at:
+        type: string
+      cpsk_id:
+        description: CPSKID references CPSKUser.UserID (uuid)
+        type: string
+      id:
+        type: integer
+      post_id:
+        description: PostID references JobPost.ID
+        type: integer
+      resume_id:
+        type: integer
+      status:
+        type: string
+    required:
+    - post_id
+    - resume_id
+    type: object
+  model.ApplicationAnswer:
+    properties:
+      expected_salary:
+        type: string
+      id:
+        type: integer
+      programming_languages:
+        items:
+          type: string
+        type: array
+      right_to_work:
+        type: string
+      year_of_experience:
+        type: integer
+    type: object
+  model.CPSKUser:
+    properties:
+      applications:
+        description: List of job applications made by the CPSK user
+        items:
+          $ref: '#/definitions/model.Application'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      program:
+        type: string
+      resume_id:
+        type: integer
+      soft_skill:
+        items:
+          type: string
+        type: array
+      user:
+        $ref: '#/definitions/model.User'
+      year:
+        type: string
+    type: object
+  model.Company:
+    properties:
+      banner_id:
+        type: integer
+      id:
+        type: string
+      industry:
+        type: string
+      job_post:
+        description: JobPost holds the company's job posts
+        items:
+          $ref: '#/definitions/model.JobPost'
+        type: array
+      logo_id:
+        type: integer
+      name:
+        type: string
+      overview:
+        type: string
+      size:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      verified_status:
+        type: string
+    type: object
+  model.EditableCPSKInfo:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      program:
+        type: string
+      soft_skill:
+        items:
+          type: string
+        type: array
+      year:
+        type: string
+    type: object
+  model.EditableCompanyInfo:
+    properties:
+      industry:
+        type: string
+      name:
+        type: string
+      overview:
+        type: string
+      size:
+        type: string
+    type: object
+  model.EditableJobPostInfo:
+    properties:
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      location:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  model.JobPost:
+    properties:
+      applications:
+        items:
+          $ref: '#/definitions/model.Application'
+        type: array
+      company_id:
+        type: string
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      post_time:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  model.User:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      id:
+        type: string
+      profile_picture:
+        type: string
+      tel:
+        type: string
+      updatedAt:
+        type: string
+      username:
+        type: string
+    type: object
+  utilities.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  utilities.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
+    app
+  title: HireMeMaybe API service
+  version: "1.0"
+paths:
+  /application:
+    post:
+      consumes:
+      - application/json
+      description: Only CPSK user can access this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Application information
+        in: body
+        name: application
+        required: true
+        schema:
+          $ref: '#/definitions/model.Application'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully apply job post
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header, request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create job application
+      tags:
+      - Application
+  /auth/google/callback:
+    get:
+      parameters:
+      - description: Authentication code from google
+        in: query
+        name: Code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.code'
+      summary: Retrieves a query parameter named "code" from the request and returns
+        it in a JSON response
+      tags:
+      - Auth
+  /auth/google/company:
+    post:
+      consumes:
+      - application/json
+      description: Checks and creates user in the database, generates an access token
+      parameters:
+      - description: Authentication code from google
+        in: body
+        name: Code
+        required: true
+        schema:
+          $ref: '#/definitions/auth.code'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login success
+          schema:
+            $ref: '#/definitions/auth.companyResponse'
+        "201":
+          description: Register success
+          schema:
+            $ref: '#/definitions/auth.companyResponse'
+        "400":
+          description: Fail to receive token or fetch user info
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Handles Google login authentication for company role, exchanges code
+        for user
+      tags:
+      - Auth
+  /auth/google/cpsk:
+    post:
+      consumes:
+      - application/json
+      description: Checks and creates user in the database, generates an access token
+      parameters:
+      - description: Authentication code from google
+        in: body
+        name: Code
+        required: true
+        schema:
+          $ref: '#/definitions/auth.code'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login success
+          schema:
+            $ref: '#/definitions/auth.cpskResponse'
+        "201":
+          description: Register success
+          schema:
+            $ref: '#/definitions/auth.cpskResponse'
+        "400":
+          description: Fail to receive token or fetch user info
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Handles Google login authentication for cpsk role, exchanges code for
+        user
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Username must exist and password match
+      parameters:
+      - description: Credentials for login
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If role is cpsk
+          schema:
+            $ref: '#/definitions/auth.cpskResponse'
+        "400":
+          description: Info provided not met the condition
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Username not exist or password incorrect
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database or password hashing error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Handles local login by receiving username and password
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Username must not already exist and password must longer or equal
+        to 8 characters long
+      parameters:
+      - description: role can be only 'cpsk' or 'company'
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/auth.registerInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If role is cpsk
+          schema:
+            $ref: '#/definitions/auth.cpskResponse'
+        "400":
+          description: Info provided not met the condition
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database or password hashing error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Handles local registration by receiving username and password
+      tags:
+      - Auth
+  /company/{company_id}:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of company
+        in: path
+        name: company_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve company profile
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header"S
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Company not exist
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve company profile from database by given ID
+      tags:
+      - Company
+  /company/myprofile:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve company profile
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve company profile from database
+      tags:
+      - Company
+  /company/profile:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Overwrite company profile and save into database
+        Sensitive field like id, file, verified status, and job post can't be overwritten
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Company info to be written
+        in: body
+        name: company_profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableCompanyInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully overwrite
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header or request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Edit company profile
+      tags:
+      - Company
+  /company/profile/{company_id}:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of company
+        in: path
+        name: company_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve company profile
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header"S
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Company not exist
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve company profile from database by given ID
+      tags:
+      - Company
+  /company/profile/banner:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension
+        is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your banner file
+        in: formData
+        name: banner
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload banner
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload banner file for company
+      tags:
+      - Company
+  /company/profile/logo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .jpg, .jpeg, or .png extension
+        is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your logo file
+        in: formData
+        name: logo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload logo
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload logo file for company
+      tags:
+      - Company
+  /cpsk/myprofile:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve CPSK profile
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve CPSK profile from database
+      tags:
+      - CPSK
+  /cpsk/profile:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Overwrite CPSK profile and save into database
+        Sensitive field like id, file, and application can't be overwritten
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CPSK info to be written
+        in: body
+        name: cpsk_profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableCPSKInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully overwrite
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header or request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Edit CPSK profile
+      tags:
+      - CPSK
+  /cpsk/profile/resume:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Only file that smaller than 10 MB with .pdf extension is permitted
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Upload your resume file
+        in: formData
+        name: resume
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully upload resume
+          schema:
+            $ref: '#/definitions/model.CPSKUser'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as CPSK
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "413":
+          description: File size is larger than 10 MB
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "415":
+          description: File extension is not allowed
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Upload resume file for CPSK
+      tags:
+      - CPSK
+  /file/{id}:
+    get:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of wanted file
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Successfully retrieve file
+          schema:
+            type: string
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Given file id not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Fail to send file content
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve dowloadable attachment
+      tags:
+      - File
+  /get-companies:
+    get:
+      description: |-
+        Only admin can access this endpoints
+        If no query given, the server will return all companies
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Only pending, unverified, or verified with case insensitive
+        example: pending+unverified
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Company'
+            type: array
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get companies based on given status
+      tags:
+      - Admin
+  /jobpost:
+    get:
+      description: Every query are not required, but they have specific use defined
+        in their description
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search from job post title with substring matching and case insensitive
+        in: query
+        name: search
+        type: string
+      - description: Job type field with substring matching and case insensitive
+        in: query
+        name: type
+        type: string
+      - description: Search if tags field contain tag param, no substring matching
+          and case insensitive
+        in: query
+        name: tag
+        type: string
+      - description: Salary field, must exactly match to get result
+        in: query
+        name: salary
+        type: string
+      - description: Exp_lvl field, must exactly match to get result
+        in: query
+        name: exp
+        type: string
+      - description: Search from company name with substring matching and case insensitive
+        in: query
+        name: company
+        type: string
+      - description: Search from industry of company with substring matching and case
+          insensitive
+        in: query
+        name: industry
+        type: string
+      - description: Search from location with substring matching and case insensitive
+        in: query
+        name: location
+        type: string
+      - description: Sorting by post time in descending if true, otherwise ascendind
+        in: query
+        name: desc
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Return non-expired job post(s)
+          schema:
+            items:
+              $ref: '#/definitions/model.JobPost'
+            type: array
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get non-expired job posts based on query
+      tags:
+      - Jobpost
+    post:
+      consumes:
+      - application/json
+      description: Only verified company have access to this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Input jobpost information
+        in: body
+        name: Jobpost
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableJobPostInfo'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully create job post
+          schema:
+            $ref: '#/definitions/model.JobPost'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as verified company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create job post based on given json structure
+      tags:
+      - Jobpost
+  /jobpost/{id}:
+    delete:
+      description: Only company that own the post or admin have access to this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of desired job post
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully delete job post
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not have permission to delete this post
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Delete given job post ID
+      tags:
+      - Jobpost
+    put:
+      consumes:
+      - application/json
+      description: Only company that own the post or admin have access to this endpoint
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of desired job post
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Input jobpost information
+        in: body
+        name: Jobpost
+        required: true
+        schema:
+          $ref: '#/definitions/model.EditableJobPostInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully update job post
+          schema:
+            $ref: '#/definitions/model.JobPost'
+        "400":
+          description: Invalid authorization header, or invalid job post struct
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not have permission to edit
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Edit job post based on given json structure
+      tags:
+      - Jobpost
+  /verify-company:
+    put:
+      description: Only admin can access this endpoints
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Company ID and status with only case insensitive unverified,
+          or verified
+        in: body
+        name: Info
+        required: true
+        schema:
+          $ref: '#/definitions/controller.verificationInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Company'
+        "400":
+          description: Invalid authorization header, or Invalid request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Given company ID not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Verify, or unverify companies
+      tags:
+      - Admin
+swagger: "2.0"

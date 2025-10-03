@@ -16,6 +16,12 @@ import (
 
 	// Load env
 	_ "github.com/joho/godotenv/autoload"
+
+	// Init swagger doc
+	_ "HireMeMaybe-backend/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // RegisterRoutes will register each http endpoint routes to bound Server instance
@@ -34,43 +40,78 @@ func RegisterRoutes() http.Handler {
 
 	r.GET("/", HelloWorldHandler)
 	r.GET("/health", healthHandler)
+	v1 := r.Group("/api/v1")
+	{
+		authRoute := v1.Group("/auth")
+		{
+			authRoute.POST("google/cpsk", auth.CPSKGoogleLoginHandler)
+			authRoute.POST("google/company", auth.CompanyGoogleLoginHandler)
+			authRoute.GET("google/callback", auth.Callback)
 
-	r.POST("/auth/google/cpsk", auth.CPSKGoogleLoginHandler)
-	r.POST("/auth/google/company", auth.CompanyGoogleLoginHandler)
-	r.GET("/auth/google/callback", auth.Callback)
+			authRoute.POST("login", auth.LocalLoginHandler)
+			authRoute.POST("register", auth.LocalRegisterHandler)
+		}
+		// Any routes
+		needAuth := v1.Group("")
+		{
+			needAuth.Use(middleware.RequireAuth())
+			file := needAuth.Group("/file")
+			{
+				file.GET(":id", controller.GetFile)
+			}
 
-	r.POST("/auth/login", auth.LocalLoginHandler)
-	r.POST("/auth/register", auth.LocalRegisterHandler)
+			companyRoute := needAuth.Group("/company")
+			{
+				companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
+				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
+				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
+				companyRoute.PUT("profile", controller.EditCompanyProfile)
+				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
+				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+				companyRoute.GET("myprofile", controller.GetCompanyProfile)
+			}
 
-	needAuth := r.Use(middleware.RequireAuth())
+			// Job post endpoints (company only)
+			jobPostRoute := needAuth.Group("/jobpost")
+			{
+				jobPostRoute.GET("", controller.GetPosts)
+				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany))
+				jobPostRoute.POST("", controller.CreateJobPostHandler)
 
-	needAuth.GET("/company/profile/:company_id", controller.GetCompanyByID)
-	needAuth.GET("/company/:company_id", controller.GetCompanyByID) // New route: same handler, different path
-	needAuth.PUT("/company/profile", controller.EditCompanyProfile)
-	needAuth.POST("/company/profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
-	needAuth.POST("/company/profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+			}
 
-	// Job post endpoints (company only)
-	needAuth.GET("/company/myprofile", controller.GetCompanyProfile)
+			needCompanyAdmin := needAuth.Group("")
+			{
+				needCompanyAdmin.Use(middleware.CheckRole(model.RoleAdmin, model.RoleCompany))
+				needCompanyAdmin.PUT("jobpost/:id", controller.EditJobPost)
+				needCompanyAdmin.DELETE("jobpost/:id", controller.DeleteJobPost)
+			}
 
-	needAuth.GET("/jobpost", controller.GetPosts)
-	needAuth.POST("/jobpost", middleware.CheckRole(model.RoleCompany), controller.CreateJobPostHandler)
+			needAdmin := needAuth.Group("")
+			{
+				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
+				needAdmin.GET("get-companies", controller.GetCompanies)
+				needAdmin.PUT("verify-company", controller.VerifyCompany)
+			}
 
-	needAuth.PUT("/jobpost/:id", middleware.CheckRole(model.RoleCompany), controller.EditJobPost)
-	needAuth.DELETE("/jobpost/:id", middleware.CheckRole(model.RoleCompany, model.RoleAdmin), controller.DeleteJobPost)
+			// CPSK routes: apply role check once for all CPSK endpoints
+			needCPSK := needAuth.Group("")
+			{
+				needCPSK.Use(middleware.CheckRole(model.RoleCPSK))
+				cpskRoute := needCPSK.Group("/cpsk")
+				{
+					cpskRoute.PUT("profile", controller.EditCPSKProfile)
+					cpskRoute.GET("myprofile", controller.GetMyCPSKProfile)
+					cpskRoute.POST("profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
+				}
 
-	needAuth.GET("/file/:id", controller.GetFile)
+				needCPSK.POST("application", controller.ApplicationHandler)
+			}
+		}
+	}
 
-	needAuth.GET("/get-companies", middleware.CheckRole(model.RoleAdmin), controller.GetCompanies)
-	needAuth.PUT("/verify-company", middleware.CheckRole(model.RoleAdmin), controller.VerifyCompany)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// CPSK routes: apply role check once for all CPSK endpoints
-	needCPSK := needAuth.Use(middleware.CheckRole(model.RoleCPSK))
-
-	needCPSK.PUT("/cpsk/profile", controller.EditCPSKProfile)
-	needCPSK.GET("/cpsk/myprofile", controller.GetMyCPSKProfile)
-	needCPSK.POST("/cpsk/profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
-	needCPSK.POST("/application", controller.ApplicationHandler)
 	return r
 }
 
