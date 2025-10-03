@@ -11,7 +11,9 @@ import (
 func CheckRole(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := utilities.ExtractUser(ctx)
-
+		if ctx.IsAborted() {
+			return
+		}
 		if !utilities.Contains(roles, user.Role) {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "User doesn't have permission to access",
