@@ -12,24 +12,33 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var secretKey = os.Getenv("SECRET_KEY")
+var (
+	secretKey = os.Getenv("SECRET_KEY")
+	// JwtIssuer is the issuer field in the JWT token.
+	JwtIssuer = os.Getenv("JWT_ISSUER")
+)
 
-// TODO: generate refresh token
-func generateToken(uuid uuid.UUID) (string, string, error) {
+// GenerateStandardToken creates a JWT with default 1 hour duration.
+func GenerateStandardToken(uuid uuid.UUID) (string, string, error) {
 
-	generatedAccessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "HireMeMaybe",
-		Subject:   uuid.String(),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+	return GenerateTokenWithDuration(uuid, time.Hour, JwtIssuer)
+
+}
+
+// GenerateTokenWithDuration creates a JWT that expires after the provided duration (can be negative for tests).
+func GenerateTokenWithDuration(id uuid.UUID, d time.Duration, issuer string) (string, string, error) {
+	exp := time.Now().Add(d)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    issuer,
+		Subject:   id.String(),
+		ExpiresAt: jwt.NewNumericDate(exp),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	})
-
-	signedToken, err := generatedAccessToken.SignedString([]byte(secretKey))
+	signed, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", "", fmt.Errorf("failed to sign token: %w", err)
 	}
-
-	return signedToken, "", nil
+	return signed, "", nil
 }
 
 // ValidatedToken parses and validates a JWT token using a secret key.

@@ -2,7 +2,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -29,16 +28,16 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/profile [put]
-func EditCPSKProfile(c *gin.Context) {
+func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
 	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
@@ -52,9 +51,9 @@ func EditCPSKProfile(c *gin.Context) {
 		return
 	}
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -74,13 +73,13 @@ func EditCPSKProfile(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
-func GetMyCPSKProfile(c *gin.Context) {
+func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	cpskUser := model.CPSKUser{}
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+	if err := jc.DB.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})

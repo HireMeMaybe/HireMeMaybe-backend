@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -27,7 +26,7 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /application [post]
-func ApplicationHandler(c *gin.Context) {
+func (j *JobController) ApplicationHandler(c *gin.Context) {
 	// ExtractUser(c)
 	user := utilities.ExtractUser(c)
 
@@ -45,7 +44,7 @@ func ApplicationHandler(c *gin.Context) {
 
 	// Prevent duplicate applications: check if this CPSK already applied to the same job post
 	existing := model.Application{}
-	if err := database.DBinstance.
+	if err := j.DB.
 		Where("cpsk_id = ? AND post_id = ?", user.ID, application.PostID).
 		First(&existing).Error; err == nil {
 		// Found an existing application
@@ -64,7 +63,7 @@ func ApplicationHandler(c *gin.Context) {
 	application.Status = model.ApplicationStatusPending
 
 	// Save application to database
-	if err := database.DBinstance.Create(&application).Error; err != nil {
+	if err := j.DB.Create(&application).Error; err != nil {
 		var pqErr *pgconn.PgError
 		// If the error is a foreign key violation, mean PostID or ResumeID is invalid
 		if errors.As(err, &pqErr) {

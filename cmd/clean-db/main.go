@@ -29,12 +29,13 @@ func main() {
 		return
 	}
 
+	db, err := database.GetMainDB()
 	// Initialize database and check for errors
-	if err := database.InitializeDatabase(); err != nil {
+	if err != nil {
 		log.Fatalf("Database failed to initialize: %v", err)
 	}
 
-	if database.DBinstance == nil {
+	if db == nil {
 		log.Fatalf("Database instance is nil after initialization")
 	}
 
@@ -51,7 +52,7 @@ func main() {
 	`
 
 	// Execute raw SQL
-	if err := database.DBinstance.Exec(sql).Error; err != nil {
+	if err := db.Exec(sql).Error; err != nil {
 		log.Fatalf("failed to execute drop command: %v", err)
 	}
 
