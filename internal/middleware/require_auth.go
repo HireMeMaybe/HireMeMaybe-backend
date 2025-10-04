@@ -6,6 +6,7 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"errors"
+	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
 	"net/http"
 
@@ -23,8 +24,8 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		authHeader := ctx.GetHeader("Authorization")
 
 		if len(authHeader) <= len(BearerSchema) {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid authorization header",
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, utilities.ErrorResponse{
+				Error: "Invalid authorization header",
 			})
 			return
 		}

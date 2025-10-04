@@ -174,19 +174,23 @@ func seedTestData(db *DBinstanceStruct) error {
 	cpskProfiles := []m.CPSKUser{
 		{
 			UserID:           TestUserCPSK1.ID,
-			FirstName:        "Alice",
-			LastName:         "Nguyen",
-			Program:          &progCPE,
-			EducationalLevel: &year3,
-			SoftSkill:        pq.StringArray{"Teamwork", "Communication"},
+			EditableCPSKInfo: m.EditableCPSKInfo{
+				FirstName:        "Alice",
+				LastName:         "Nguyen",
+				Program:          &progCPE,
+				EducationalLevel: &year3,
+				SoftSkill:        pq.StringArray{"Teamwork", "Communication"},
+			},
 		},
 		{
 			UserID:           TestUserCPSK2.ID,
-			FirstName:        "Bob",
-			LastName:         "Somsak",
-			Program:          &progSKE,
-			EducationalLevel: &year2,
-			SoftSkill:        pq.StringArray{"Problem Solving", "Adaptability"},
+			EditableCPSKInfo: m.EditableCPSKInfo{
+				FirstName:        "Bob",
+				LastName:         "Somsak",
+				Program:          &progSKE,
+				EducationalLevel: &year2,
+				SoftSkill:        pq.StringArray{"Problem Solving", "Adaptability"},
+			},
 		},
 	}
 	if err := db.Create(&cpskProfiles).Error; err != nil {
@@ -197,18 +201,22 @@ func seedTestData(db *DBinstanceStruct) error {
 		{
 			UserID:         TestUserCompany1.ID,
 			VerifiedStatus: m.StatusVerified,
-			Name:           "TechNova",
-			Overview:       "Innovative platform solutions",
-			Industry:       "Software",
-			Size:           &sizeM,
+			EditableCompanyInfo: m.EditableCompanyInfo{
+				Name:           "TechNova",
+				Overview:       "Innovative platform solutions",
+				Industry:       "Software",
+				Size:           &sizeM,
+			},
 		},
 		{
 			UserID:         TestUserCompany2.ID,
 			VerifiedStatus: m.StatusPending,
-			Name:           "DataForge",
-			Overview:       "Data analytics consulting",
-			Industry:       "Consulting",
-			Size:           &sizeL,
+			EditableCompanyInfo: m.EditableCompanyInfo{
+				Name:           "DataForge",
+				Overview:       "Data analytics consulting",
+				Industry:       "Consulting",
+				Size:           &sizeL,
+			},
 		},
 	}
 	if err := db.Create(&companies).Error; err != nil {

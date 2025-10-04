@@ -13,6 +13,19 @@ import (
 )
 
 // ApplicationHandler handles the creation of a new job application by a CPSK user.
+// @Summary Create job application
+// @Description Only CPSK user can access this endpoint
+// @Tags Application
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param application body model.Application true "Application information"
+// @Success 201 {object} model.CPSKUser "Successfully apply job post"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, request body"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /application [post]
 func (j *JobController) ApplicationHandler(c *gin.Context) {
 	// ExtractUser(c)
 	user := utilities.ExtractUser(c)
@@ -20,7 +33,9 @@ func (j *JobController) ApplicationHandler(c *gin.Context) {
 	// Extract application detail from request body
 	application := model.Application{}
 	if err := c.ShouldBindJSON(&application); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %s", err.Error())})
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
+		})
 		return
 	}
 
@@ -33,11 +48,15 @@ func (j *JobController) ApplicationHandler(c *gin.Context) {
 		Where("cpsk_id = ? AND post_id = ?", user.ID, application.PostID).
 		First(&existing).Error; err == nil {
 		// Found an existing application
-		c.JSON(http.StatusBadRequest, gin.H{"error": "You have already applied to this job post"})
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "You have already applied to this job post",
+		})
 		return
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		// Some other DB error occurred
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing application"})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: "Failed to check existing application",
+		})
 		return
 	}
 
@@ -49,11 +68,15 @@ func (j *JobController) ApplicationHandler(c *gin.Context) {
 		// If the error is a foreign key violation, mean PostID or ResumeID is invalid
 		if errors.As(err, &pqErr) {
 			if pqErr.Code == "23503" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid PostID or ResumeID: %s", err.Error())})
+				c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+					Error: fmt.Sprintf("Invalid PostID or ResumeID: %s", err.Error()),
+				})
 				return
 			}
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create application: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to create application: %s", err.Error()),
+		})
 		return
 	}
 
