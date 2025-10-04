@@ -173,7 +173,7 @@ func seedTestData(db *DBinstanceStruct) error {
 
 	cpskProfiles := []m.CPSKUser{
 		{
-			UserID:           TestUserCPSK1.ID,
+			UserID: TestUserCPSK1.ID,
 			EditableCPSKInfo: m.EditableCPSKInfo{
 				FirstName:        "Alice",
 				LastName:         "Nguyen",
@@ -183,7 +183,7 @@ func seedTestData(db *DBinstanceStruct) error {
 			},
 		},
 		{
-			UserID:           TestUserCPSK2.ID,
+			UserID: TestUserCPSK2.ID,
 			EditableCPSKInfo: m.EditableCPSKInfo{
 				FirstName:        "Bob",
 				LastName:         "Somsak",
@@ -202,20 +202,20 @@ func seedTestData(db *DBinstanceStruct) error {
 			UserID:         TestUserCompany1.ID,
 			VerifiedStatus: m.StatusVerified,
 			EditableCompanyInfo: m.EditableCompanyInfo{
-				Name:           "TechNova",
-				Overview:       "Innovative platform solutions",
-				Industry:       "Software",
-				Size:           &sizeM,
+				Name:     "TechNova",
+				Overview: "Innovative platform solutions",
+				Industry: "Software",
+				Size:     &sizeM,
 			},
 		},
 		{
 			UserID:         TestUserCompany2.ID,
 			VerifiedStatus: m.StatusPending,
 			EditableCompanyInfo: m.EditableCompanyInfo{
-				Name:           "DataForge",
-				Overview:       "Data analytics consulting",
-				Industry:       "Consulting",
-				Size:           &sizeL,
+				Name:     "DataForge",
+				Overview: "Data analytics consulting",
+				Industry: "Consulting",
+				Size:     &sizeL,
 			},
 		},
 	}

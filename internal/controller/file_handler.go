@@ -290,4 +290,3 @@ func (jc *JobController) GetFile(c *gin.Context) {
 		return
 	}
 }
-

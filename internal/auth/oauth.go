@@ -22,13 +22,13 @@ import (
 )
 
 type OauthLoginHandler struct {
-	DB *database.DBinstanceStruct
+	DB          *database.DBinstanceStruct
 	OauthConfig *oauth2.Config
 }
 
 func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config) *OauthLoginHandler {
 	return &OauthLoginHandler{
-		DB: db,
+		DB:          db,
 		OauthConfig: oauthConfig,
 	}
 }
@@ -124,7 +124,6 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (uInfo struct {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /auth/google/cpsk [post]
 func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
-
 
 	uInfo, err := h.getUserInfo(c)
 	if err != nil {

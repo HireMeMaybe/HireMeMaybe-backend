@@ -288,4 +288,3 @@ func (jc *JobController) DeleteJobPost(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utilities.MessageResponse{Message: "Job post deleted"})
 }
-

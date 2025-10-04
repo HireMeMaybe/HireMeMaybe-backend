@@ -64,7 +64,7 @@ func TestRegisterCPSK(t *testing.T) {
 		"password": "password123",
 		"role":     "cpsk",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler, "/register", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code, "unexpected status, body: %s", rec.Body.String())
 
@@ -94,7 +94,7 @@ func TestRegisterCompany(t *testing.T) {
 		"password": "companyPass123",
 		"role":     "company",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler, "/register", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code, "unexpected status, body: %s", rec.Body.String())
 
@@ -125,7 +125,7 @@ func TestRegisterPasswordTooShort(t *testing.T) {
 		"password": "1234567", // 7 chars
 		"role":     "cpsk",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler, "/register", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
@@ -142,10 +142,10 @@ func TestRegisterDuplicateUsername(t *testing.T) {
 		"password": "password123",
 		"role":     "cpsk",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler, "/register", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	
+
 	errMsg, _ := resp["error"].(string)
 	assert.Equal(t, "Username already exist", errMsg)
 }
@@ -159,12 +159,12 @@ func TestRegisterInvalidRole(t *testing.T) {
 		"password": "password123",
 		"role":     "admin", // not allowed
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler,"/register", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalRegisterHandler, "/register", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 	errMsg, _ := resp["error"].(string)
-	assert.Contains(t, errMsg, "Invalid Role, only 'cpsk' or 'company' is allowed")
+	assert.Contains(t, errMsg, "Username, password, and Role (Only 'cpsk' or 'company) must be provided")
 }
 
 func TestLoginCPSKSuccess(t *testing.T) {
@@ -173,7 +173,7 @@ func TestLoginCPSKSuccess(t *testing.T) {
 		"username": database.TestUserCPSK1.Username,
 		"password": database.TestSeedPassword,
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler, "/login", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
 	assert.Contains(t, resp, "access_token")
@@ -194,7 +194,7 @@ func TestLoginCompanySuccess(t *testing.T) {
 		"username": database.TestUserCompany1.Username,
 		"password": database.TestSeedPassword,
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler, "/login", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
 
@@ -216,7 +216,7 @@ func TestLoginWrongPassword(t *testing.T) {
 		"username": database.TestUserCPSK1.Username,
 		"password": "WrongPass999!",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler, "/login", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
@@ -230,7 +230,7 @@ func TestLoginUserNotFound(t *testing.T) {
 		"username": "non_existent_user_xyz",
 		"password": "SomePassword1!",
 	}
-	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler,"/login", http.MethodPost ,payload)
+	rec, resp, err := utilities.SimulateAPICall(handler.LocalLoginHandler, "/login", http.MethodPost, payload)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 

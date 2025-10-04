@@ -17,6 +17,6 @@ func SizeLimit(maxBodyBytes int64) gin.HandlerFunc {
 
 		c.Request.Body = http.MaxBytesReader(w, c.Request.Body, maxBodyBytes+(c.Request.ContentLength+multipartOverhead))
 
-		c.Next() 
+		c.Next()
 	}
 }

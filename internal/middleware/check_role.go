@@ -21,4 +21,3 @@ func CheckRole(roles ...string) gin.HandlerFunc {
 		}
 	}
 }
-

@@ -5,8 +5,8 @@ import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
-	"errors"
 	"HireMeMaybe-backend/internal/utilities"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -33,7 +33,6 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
-		
 		if !token.Valid {
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

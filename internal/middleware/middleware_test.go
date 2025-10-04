@@ -24,7 +24,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 )
 
-var testDB   *database.DBinstanceStruct
+var testDB *database.DBinstanceStruct
 
 func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
@@ -159,7 +159,6 @@ func simulateFileSendingRequest(t *testing.T, engine *gin.Engine, endpoint strin
 	return rec
 }
 
-
 func TestRequireAuth_Success(t *testing.T) {
 	engine := gin.New()
 	engine.GET("/protected", RequireAuth(testDB), checkUserHandler)
@@ -233,15 +232,14 @@ func TestRequireAuth_UnknownUser(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 	engine.ServeHTTP(rec, req)
-	
+
 	// Current middleware reports DB retrieval error (500)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	var body map[string]interface{}
 	_ = json.Unmarshal(rec.Body.Bytes(), &body)
 	assert.Contains(t, body["error"], "User not exist")
-	
-}
 
+}
 
 func TestRequireAuth_InvalidIssuer(t *testing.T) {
 	engine := protectedEngine()
@@ -258,7 +256,6 @@ func TestRequireAuth_InvalidIssuer(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	assert.Contains(t, body["error"], "Invalid token issuer")
 }
-
 
 func TestCheckRole_NoRequireAuthBefore(t *testing.T) {
 	engine := gin.New()
@@ -355,13 +352,12 @@ func TestCheckRole_MultipleRoleCheck(t *testing.T) {
 	assert.Contains(t, bodyCompany["error"], "User doesn't have permission to access")
 }
 
-
 func TestSizeLimit_LessThenLimit(t *testing.T) {
 	engine := gin.New()
 	engine.POST("/upload", SizeLimit(10<<20), readFileHandler)
 
 	rec := simulateFileSendingRequest(t, engine, "/upload", "./testfile/test1mb.jpeg", "file")
-	
+
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var body map[string]interface{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))

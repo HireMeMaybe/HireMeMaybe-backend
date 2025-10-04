@@ -48,17 +48,17 @@ type DBinstanceStruct struct {
 	Config *DBConfig
 	// cached raw DB and mutex for lazy-init
 	sqlDB *sql.DB
-    mu    sync.RWMutex
+	mu    sync.RWMutex
 }
 
 // DBConfig holds the configuration parameters for connecting to a database.
 type DBConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	Constr   string
+	Host      string
+	Port      string
+	User      string
+	Password  string
+	DBName    string
+	Constr    string
 	useConstr bool
 }
 
@@ -75,8 +75,6 @@ func (d *DBConfig) GetDsn() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", d.User, d.Password, d.Host, d.Port, d.DBName)
 }
 
-
-
 var (
 	database      = os.Getenv("DB_DATABASE")
 	password      = os.Getenv("DB_PASSWORD")
@@ -86,9 +84,8 @@ var (
 	useEnvConnStr = os.Getenv("USE_CONNECTION_STR")
 	envConStr     = os.Getenv("DB_CONNECTION_STR")
 	// DBinstance is instance or GORM orm as an interface to database
-	dbInstance      *DBinstanceStruct
+	dbInstance *DBinstanceStruct
 )
-
 
 func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 
@@ -100,16 +97,16 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 	}
 
 	newDb := &DBinstanceStruct{
-		DB:    gdb,
+		DB:     gdb,
 		Config: config,
 	}
 
 	if gin.IsDebugging() {
 		gdb = gdb.Debug()
 	}
-	
+
 	newDb.installExtension()
-	
+
 	if err := newDb.Migrate(); err != nil {
 		return nil, err
 	}
@@ -131,13 +128,13 @@ func GetMainDB() (*DBinstanceStruct, error) {
 	}
 
 	config := &DBConfig{
-		Host:     host,
-		Port:     port,
-		User:     username,
-		Password: password,
-		DBName:   database,
+		Host:      host,
+		Port:      port,
+		User:      username,
+		Password:  password,
+		DBName:    database,
 		useConstr: useEnvConnStr,
-		Constr:   envConStr,
+		Constr:    envConStr,
 	}
 
 	return NewDBInstance(config)
@@ -146,34 +143,34 @@ func GetMainDB() (*DBinstanceStruct, error) {
 // Raw returns the underlying *sql.DB, caching it after the first successful retrieval.
 // It is safe for concurrent use.
 func (d *DBinstanceStruct) Raw() (*sql.DB, error) {
-    if d == nil {
-        return nil, fmt.Errorf("DBinstanceStruct is nil")
-    }
+	if d == nil {
+		return nil, fmt.Errorf("DBinstanceStruct is nil")
+	}
 
-    // fast path: cached value
-    d.mu.RLock()
-    if d.sqlDB != nil {
-        raw := d.sqlDB
-        d.mu.RUnlock()
-        return raw, nil
-    }
-    d.mu.RUnlock()
+	// fast path: cached value
+	d.mu.RLock()
+	if d.sqlDB != nil {
+		raw := d.sqlDB
+		d.mu.RUnlock()
+		return raw, nil
+	}
+	d.mu.RUnlock()
 
-    // slow path: initialize
-    d.mu.Lock()
-    defer d.mu.Unlock()
-    if d.sqlDB != nil {
-        return d.sqlDB, nil
-    }
-    if d.DB == nil {
-        return nil, fmt.Errorf("gorm DB is nil")
-    }
-    raw, err := d.DB.DB()
-    if err != nil {
-        return nil, err
-    }
-    d.sqlDB = raw
-    return raw, nil
+	// slow path: initialize
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.sqlDB != nil {
+		return d.sqlDB, nil
+	}
+	if d.DB == nil {
+		return nil, fmt.Errorf("gorm DB is nil")
+	}
+	raw, err := d.DB.DB()
+	if err != nil {
+		return nil, err
+	}
+	d.sqlDB = raw
+	return raw, nil
 }
 
 func (d *DBinstanceStruct) createAdmin() {

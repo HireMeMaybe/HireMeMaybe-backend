@@ -24,6 +24,7 @@ func NewLocalAuthHandler(db *database.DBinstanceStruct) *LocalRegisterHandler {
 		DB: db,
 	}
 }
+
 type registerInfo struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`

@@ -11,7 +11,7 @@ import (
 func GetAccessToken(
 	t *testing.T,
 	db *database.DBinstanceStruct,
-	username string, 
+	username string,
 	password string,
 ) (string, error) {
 	t.Helper()

@@ -128,4 +128,3 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 
 	c.JSON(http.StatusOK, company)
 }
-

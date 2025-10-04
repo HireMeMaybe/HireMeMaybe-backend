@@ -133,4 +133,3 @@ func (jc *JobController) GetCompanyByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, company)
 }
-

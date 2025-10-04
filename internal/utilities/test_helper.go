@@ -10,9 +10,9 @@ import (
 )
 
 func SimulateAPICall(
-	handlerFunc func(*gin.Context), 
-	route string, 
-	method string, 
+	handlerFunc func(*gin.Context),
+	route string,
+	method string,
 	body interface{},
 ) (*httptest.ResponseRecorder, map[string]interface{}, error) {
 	b, err := json.Marshal(body)
