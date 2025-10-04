@@ -111,7 +111,9 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 	if err := newDb.installExtension(); err != nil {
 		log.Fatal("failed to install extension: ", err)
 	}
-
+	if err := newDb.Migrate(); err != nil {
+		log.Fatal("failed to migrate database: ", err)
+	}
 	newDb.createAdmin()
 
 	return newDb, nil
