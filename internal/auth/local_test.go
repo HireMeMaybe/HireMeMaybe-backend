@@ -31,15 +31,13 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	code := m.Run()
+	m.Run()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := testTeardown(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "teardown error: %v\n", err)
 	}
-
-	os.Exit(code)
 }
 
 // Helper: validate access token in response and return claims.

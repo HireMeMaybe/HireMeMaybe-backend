@@ -14,6 +14,7 @@ import (
 
 var (
 	secretKey = os.Getenv("SECRET_KEY")
+	// JwtIssuer is the issuer field in the JWT token.
 	JwtIssuer = os.Getenv("JWT_ISSUER")
 )
 

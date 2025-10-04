@@ -62,7 +62,7 @@ type DBConfig struct {
 	useConstr bool
 }
 
-func (d *DBConfig) GetDsn() string {
+func (d *DBConfig) getDsn() string {
 	if d.useConstr {
 		if d.Constr == "" {
 			log.Fatal("DB_CONNECTION_STR is empty")
@@ -87,13 +87,19 @@ var (
 	dbInstance *DBinstanceStruct
 )
 
+// NewDBInstance creates a new DBinstanceStruct with the given configuration.
+// It establishes a connection to the database and returns the instance or an error if the connection fails.
 func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 
-	connStr := config.GetDsn()
+	connStr := config.getDsn()
 
 	gdb, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		return nil, err
+	}
+
+	if gin.IsDebugging() {
+		gdb = gdb.Debug()
 	}
 
 	newDb := &DBinstanceStruct{
@@ -101,14 +107,9 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 		Config: config,
 	}
 
-	if gin.IsDebugging() {
-		gdb = gdb.Debug()
-	}
 
-	newDb.installExtension()
-
-	if err := newDb.Migrate(); err != nil {
-		return nil, err
+	if err := newDb.installExtension(); err != nil {
+		log.Fatal("failed to install extension: ", err)
 	}
 
 	newDb.createAdmin()
@@ -116,6 +117,8 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 	return newDb, nil
 }
 
+// GetMainDB returns the main database instance, initializing it if necessary.
+// It reads configuration from environment variables and ensures a single instance is used.
 func GetMainDB() (*DBinstanceStruct, error) {
 	// Reuse Connection
 	if dbInstance != nil {

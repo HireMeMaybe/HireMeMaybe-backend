@@ -21,11 +21,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// OauthLoginHandler struct holds the database connection and OAuth2 configuration for handling OAuth login.
 type OauthLoginHandler struct {
 	DB          *database.DBinstanceStruct
 	OauthConfig *oauth2.Config
 }
 
+// NewOauthLoginHandler creates a new instance of OauthLoginHandler with the provided database connection and OAuth2 configuration.
 func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config) *OauthLoginHandler {
 	return &OauthLoginHandler{
 		DB:          db,
@@ -111,7 +113,6 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (uInfo struct {
 // CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
-
 // @Summary Handles Google login authentication for cpsk role, exchanges code for user
 // @Description Checks and creates user in the database, generates an access token
 // @Tags Auth

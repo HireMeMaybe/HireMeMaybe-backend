@@ -11,6 +11,7 @@ import (
 	"HireMeMaybe-backend/internal/database"
 )
 
+// MyServer is a struct that holds the server configuration and dependencies.
 type MyServer struct {
 	DB   *database.DBinstanceStruct
 	port int

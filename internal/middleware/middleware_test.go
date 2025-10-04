@@ -34,13 +34,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		os.Exit(1)
 	}
-	code := m.Run()
+	m.Run()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if midTeardown != nil {
 		_ = midTeardown(ctx)
 	}
-	os.Exit(code)
 }
 
 func protectedEngine() *gin.Engine {
@@ -114,11 +113,16 @@ func getCheckRoleHandler(role ...string) gin.HandlerFunc {
 }
 
 func convertFileToBytes(filePath string) ([]byte, error) {
+	// #nosec G304 -- test inputs are static files under ./testfile checked into repo
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Fatal("Failed to close file")
+		}
+	}()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
@@ -148,8 +152,12 @@ func simulateFileSendingRequest(t *testing.T, engine *gin.Engine, endpoint strin
 		assert.NoError(t, err)
 		_, err = part.Write(fileBytes)
 		assert.NoError(t, err)
-		multipartWriter.Close()
-		bodyWriter.Close()
+		if err := multipartWriter.Close(); err != nil {
+			log.Fatal("Failed to close multipart writer")
+		}
+		if err := bodyWriter.Close(); err != nil {
+			log.Fatal("Failed to close body writer")
+		}
 	}()
 
 	req, _ := http.NewRequest(http.MethodPost, endpoint, bodyReader)

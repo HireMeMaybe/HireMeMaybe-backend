@@ -19,6 +19,7 @@ type LocalRegisterHandler struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewLocalAuthHandler creates a new instance of LocalRegisterHandler with the provided database connection.
 func NewLocalAuthHandler(db *database.DBinstanceStruct) *LocalRegisterHandler {
 	return &LocalRegisterHandler{
 		DB: db,
