@@ -10,11 +10,21 @@ var (
 
 type ReportOnUser struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement;->" json:"id"`
+	ReportedUserID uuid.UUID `gorm:"type:uuid;not null;index" json:"reported"`
+	ReportedUser User `gorm:"foreignKey:ReportedUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ReportCommon
+}
+
+type ReportOnPost struct {
+	ID        uint   `gorm:"primaryKey;autoIncrement;->" json:"id"`
+	ReportedPostID uint `gorm:"type:uuid;not null;index" json:"reported"`
+	ReportedPost JobPost `gorm:"foreignKey:ReportedPostID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ReportCommon
+}
+
+type ReportCommon struct {
 	Reporter uuid.UUID `gorm:"type:uuid;not null;index" json:"reporter"`
 	ReporterUser User `gorm:"foreignKey:Reporter;references:ID" json:"-"`
-
-	Reported uuid.UUID `gorm:"type:uuid;not null;index" json:"reported"`
-	ReportedUser User `gorm:"foreignKey:Reported;references:ID" json:"-"`
 
 	Reason string `gorm:"type:text" json:"reason"`
 

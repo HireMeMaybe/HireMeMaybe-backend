@@ -97,6 +97,14 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 			}
 
+			// Reporting endpoints
+			reportRoute := needAuth.Group("/report")
+			{
+				reportRoute.POST("/user", controller.CreateUserReport)
+				reportRoute.Use(middleware.CheckRole(model.RoleCPSK))
+				reportRoute.POST("/post", controller.CreatePostReport)
+			}
+
 			needCompanyAdmin := needAuth.Group("")
 			{
 				needCompanyAdmin.Use(middleware.CheckRole(model.RoleAdmin, model.RoleCompany))
@@ -124,6 +132,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 				needCPSK.POST("application", controller.ApplicationHandler)
 			}
+
 		}
 	}
 
