@@ -64,7 +64,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_id path string true "Company ID"
-// @Param status query string false "Status is case insensitive and allow only unverified, or verified"
+// @Param status query string false "Status is case insensitive and allow only unverified, or verified (verified by default)" default(verified)
 // @Success 200 {object} model.Company
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or Invalid request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -75,6 +75,10 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 func (jc *JobController) VerifyCompany(c *gin.Context) {
 	companyID := c.Param("company_id")
 	status := c.Query("status")
+
+	if status == "" {
+		status = "verified"
+	}
 
 	status = strings.ToUpper(status[:1]) + strings.ToLower(status[1:])
 	allowedStatus := map[string]bool{

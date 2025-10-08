@@ -180,7 +180,7 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit, User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /jobpost/{id} [put]
+// @Router /jobpost/{id} [patch]
 func (jc *JobController) EditJobPost(c *gin.Context) {
 
 	// Use ExtractUser itiesity to get authenticated user

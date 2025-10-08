@@ -349,7 +349,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company, User is ิฟืืำก",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -364,7 +364,7 @@ const docTemplate = `{
             }
         },
         "/company/profile": {
-            "put": {
+            "patch": {
                 "description": "Overwrite company profile and save into database\nSensitive field like id, file, verified status, and job post can't be overwritten",
                 "consumes": [
                     "application/json"
@@ -767,7 +767,7 @@ const docTemplate = `{
             }
         },
         "/cpsk/profile": {
-            "put": {
+            "patch": {
                 "description": "Overwrite CPSK profile and save into database\nSensitive field like id, file, and application can't be overwritten",
                 "consumes": [
                     "application/json"
@@ -1214,7 +1214,72 @@ const docTemplate = `{
             }
         },
         "/jobpost/{id}": {
-            "put": {
+            "delete": {
+                "description": "Only company that own the post or admin have access to this endpoint",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Delete given job post ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of desired job post",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully delete job post",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not have permission to delete this post, User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "description": "Only company that own the post or admin have access to this endpoint",
                 "consumes": [
                     "application/json"
@@ -1290,75 +1355,10 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Only company that own the post or admin have access to this endpoint",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Jobpost"
-                ],
-                "summary": "Delete given job post ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cyour access token\u003e",
-                        "description": "Insert your access token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID of desired job post",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully delete job post",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.MessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid authorization header, or invalid job post struct",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid token",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Do not have permission to delete this post, User is banned",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Post not found",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Database error",
-                        "schema": {
-                            "$ref": "#/definitions/utilities.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/punish/{user_id}": {
-            "post": {
+            "put": {
                 "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.\n'end' can be null for permanent punish.",
                 "consumes": [
                     "application/json"
@@ -1436,8 +1436,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/verify-company": {
-            "put": {
+        "/verify-company/{company_id}": {
+            "patch": {
                 "description": "Only admin can access this endpoints",
                 "produces": [
                     "application/json"
@@ -1456,13 +1456,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Company ID and status with only case insensitive unverified, or verified",
-                        "name": "Info",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.verificationInfo"
-                        }
+                        "type": "string",
+                        "description": "Company ID",
+                        "name": "company_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "verified",
+                        "description": "Status is case insensitive and allow only unverified, or verified (verified by default)",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1571,21 +1576,6 @@ const docTemplate = `{
                     ]
                 },
                 "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.verificationInfo": {
-            "type": "object",
-            "required": [
-                "company_id",
-                "status"
-            ],
-            "properties": {
-                "company_id": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 }
             }

@@ -29,7 +29,7 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as Admin, trying to punish other Admin"
 // @Failure 404 {object} utilities.ErrorResponse "User not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /punish/{user_id} [post]
+// @Router /punish/{user_id} [put]
 func (jc *JobController) PunishUser(c *gin.Context) {
 	userID := c.Param("user_id")
 

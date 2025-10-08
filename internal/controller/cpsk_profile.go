@@ -27,7 +27,7 @@ import (
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /cpsk/profile [put]
+// @Router /cpsk/profile [patch]
 func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}

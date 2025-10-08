@@ -45,16 +45,6 @@ definitions:
     - role
     - username
     type: object
-  controller.verificationInfo:
-    properties:
-      company_id:
-        type: string
-      status:
-        type: string
-    required:
-    - company_id
-    - status
-    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -549,7 +539,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as company, User is ิฟืืำก
+          description: Not logged in as company, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -560,7 +550,7 @@ paths:
       tags:
       - Company
   /company/profile:
-    put:
+    patch:
       consumes:
       - application/json
       description: |-
@@ -789,7 +779,7 @@ paths:
       tags:
       - CPSK
   /cpsk/profile:
-    put:
+    patch:
       consumes:
       - application/json
       description: |-
@@ -1139,7 +1129,7 @@ paths:
       summary: Delete given job post ID
       tags:
       - Jobpost
-    put:
+    patch:
       consumes:
       - application/json
       description: Only company that own the post or admin have access to this endpoint
@@ -1192,7 +1182,7 @@ paths:
       tags:
       - Jobpost
   /punish/{user_id}:
-    post:
+    put:
       consumes:
       - application/json
       description: |-
@@ -1247,8 +1237,8 @@ paths:
       summary: Ban or suspend user
       tags:
       - Admin
-  /verify-company:
-    put:
+  /verify-company/{company_id}:
+    patch:
       description: Only admin can access this endpoints
       parameters:
       - default: Bearer <your access token>
@@ -1257,13 +1247,17 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: Company ID and status with only case insensitive unverified,
-          or verified
-        in: body
-        name: Info
+      - description: Company ID
+        in: path
+        name: company_id
         required: true
-        schema:
-          $ref: '#/definitions/controller.verificationInfo'
+        type: string
+      - default: verified
+        description: Status is case insensitive and allow only unverified, or verified
+          (verified by default)
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:
