@@ -106,8 +106,8 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			},
 		}
 		if err := lh.DB.Create(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
@@ -139,8 +139,8 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			VerifiedStatus: verified,
 		}
 		if err := lh.DB.Create(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
@@ -158,8 +158,8 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			AccessToken: accessToken,
 		})
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Role '%s' not allowed", info.Role),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Role '%s' not allowed", info.Role),
 		})
 	}
 }
@@ -227,8 +227,8 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
@@ -248,8 +248,8 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	case model.RoleCompany:
 		var companyUser model.Company
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}

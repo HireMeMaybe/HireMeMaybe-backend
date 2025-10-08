@@ -67,8 +67,8 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	// save job post
 	jobPost.CompanyID = user.ID
 	if err := jc.DB.Create(&jobPost).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprint("Failed to create job post: ", err),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprint("Failed to create job post: ", err),
 		})
 		return
 	}
@@ -283,7 +283,9 @@ func (jc *JobController) DeleteJobPost(c *gin.Context) {
 	}
 
 	if err := jc.DB.Delete(&job).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to delete job post: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to delete job post: %s", err.Error()),
+		})
 		return
 	}
 

@@ -36,8 +36,8 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
@@ -52,8 +52,8 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 	}
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -80,8 +80,8 @@ func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}

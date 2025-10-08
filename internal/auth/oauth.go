@@ -155,8 +155,8 @@ func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 		}
 
 		if err := h.DB.Create(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %v", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %v", err.Error()),
 			})
 			return
 		}
@@ -164,8 +164,8 @@ func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 		respStatus = http.StatusCreated
 	case err == nil:
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
 			})
 			return
 		}
@@ -244,8 +244,8 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 		}
 
 		if err := h.DB.Create(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to create user: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
@@ -255,8 +255,8 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 	case err == nil:
 
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
