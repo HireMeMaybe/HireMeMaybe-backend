@@ -226,7 +226,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	switch user.Role {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
-		if err := lh.DB.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
@@ -247,7 +247,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 		})
 	case model.RoleCompany:
 		var companyUser model.Company
-		if err := lh.DB.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})

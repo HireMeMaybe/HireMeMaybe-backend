@@ -67,7 +67,7 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 		var foundUser model.User
 
-		if err := db.Where("id = ?", userID).First(&foundUser).Error; err != nil {
+		if err := db.Preload("Punishment").Where("id = ?", userID).First(&foundUser).Error; err != nil {
 
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

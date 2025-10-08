@@ -11,12 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// CheckPunishment check whether user is punished or not
 func CheckPunishment(db *database.DBinstanceStruct, punishmentType string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := utilities.ExtractUser(ctx)
 		if ctx.IsAborted() {
 			return
 		}
+
 		if user.Punishment == nil {
 			ctx.Next()
 			return
