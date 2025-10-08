@@ -54,7 +54,7 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 
 	allowedType := []string{"ban", "suspend"}
 	punishment.PunishmentType = strings.ToLower(punishment.PunishmentType)
-	if slices.Contains(allowedType, punishment.PunishmentType) {
+	if !slices.Contains(allowedType, punishment.PunishmentType) {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: "Invalid request body: type can be only 'ban' or 'suspend'",
 		})
@@ -69,7 +69,7 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 		}
 	}
 
-	user.Punishment = punishment
+	user.Punishment = &punishment
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&user).Error; err != nil {
