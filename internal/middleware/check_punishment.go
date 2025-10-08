@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"HireMeMaybe-backend/internal/database"
+	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
 	"net/http"
@@ -15,7 +16,14 @@ import (
 func CheckPunishment(db *database.DBinstanceStruct, punishmentType string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := utilities.ExtractUser(ctx)
+
 		if ctx.IsAborted() {
+			return
+		}
+
+		// Of course, Admin can't be punished
+		if user.Role == model.RoleAdmin {
+			ctx.Next()
 			return
 		}
 
