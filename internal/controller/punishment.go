@@ -53,7 +53,7 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 		return
 	}
 
-	allowedType := []string{"ban", "suspend"}
+	allowedType := []string{model.BanPunishment, model.SuspendPunishment}
 	punishment.PunishmentType = strings.ToLower(punishment.PunishmentType)
 	if !slices.Contains(allowedType, punishment.PunishmentType) {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{

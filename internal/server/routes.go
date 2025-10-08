@@ -71,7 +71,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		// Any routes
 		needAuth := v1.Group("")
 		{
-			needAuth.Use(middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, "ban"))
+			needAuth.Use(middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
 			file := needAuth.Group("/file")
 			{
 				file.GET(":id", controller.GetFile)
@@ -92,7 +92,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
 				jobPostRoute.GET("", controller.GetPosts)
-				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany), middleware.CheckPunishment(s.DB, "suspend"))
+				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany), middleware.CheckPunishment(s.DB, model.SuspendPunishment))
 				jobPostRoute.POST("", controller.CreateJobPostHandler)
 
 			}
@@ -123,7 +123,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 					cpskRoute.POST("profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
 				}
 
-				needCPSK.Use(middleware.CheckPunishment(s.DB, "suspend"))
+				needCPSK.Use(middleware.CheckPunishment(s.DB, model.SuspendPunishment))
 				needCPSK.POST("application", controller.ApplicationHandler)
 			}
 		}

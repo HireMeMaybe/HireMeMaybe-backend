@@ -24,6 +24,12 @@ var (
 	StatusUnverified = "Unverified"
 )
 
+// Each punishment type
+var (
+	BanPunishment     = "ban"
+	SuspendPunishment = "suspend"
+)
+
 // EditableCPSKInfo is part of CPSK field that allow overwrite
 type EditableCPSKInfo struct {
 	FirstName        string         `json:"first_name"`
