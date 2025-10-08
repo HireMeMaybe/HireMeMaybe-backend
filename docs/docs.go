@@ -67,7 +67,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned or suspended",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -349,7 +349,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is ิฟืืำก",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -415,7 +415,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -479,7 +479,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -555,7 +555,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -626,6 +626,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Company not exist",
                         "schema": {
@@ -686,6 +692,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Company not exist",
                         "schema": {
@@ -740,7 +752,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -806,7 +818,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -870,7 +882,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -937,6 +949,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1116,6 +1134,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Database error",
                         "schema": {
@@ -1175,7 +1199,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as verified company",
+                        "description": "Not logged in as verified company, User is banned or suspended",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1248,7 +1272,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Do not have permission to edit",
+                        "description": "Do not have permission to edit, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1313,7 +1337,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Do not have permission to delete this post",
+                        "description": "Do not have permission to delete this post, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }

@@ -26,7 +26,7 @@ import (
 // @Success 201 {object} model.JobPost "Successfully create job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company, User is banned or suspended"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [post]
 func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
@@ -96,6 +96,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 // @Success 200 {array} model.JobPost "Return non-expired job post(s)"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [get]
 func (jc *JobController) GetPosts(c *gin.Context) {
@@ -176,7 +177,7 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 // @Success 200 {object} model.JobPost "Successfully update job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit, User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [put]
@@ -251,7 +252,7 @@ func (jc *JobController) EditJobPost(c *gin.Context) {
 // @Success 200 {object} utilities.MessageResponse "Successfully delete job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to delete this post"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to delete this post, User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [delete]

@@ -21,7 +21,7 @@ import (
 // @Success 200 {object} model.Company "Successfully retrieve company profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is ิฟืืำก"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/myprofile [get]
 func (jc *JobController) GetCompanyProfile(c *gin.Context) {
@@ -57,7 +57,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 // @Success 200 {object} model.Company "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile [put]
 func (jc *JobController) EditCompanyProfile(c *gin.Context) {
@@ -106,6 +106,7 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 // @Success 200 {object} model.Company "Successfully retrieve company profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"S
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Company not exist"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/{company_id} [get]

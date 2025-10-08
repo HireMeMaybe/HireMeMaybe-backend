@@ -25,7 +25,7 @@ import (
 // @Success 200 {object} model.CPSKUser "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/profile [put]
 func (jc *JobController) EditCPSKProfile(c *gin.Context) {
@@ -70,7 +70,7 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 // @Success 200 {object} model.CPSKUser "Successfully retrieve CPSK profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
 func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
