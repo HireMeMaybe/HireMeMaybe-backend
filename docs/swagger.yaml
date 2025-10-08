@@ -1179,6 +1179,9 @@ paths:
     post:
       consumes:
       - application/json
+      description: |-
+        Type of punishment (Only 'ban' or 'suspend' with case insensitive),
+        'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
       parameters:
       - default: Bearer <your access token>
         description: Insert your access token
@@ -1191,7 +1194,7 @@ paths:
         name: user_id
         required: true
         type: string
-      - description: Type of punishment (Only 'ban' or 'suspend
+      - description: Detail of punishment
         in: body
         name: Detail
         required: true

@@ -14,12 +14,14 @@ import (
 
 // PunishUser handles ban and suspend process for admin
 // @Summary Ban or suspend user
+// @Description Type of punishment (Only 'ban' or 'suspend' with case insensitive),
+// @Description 'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
 // @Tags Admin
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param user_id path string true "ID of user to be punished"
-// @Param Detail body model.PunishmentStruct true "Type of punishment (Only 'ban' or 'suspend" with case insensitive), when it start and end"
+// @Param Detail body model.PunishmentStruct true "Detail of punishment"
 // @Success 200 {object} utilities.MessageResponse "Successfully punish a user"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
