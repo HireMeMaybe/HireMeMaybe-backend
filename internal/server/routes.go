@@ -109,6 +109,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
 				needAdmin.GET("get-companies", controller.GetCompanies)
 				needAdmin.PUT("verify-company", controller.VerifyCompany)
+				needAdmin.POST("punish/:user_id", controller.PunishUser)
 			}
 
 			// CPSK routes: apply role check once for all CPSK endpoints

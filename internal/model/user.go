@@ -41,10 +41,12 @@ type EditableCompanyInfo struct {
 	Size     *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
 }
 
+// PunishmentStruct is for storing punishment detail like ban or suspend
 type PunishmentStruct struct {
-	PunishmentType string    `json:"type"`
-	PunishAt       time.Time `json:"at"`
-	PunishEnd      time.Time `json:"end"`
+	ID             uint       `gorm:"primaryKey;autoIncrement;->" json:"-"`
+	PunishmentType string     `json:"type"`
+	PunishAt       time.Time  `json:"at"`
+	PunishEnd      *time.Time `json:"end"`
 }
 
 // User struct is gorm model for store base user data in DB
@@ -57,6 +59,7 @@ type User struct {
 	Username       string           `json:"username" gorm:"<-:create"`
 	Password       string           `json:"-"`
 	Role           string           `json:"-"`
+	PunishmentID   *int             `json:"-"`
 	Punishment     PunishmentStruct `json:"punishment"`
 	ProfilePicture string           `json:"profile_picture"`
 }
