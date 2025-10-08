@@ -16,6 +16,7 @@ import (
 // @Summary Ban or suspend user
 // @Description Type of punishment (Only 'ban' or 'suspend' with case insensitive),
 // @Description 'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
+// @Description 'end' can be null for permanent punish.
 // @Tags Admin
 // @Accept json
 // @Produce json

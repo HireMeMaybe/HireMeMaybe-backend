@@ -1335,7 +1335,7 @@ const docTemplate = `{
         },
         "/punish/{user_id}": {
             "post": {
-                "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.",
+                "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.\n'end' can be null for permanent punish.",
                 "consumes": [
                     "application/json"
                 ],

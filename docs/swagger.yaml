@@ -1182,6 +1182,7 @@ paths:
       description: |-
         Type of punishment (Only 'ban' or 'suspend' with case insensitive),
         'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
+        'end' can be null for permanent punish.
       parameters:
       - default: Bearer <your access token>
         description: Insert your access token
