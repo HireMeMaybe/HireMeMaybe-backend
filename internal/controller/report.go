@@ -11,13 +11,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// UserReportRequest represents the request body for reporting a user.
 type UserReportRequest struct {
 	ReportedID string `json:"reported_id" binding:"required,uuid"`
 	Reason     string `json:"reason" binding:"required"`
 }
+
+// PostReportRequest represents the request body for reporting a job post.
 type PostReportRequest struct {
-	ReportedID int    `json:"reported_id" binding:"required"`
-	Reason     string `json:"reason" binding:"required"`
+	ReportedID uint    `json:"reported_id" binding:"required"`
+	Reason     string  `json:"reason" binding:"required"`
 }
 
 // CreateUserReport handles the creation of a report against a user.
@@ -202,7 +205,6 @@ func (jc *JobController) GetReport(c *gin.Context) {
 		return
 	}
 
-
 	if err := userQuery.Find(&userReports).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
@@ -252,7 +254,8 @@ func (jc *JobController) UpdateReportStatus(c *gin.Context) {
 
 	var report model.UpdateableReport
 
-	if rType == "user" {
+	switch rType {
+	case "user":
 		var userReport model.ReportOnUser
 		if err := jc.DB.Where("id = ?", reportID).First(&userReport).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -267,7 +270,7 @@ func (jc *JobController) UpdateReportStatus(c *gin.Context) {
 			return
 		}
 		report = &userReport
-	} else if rType == "post" {
+	case "post":
 		var postReport model.ReportOnPost
 		if err := jc.DB.Where("id = ?", reportID).First(&postReport).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -282,15 +285,20 @@ func (jc *JobController) UpdateReportStatus(c *gin.Context) {
 			return
 		}
 		report = &postReport
-	} else {
+	default:
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: "Invalid report type",
 		})
 		return
 	}
 
-	report.UpdateStatus(req.Status, req.AdminNote)
-
+	err := report.UpdateStatus(req.Status, req.AdminNote)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: "Invalid status value",
+		})
+		return
+	}
 	if err := jc.DB.Save(report).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: "Database error: " + err.Error(),

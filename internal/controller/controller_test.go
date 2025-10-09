@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	}
 }
 
-func makeJsonRequest(body gin.H, authToken string, r *gin.Engine, endpoint string, method string) (*httptest.ResponseRecorder, map[string]interface{}) {
+func makeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint string, method string) (*httptest.ResponseRecorder, map[string]interface{}) {
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(method, endpoint, bytes.NewReader(payload))
@@ -68,7 +68,7 @@ func TestCreateUserReport_cpskReportCompany(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, _ := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, _ := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 }
@@ -87,7 +87,7 @@ func TestCreateUserReport_companyReportCpsk(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, _ := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, _ := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 }
@@ -106,7 +106,7 @@ func TestCreateUserReport_cpskReportcpsk(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.Contains(t, resp["error"], "cannot report this user")
@@ -125,7 +125,7 @@ func TestCreateUserReport_NotEnoughInfo(t *testing.T) {
 		"reason": "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
@@ -145,7 +145,7 @@ func TestCreateUserReport_NotFoundUser(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 	assert.Contains(t, resp["error"], "Reported user not found")
@@ -165,7 +165,7 @@ func TestCreateUserReport_InvalidUUID(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
@@ -185,13 +185,11 @@ func TestCreateUserReport_reportAdmin(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.Contains(t, resp["error"], "cannot report this user")
 }
-
-
 
 func TestCreatePostReport_reportSuccess(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
@@ -201,13 +199,13 @@ func TestCreatePostReport_reportSuccess(t *testing.T) {
 		DB: testDB,
 	}
 	r.POST("/report/post", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), jc.CreatePostReport)
-	
+
 	body := gin.H{
 		"reported_id": database.TestJobPost1.ID,
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	log.Println(resp["error"])
 	assert.Equal(t, http.StatusCreated, rec.Code)
@@ -227,7 +225,7 @@ func TestCreatePostReport_postNotFound(t *testing.T) {
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 	assert.Contains(t, resp["error"], "Reported post not found")
@@ -246,13 +244,11 @@ func TestCreatePostReport_invalidRequestBody(t *testing.T) {
 		"reason": "Inappropriate content",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
 }
-
-
 
 func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
@@ -274,7 +270,7 @@ func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -286,7 +282,7 @@ func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := makeJsonRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := makeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	log.Println(updateResp["error"])
@@ -313,7 +309,7 @@ func TestUpdateReportStatus_ResolvedPost(t *testing.T) {
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -325,7 +321,7 @@ func TestUpdateReportStatus_ResolvedPost(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := makeJsonRequest(updateBody, adminToken, r, "/report/post/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := makeJSONRequest(updateBody, adminToken, r, "/report/post/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	log.Println(updateResp["error"])
@@ -352,7 +348,7 @@ func TestUpdateReportStatus_InvalidStatus(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := makeJsonRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -364,7 +360,7 @@ func TestUpdateReportStatus_InvalidStatus(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := makeJsonRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := makeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Invalid request body")
@@ -386,7 +382,7 @@ func TestUpdateReportStatus_ReportNotFound(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := makeJsonRequest(updateBody, adminToken, r, "/report/user/9999", http.MethodPut)
+	rec, updateResp := makeJSONRequest(updateBody, adminToken, r, "/report/user/9999", http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Report not found")
@@ -408,7 +404,7 @@ func TestUpdateReportStatus_InvalidReportType(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := makeJsonRequest(updateBody, adminToken, r, "/report/invalid_type/1", http.MethodPut)
+	rec, updateResp := makeJSONRequest(updateBody, adminToken, r, "/report/invalid_type/1", http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Invalid report type")
