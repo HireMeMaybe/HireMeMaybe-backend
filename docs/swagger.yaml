@@ -64,15 +64,35 @@ definitions:
     - reason
     - reported_id
     type: object
-  controller.verificationInfo:
+  controller.editCPSKUser:
     properties:
-      company_id:
+      first_name:
         type: string
-      status:
+      last_name:
         type: string
-    required:
-    - company_id
-    - status
+      program:
+        type: string
+      soft_skill:
+        items:
+          type: string
+        type: array
+      tel:
+        type: string
+      year:
+        type: string
+    type: object
+  controller.editCompanyUser:
+    properties:
+      industry:
+        type: string
+      name:
+        type: string
+      overview:
+        type: string
+      size:
+        type: string
+      tel:
+        type: string
     type: object
   gorm.DeletedAt:
     properties:
@@ -173,32 +193,6 @@ definitions:
       verified_status:
         type: string
     type: object
-  model.EditableCPSKInfo:
-    properties:
-      first_name:
-        type: string
-      last_name:
-        type: string
-      program:
-        type: string
-      soft_skill:
-        items:
-          type: string
-        type: array
-      year:
-        type: string
-    type: object
-  model.EditableCompanyInfo:
-    properties:
-      industry:
-        type: string
-      name:
-        type: string
-      overview:
-        type: string
-      size:
-        type: string
-    type: object
   model.EditableJobPostInfo:
     properties:
       desc:
@@ -255,6 +249,15 @@ definitions:
       type:
         type: string
     type: object
+  model.PunishmentStruct:
+    properties:
+      at:
+        type: string
+      end:
+        type: string
+      type:
+        type: string
+    type: object
   model.User:
     properties:
       createdAt:
@@ -267,6 +270,8 @@ definitions:
         type: string
       profile_picture:
         type: string
+      punishment:
+        $ref: '#/definitions/model.PunishmentStruct'
       tel:
         type: string
       updatedAt:
@@ -321,7 +326,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as CPSK
+          description: Not logged in as CPSK, User is banned or suspended
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -513,6 +518,10 @@ paths:
           description: Invalid token
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User is banned
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
         "404":
           description: Company not exist
           schema:
@@ -549,7 +558,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as company
+          description: Not logged in as company, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -560,7 +569,7 @@ paths:
       tags:
       - Company
   /company/profile:
-    put:
+    patch:
       consumes:
       - application/json
       description: |-
@@ -578,7 +587,7 @@ paths:
         name: company_profile
         required: true
         schema:
-          $ref: '#/definitions/model.EditableCompanyInfo'
+          $ref: '#/definitions/controller.editCompanyUser'
       produces:
       - application/json
       responses:
@@ -595,7 +604,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as company
+          description: Not logged in as company, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -632,6 +641,10 @@ paths:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
           description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "404":
@@ -679,7 +692,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as company
+          description: Not logged in as company, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "413":
@@ -731,7 +744,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as company
+          description: Not logged in as company, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "413":
@@ -774,7 +787,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as CPSK
+          description: Not logged in as CPSK, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -785,7 +798,7 @@ paths:
       tags:
       - CPSK
   /cpsk/profile:
-    put:
+    patch:
       consumes:
       - application/json
       description: |-
@@ -803,7 +816,7 @@ paths:
         name: cpsk_profile
         required: true
         schema:
-          $ref: '#/definitions/model.EditableCPSKInfo'
+          $ref: '#/definitions/controller.editCPSKUser'
       produces:
       - application/json
       responses:
@@ -820,7 +833,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as CPSK
+          description: Not logged in as CPSK, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -863,7 +876,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as CPSK
+          description: Not logged in as CPSK, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "413":
@@ -908,6 +921,10 @@ paths:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
           description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "404":
@@ -1032,6 +1049,10 @@ paths:
           description: Invalid token
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User is banned
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
         "500":
           description: Database error
           schema:
@@ -1072,7 +1093,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Not logged in as verified company
+          description: Not logged in as verified company, User is banned or suspended
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "500":
@@ -1113,7 +1134,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Do not have permission to delete this post
+          description: Do not have permission to delete this post, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "404":
@@ -1127,7 +1148,7 @@ paths:
       summary: Delete given job post ID
       tags:
       - Jobpost
-    put:
+    patch:
       consumes:
       - application/json
       description: Only company that own the post or admin have access to this endpoint
@@ -1165,7 +1186,7 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "403":
-          description: Do not have permission to edit
+          description: Do not have permission to edit, User is banned
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "404":
@@ -1179,6 +1200,64 @@ paths:
       summary: Edit job post based on given json structure
       tags:
       - Jobpost
+  /punish/{user_id}:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Type of punishment (Only 'ban' or 'suspend' with case insensitive),
+        'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
+        Only 'type' is required 'at' and 'end' are optional
+        'at' will be current time by default
+        'end' leave empty mean permanent punishment
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of user to be punished
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Detail of punishment
+        in: body
+        name: Detail
+        required: true
+        schema:
+          $ref: '#/definitions/model.PunishmentStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully punish a user
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid authorization header, request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as Admin, trying to punish other Admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Ban or suspend user
+      tags:
+      - Admin
   /report:
     get:
       description: Retrieve reports from database, optionally filtered by status.
@@ -1379,8 +1458,8 @@ paths:
       summary: Create a report against a user
       tags:
       - Report
-  /verify-company:
-    put:
+  /verify-company/{company_id}:
+    patch:
       description: Only admin can access this endpoints
       parameters:
       - default: Bearer <your access token>
@@ -1389,13 +1468,17 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: Company ID and status with only case insensitive unverified,
-          or verified
-        in: body
-        name: Info
+      - description: Company ID
+        in: path
+        name: company_id
         required: true
-        schema:
-          $ref: '#/definitions/controller.verificationInfo'
+        type: string
+      - default: verified
+        description: Status is case insensitive and allow only unverified, or verified
+          (verified by default)
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:

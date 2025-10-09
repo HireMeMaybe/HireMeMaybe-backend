@@ -23,7 +23,7 @@ import (
 // @Success 201 {object} model.CPSKUser "Successfully apply job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned or suspended"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /application [post]
 func (j *JobController) ApplicationHandler(c *gin.Context) {

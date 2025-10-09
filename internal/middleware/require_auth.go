@@ -35,21 +35,21 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 		if !token.Valid {
 			if errors.Is(err, jwt.ErrTokenExpired) {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"error": "Access token expired",
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+					Error: "Access token expired",
 				})
 				return
 			}
 
 			if errors.Is(err, jwt.ErrTokenInvalidIssuer) {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"error": "Invalid token issuer",
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+					Error: "Invalid token issuer",
 				})
 				return
 			}
 
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": fmt.Sprintf("Failed to validate token: %s", err.Error()),
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to validate token: %s", err.Error()),
 			})
 			return
 		}
@@ -57,8 +57,8 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
 		if claims.Issuer != auth.JwtIssuer {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token issuer",
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: "Invalid token issuer",
 			})
 			return
 		}
@@ -67,17 +67,17 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 		var foundUser model.User
 
-		if err := db.Where("id = ?", userID).First(&foundUser).Error; err != nil {
+		if err := db.Preload("Punishment").Where("id = ?", userID).First(&foundUser).Error; err != nil {
 
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"error": "User not exist",
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+					Error: "User not exist",
 				})
 				return
 			}
 
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}

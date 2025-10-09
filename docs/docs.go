@@ -67,7 +67,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned or suspended",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -349,7 +349,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -364,7 +364,7 @@ const docTemplate = `{
             }
         },
         "/company/profile": {
-            "put": {
+            "patch": {
                 "description": "Overwrite company profile and save into database\nSensitive field like id, file, verified status, and job post can't be overwritten",
                 "consumes": [
                     "application/json"
@@ -391,7 +391,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.EditableCompanyInfo"
+                            "$ref": "#/definitions/controller.editCompanyUser"
                         }
                     }
                 ],
@@ -415,7 +415,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -479,7 +479,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -555,7 +555,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as company",
+                        "description": "Not logged in as company, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -626,6 +626,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Company not exist",
                         "schema": {
@@ -686,6 +692,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Company not exist",
                         "schema": {
@@ -740,7 +752,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -755,7 +767,7 @@ const docTemplate = `{
             }
         },
         "/cpsk/profile": {
-            "put": {
+            "patch": {
                 "description": "Overwrite CPSK profile and save into database\nSensitive field like id, file, and application can't be overwritten",
                 "consumes": [
                     "application/json"
@@ -782,7 +794,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.EditableCPSKInfo"
+                            "$ref": "#/definitions/controller.editCPSKUser"
                         }
                     }
                 ],
@@ -806,7 +818,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -870,7 +882,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as CPSK",
+                        "description": "Not logged in as CPSK, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -937,6 +949,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1116,6 +1134,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Database error",
                         "schema": {
@@ -1175,7 +1199,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not logged in as verified company",
+                        "description": "Not logged in as verified company, User is banned or suspended",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1190,7 +1214,72 @@ const docTemplate = `{
             }
         },
         "/jobpost/{id}": {
-            "put": {
+            "delete": {
+                "description": "Only company that own the post or admin have access to this endpoint",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jobpost"
+                ],
+                "summary": "Delete given job post ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of desired job post",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully delete job post",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, or invalid job post struct",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not have permission to delete this post, User is banned",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "description": "Only company that own the post or admin have access to this endpoint",
                 "consumes": [
                     "application/json"
@@ -1248,7 +1337,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Do not have permission to edit",
+                        "description": "Do not have permission to edit, User is banned",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1266,16 +1355,21 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Only company that own the post or admin have access to this endpoint",
+            }
+        },
+        "/punish/{user_id}": {
+            "put": {
+                "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.\nOnly 'type' is required 'at' and 'end' are optional\n'at' will be current time by default\n'end' leave empty mean permanent punishment",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Jobpost"
+                    "Admin"
                 ],
-                "summary": "Delete given job post ID",
+                "summary": "Ban or suspend user",
                 "parameters": [
                     {
                         "type": "string",
@@ -1286,22 +1380,31 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "ID of desired job post",
-                        "name": "id",
+                        "type": "string",
+                        "description": "ID of user to be punished",
+                        "name": "user_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Detail of punishment",
+                        "name": "Detail",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PunishmentStruct"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully delete job post",
+                        "description": "Successfully punish a user",
                         "schema": {
                             "$ref": "#/definitions/utilities.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid authorization header, or invalid job post struct",
+                        "description": "Invalid authorization header, request body",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1313,13 +1416,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Do not have permission to delete this post",
+                        "description": "Not logged in as Admin, trying to punish other Admin",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Post not found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1630,8 +1733,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/verify-company": {
-            "put": {
+        "/verify-company/{company_id}": {
+            "patch": {
                 "description": "Only admin can access this endpoints",
                 "produces": [
                     "application/json"
@@ -1650,13 +1753,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Company ID and status with only case insensitive unverified, or verified",
-                        "name": "Info",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.verificationInfo"
-                        }
+                        "type": "string",
+                        "description": "Company ID",
+                        "name": "company_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "verified",
+                        "description": "Status is case insensitive and allow only unverified, or verified (verified by default)",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1799,17 +1907,48 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.verificationInfo": {
+        "controller.editCPSKUser": {
             "type": "object",
-            "required": [
-                "company_id",
-                "status"
-            ],
             "properties": {
-                "company_id": {
+                "first_name": {
                     "type": "string"
                 },
-                "status": {
+                "last_name": {
+                    "type": "string"
+                },
+                "program": {
+                    "type": "string"
+                },
+                "soft_skill": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tel": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.editCompanyUser": {
+            "type": "object",
+            "properties": {
+                "industry": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "overview": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "tel": {
                     "type": "string"
                 }
             }
@@ -1962,46 +2101,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.EditableCPSKInfo": {
-            "type": "object",
-            "properties": {
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "program": {
-                    "type": "string"
-                },
-                "soft_skill": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "year": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.EditableCompanyInfo": {
-            "type": "object",
-            "properties": {
-                "industry": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "overview": {
-                    "type": "string"
-                },
-                "size": {
-                    "type": "string"
-                }
-            }
-        },
         "model.EditableJobPostInfo": {
             "type": "object",
             "properties": {
@@ -2087,6 +2186,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.PunishmentStruct": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "end": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "model.User": {
             "type": "object",
             "properties": {
@@ -2104,6 +2217,9 @@ const docTemplate = `{
                 },
                 "profile_picture": {
                     "type": "string"
+                },
+                "punishment": {
+                    "$ref": "#/definitions/model.PunishmentStruct"
                 },
                 "tel": {
                     "type": "string"
