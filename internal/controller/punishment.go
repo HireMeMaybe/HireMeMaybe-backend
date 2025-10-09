@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -16,7 +17,9 @@ import (
 // @Summary Ban or suspend user
 // @Description Type of punishment (Only 'ban' or 'suspend' with case insensitive),
 // @Description 'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.
-// @Description 'end' can be null for permanent punish.
+// @Description Only 'type' is required 'at' and 'end' are optional
+// @Description 'at' will be current time by default
+// @Description 'end' leave empty mean permanent punishment
 // @Tags Admin
 // @Accept json
 // @Produce json
@@ -51,6 +54,10 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
+	}
+	if punishment.PunishAt == nil {
+		now := time.Now()
+		punishment.PunishAt = &now
 	}
 
 	allowedType := []string{model.BanPunishment, model.SuspendPunishment}

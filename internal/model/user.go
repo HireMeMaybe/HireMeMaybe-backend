@@ -56,7 +56,7 @@ type EditableCompanyInfo struct {
 type PunishmentStruct struct {
 	ID             uint       `gorm:"primaryKey;autoIncrement;->" json:"-"`
 	PunishmentType string     `json:"type"`
-	PunishAt       time.Time  `json:"at"`
+	PunishAt       *time.Time `json:"at"`
 	PunishEnd      *time.Time `json:"end"`
 }
 

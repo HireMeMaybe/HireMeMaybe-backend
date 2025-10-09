@@ -1352,7 +1352,7 @@
         },
         "/punish/{user_id}": {
             "put": {
-                "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.\n'end' can be null for permanent punish.",
+                "description": "Type of punishment (Only 'ban' or 'suspend' with case insensitive),\n'at' and 'end' fields must be in 'YYYY-MM-DDTHH:mm:ssZ' format.\nOnly 'type' is required 'at' and 'end' are optional\n'at' will be current time by default\n'end' leave empty mean permanent punishment",
                 "consumes": [
                     "application/json"
                 ],
