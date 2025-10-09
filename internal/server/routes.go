@@ -60,18 +60,17 @@ func RegisterRoutes() http.Handler {
 				file.GET(":id", controller.GetFile)
 			}
 
-			companyRoute := needAuth.Group("/company")
-			{
-				companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
-				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
-				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
-				companyRoute.PUT("profile", controller.EditCompanyProfile)
-				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
-				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
-				companyRoute.GET("myprofile", controller.GetCompanyProfile)
-			}
-
-			// Job post endpoints (company only)
+		companyRoute := needAuth.Group("/company")
+		{
+			companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
+			companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
+			companyRoute.Use(middleware.CheckRole(model.RoleCompany))
+			companyRoute.PUT("profile", controller.EditCompanyProfile)
+			companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
+			companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
+			companyRoute.GET("myprofile", controller.GetCompanyProfile)
+			companyRoute.POST("ai-verify", controller.AIVerifyCompany)
+		}			// Job post endpoints (company only)
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
 				jobPostRoute.GET("", controller.GetPosts)
@@ -87,14 +86,12 @@ func RegisterRoutes() http.Handler {
 				needCompanyAdmin.DELETE("jobpost/:id", controller.DeleteJobPost)
 			}
 
-			needAdmin := needAuth.Group("")
-			{
-				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
-				needAdmin.GET("get-companies", controller.GetCompanies)
-				needAdmin.PUT("verify-company", controller.VerifyCompany)
-			}
-
-			// CPSK routes: apply role check once for all CPSK endpoints
+		needAdmin := needAuth.Group("")
+		{
+			needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
+			needAdmin.GET("get-companies", controller.GetCompanies)
+			needAdmin.PUT("verify-company", controller.VerifyCompany)
+		}			// CPSK routes: apply role check once for all CPSK endpoints
 			needCPSK := needAuth.Group("")
 			{
 				needCPSK.Use(middleware.CheckRole(model.RoleCPSK))
