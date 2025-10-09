@@ -2,6 +2,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -20,6 +22,12 @@ var (
 	StatusPending    = "Pending"
 	StatusVerified   = "Verified"
 	StatusUnverified = "Unverified"
+)
+
+// Each punishment type
+var (
+	BanPunishment     = "ban"
+	SuspendPunishment = "suspend"
 )
 
 // EditableUserInfo is part of User field that allow overwrite
@@ -44,17 +52,27 @@ type EditableCompanyInfo struct {
 	Size     *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
 }
 
+// PunishmentStruct is for storing punishment detail like ban or suspend
+type PunishmentStruct struct {
+	ID             uint       `gorm:"primaryKey;autoIncrement;->" json:"-"`
+	PunishmentType string     `json:"type"`
+	PunishAt       *time.Time `json:"at"`
+	PunishEnd      *time.Time `json:"end"`
+}
+
 // User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
 	EditableUserInfo
-	Email          *string   `json:"email" gorm:"<-:create"`
-	ID             uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey;<-:create" json:"id" `
-	GoogleID       string    `json:"-" gorm:"<-:create"`
-	Username       string    `json:"username" gorm:"<-:create"`
-	Password       string    `json:"-"`
-	Role           string    `json:"-"`
-	ProfilePicture string    `json:"profile_picture"`
+	Email          *string           `json:"email" gorm:"<-:create"`
+	ID             uuid.UUID         `gorm:"type:uuid;default:uuid_generate_v4();primaryKey;<-:create" json:"id" `
+	GoogleID       string            `json:"-" gorm:"<-:create"`
+	Username       string            `json:"username" gorm:"<-:create"`
+	Password       string            `json:"-"`
+	Role           string            `json:"-"`
+	PunishmentID   *int              `json:"-"`
+	Punishment     *PunishmentStruct `json:"punishment"`
+	ProfilePicture string            `json:"profile_picture"`
 }
 
 // CPSKUser is gorm model for store CPSK student profile data in DB

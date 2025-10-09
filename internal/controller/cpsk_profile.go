@@ -30,9 +30,9 @@ type editCPSKUser struct {
 // @Success 200 {object} model.CPSKUser "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /cpsk/profile [put]
+// @Router /cpsk/profile [patch]
 func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
@@ -41,8 +41,8 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
@@ -61,8 +61,8 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 	cpskUser.EditableCPSKInfo = edited.EditableCPSKInfo
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -79,7 +79,7 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 // @Success 200 {object} model.CPSKUser "Successfully retrieve CPSK profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
 func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
@@ -89,8 +89,8 @@ func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}

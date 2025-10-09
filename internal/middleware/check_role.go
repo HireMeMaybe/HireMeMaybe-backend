@@ -15,8 +15,8 @@ func CheckRole(roles ...string) gin.HandlerFunc {
 			return
 		}
 		if !utilities.Contains(roles, user.Role) {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": "User doesn't have permission to access",
+			ctx.AbortWithStatusJSON(http.StatusForbidden, utilities.ErrorResponse{
+				Error: "User doesn't have permission to access",
 			})
 		}
 	}
