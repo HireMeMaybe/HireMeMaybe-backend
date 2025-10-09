@@ -47,6 +47,7 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 		c.JSON(http.StatusForbidden, utilities.ErrorResponse{
 			Error: "Unable to punish other admin",
 		})
+		return
 	}
 
 	if err := c.ShouldBindJSON(&punishment); err != nil {
