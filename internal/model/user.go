@@ -22,6 +22,11 @@ var (
 	StatusUnverified = "Unverified"
 )
 
+// EditableUserInfo is part of User field that allow overwrite
+type EditableUserInfo struct {
+	Tel *string `json:"tel"`
+}
+
 // EditableCPSKInfo is part of CPSK field that allow overwrite
 type EditableCPSKInfo struct {
 	FirstName        string         `json:"first_name"`
@@ -42,7 +47,7 @@ type EditableCompanyInfo struct {
 // User struct is gorm model for store base user data in DB
 type User struct {
 	gorm.Model
-	Tel            *string   `json:"tel"`
+	EditableUserInfo
 	Email          *string   `json:"email" gorm:"<-:create"`
 	ID             uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey;<-:create" json:"id" `
 	GoogleID       string    `json:"-" gorm:"<-:create"`

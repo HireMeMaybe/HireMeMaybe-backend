@@ -136,15 +136,16 @@ func seedTestData(db *DBinstanceStruct) error {
 
 	users := make([]m.User, 0, len(userSpecs))
 	for _, s := range userSpecs {
-		users = append(users, m.User{
+		user := m.User{
 			ID:             uuid.New(),
 			Username:       s.username,
 			Email:          s.email,
-			Tel:            s.tel,
 			Role:           s.role,
 			Password:       hashedPwd,
 			ProfilePicture: "",
-		})
+		}
+		user.Tel = s.tel
+		users = append(users, user)
 	}
 
 	if err := db.Create(&users).Error; err != nil {

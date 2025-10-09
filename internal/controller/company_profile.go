@@ -12,6 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type editCompanyUser struct {
+	model.EditableCompanyInfo
+	model.EditableUserInfo
+}
+
 // GetCompanyProfile function retrieve company profile from database
 // and response as JSON format.
 // @Summary Retrieve company profile from database
@@ -53,7 +58,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param company_profile body model.EditableCompanyInfo true "Company info to be written"
+// @Param company_profile body editCompanyUser true "Company info to be written"
 // @Success 200 {object} model.Company "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -76,14 +81,18 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 		return
 	}
 
+	edited := editCompanyUser{}
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&company.EditableCompanyInfo); err != nil {
+	if err := decoder.Decode(&edited); err != nil {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
 	}
+
+	company.EditableCompanyInfo = edited.EditableCompanyInfo
+	company.User.EditableUserInfo = edited.EditableUserInfo
 
 	// Save updated profile to database
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
