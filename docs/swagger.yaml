@@ -45,6 +45,36 @@ definitions:
     - role
     - username
     type: object
+  controller.editCPSKUser:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      program:
+        type: string
+      soft_skill:
+        items:
+          type: string
+        type: array
+      tel:
+        type: string
+      year:
+        type: string
+    type: object
+  controller.editCompanyUser:
+    properties:
+      industry:
+        type: string
+      name:
+        type: string
+      overview:
+        type: string
+      size:
+        type: string
+      tel:
+        type: string
+    type: object
   controller.verificationInfo:
     properties:
       company_id:
@@ -152,32 +182,6 @@ definitions:
       user:
         $ref: '#/definitions/model.User'
       verified_status:
-        type: string
-    type: object
-  model.EditableCPSKInfo:
-    properties:
-      first_name:
-        type: string
-      last_name:
-        type: string
-      program:
-        type: string
-      soft_skill:
-        items:
-          type: string
-        type: array
-      year:
-        type: string
-    type: object
-  model.EditableCompanyInfo:
-    properties:
-      industry:
-        type: string
-      name:
-        type: string
-      overview:
-        type: string
-      size:
         type: string
     type: object
   model.EditableJobPostInfo:
@@ -563,7 +567,7 @@ paths:
         name: company_profile
         required: true
         schema:
-          $ref: '#/definitions/model.EditableCompanyInfo'
+          $ref: '#/definitions/controller.editCompanyUser'
       produces:
       - application/json
       responses:
@@ -788,7 +792,7 @@ paths:
         name: cpsk_profile
         required: true
         schema:
-          $ref: '#/definitions/model.EditableCPSKInfo'
+          $ref: '#/definitions/controller.editCPSKUser'
       produces:
       - application/json
       responses:
