@@ -391,7 +391,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.EditableCompanyInfo"
+                            "$ref": "#/definitions/controller.editCompanyUser"
                         }
                     }
                 ],
@@ -794,7 +794,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.EditableCPSKInfo"
+                            "$ref": "#/definitions/controller.editCPSKUser"
                         }
                     }
                 ],
@@ -1580,6 +1580,52 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.editCPSKUser": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "program": {
+                    "type": "string"
+                },
+                "soft_skill": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tel": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.editCompanyUser": {
+            "type": "object",
+            "properties": {
+                "industry": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "overview": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "tel": {
+                    "type": "string"
+                }
+            }
+        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -1724,46 +1770,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/model.User"
                 },
                 "verified_status": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.EditableCPSKInfo": {
-            "type": "object",
-            "properties": {
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "program": {
-                    "type": "string"
-                },
-                "soft_skill": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "year": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.EditableCompanyInfo": {
-            "type": "object",
-            "properties": {
-                "industry": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "overview": {
-                    "type": "string"
-                },
-                "size": {
                     "type": "string"
                 }
             }
