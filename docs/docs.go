@@ -1333,6 +1333,303 @@ const docTemplate = `{
                 }
             }
         },
+        "/report": {
+            "get": {
+                "description": "Retrieve reports from database, optionally filtered by status.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Retrieve reports from database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter reports by status (e.g., pending, reviewed, resolved)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieve reports",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User doesn't have permission to access",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/report/post": {
+            "post": {
+                "description": "Create a report against a job post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Create a report against a job post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Report information",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.PostReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Report created successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string"
+                                },
+                                "report_id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, reported post not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User doesn't have permission to access",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/report/user": {
+            "post": {
+                "description": "Create a report against a user. Cannot report admins or users with the same role as the reporter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Create a report against a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Report information",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.UserReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Report created successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string"
+                                },
+                                "report_id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, reported user not found, cannot report this user",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User doesn't have permission to access",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/report/{type}/{id}": {
+            "put": {
+                "description": "Update the status of a report (either on a user or a post).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Update the status of a report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the report to update",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Type of report to update (user or post)",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Report status update information",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "admin_note": {
+                                    "type": "string"
+                                },
+                                "status": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report status updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, report not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User doesn't have permission to access",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/verify-company": {
             "put": {
                 "description": "Only admin can access this endpoints",
@@ -1468,6 +1765,36 @@ const docTemplate = `{
                     ]
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PostReportRequest": {
+            "type": "object",
+            "required": [
+                "reason",
+                "reported_id"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "reported_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.UserReportRequest": {
+            "type": "object",
+            "required": [
+                "reason",
+                "reported_id"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "reported_id": {
                     "type": "string"
                 }
             }
@@ -1810,12 +2137,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "HireMeMaybe API service",
-	Description:      "This is HireMeMaybe API service that provide data for HireMeMaybe web app",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -100,9 +100,10 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 			// Reporting endpoints
 			reportRoute := needAuth.Group("/report")
 			{
+				reportRoute.PUT("/:type/:id", middleware.CheckRole(model.RoleAdmin), controller.UpdateReportStatus)
+				reportRoute.GET("", middleware.CheckRole(model.RoleAdmin), controller.GetReport)
 				reportRoute.POST("/user", controller.CreateUserReport)
-				reportRoute.Use(middleware.CheckRole(model.RoleCPSK))
-				reportRoute.POST("/post", controller.CreatePostReport)
+				reportRoute.POST("/post", middleware.CheckRole(model.RoleCPSK), controller.CreatePostReport)
 			}
 
 			needCompanyAdmin := needAuth.Group("")
