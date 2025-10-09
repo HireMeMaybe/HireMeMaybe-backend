@@ -310,6 +310,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/company/ai-verify": {
+            "post": {
+                "description": "Company can request AI verification of their own profile. AI analyzes company data and makes verification decision",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Use AI to verify your company",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.aiVerificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as company",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Company profile not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error or AI service error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/company/myprofile": {
             "get": {
                 "produces": [
@@ -1468,6 +1528,24 @@ const docTemplate = `{
                     ]
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.aiVerificationResponse": {
+            "type": "object",
+            "properties": {
+                "ai_decision": {
+                    "description": "\"Verified\" or \"Unverified\"",
+                    "type": "string"
+                },
+                "company": {
+                    "$ref": "#/definitions/model.Company"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "reasoning": {
                     "type": "string"
                 }
             }
