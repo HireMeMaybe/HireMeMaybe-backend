@@ -13,5 +13,7 @@ func init() {
 		&JobPost{},
 		&Application{},
 		&ApplicationAnswer{},
+		&ReportOnPost{},
+		&ReportOnUser{},
 	)
 }

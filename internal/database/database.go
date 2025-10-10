@@ -107,7 +107,6 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 		Config: config,
 	}
 
-
 	if err := newDb.installExtension(); err != nil {
 		log.Fatal("failed to install extension: ", err)
 	}

@@ -11,7 +11,7 @@ import (
 
 // SimulateAPICall is a helper function to simulate an API call to a gin handler function.
 // It takes the handler function, route, HTTP method, and request body as parameters.
-// It returns the HTTP response recorder, parsed JSON response as a map, and any error encountered. 
+// It returns the HTTP response recorder, parsed JSON response as a map, and any error encountered.
 func SimulateAPICall(
 	handlerFunc func(*gin.Context),
 	route string,
