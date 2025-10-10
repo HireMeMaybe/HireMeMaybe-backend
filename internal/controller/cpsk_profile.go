@@ -2,7 +2,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -13,6 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type editCPSKUser struct {
+	model.EditableCPSKInfo
+	model.EditableUserInfo
+}
+
 // EditCPSKProfile in Go handles editing a user's profile information, including
 // retrieving the original profile from the database, updating the information, and saving the changes.
 // @Summary Edit CPSK profile
@@ -22,37 +26,41 @@ import (
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param cpsk_profile body model.EditableCPSKInfo true "CPSK info to be written"
+// @Param cpsk_profile body editCPSKUser true "CPSK info to be written"
 // @Success 200 {object} model.CPSKUser "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /cpsk/profile [put]
-func EditCPSKProfile(c *gin.Context) {
+// @Router /cpsk/profile [patch]
+func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
 	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}
 
+	edited := editCPSKUser{}
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&cpskUser.EditableCPSKInfo); err != nil {
+	if err := decoder.Decode(&edited); err != nil {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
 	}
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
+	cpskUser.User.EditableUserInfo = edited.EditableUserInfo
+	cpskUser.EditableCPSKInfo = edited.EditableCPSKInfo
+
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
@@ -71,18 +79,18 @@ func EditCPSKProfile(c *gin.Context) {
 // @Success 200 {object} model.CPSKUser "Successfully retrieve CPSK profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
-func GetMyCPSKProfile(c *gin.Context) {
+func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	cpskUser := model.CPSKUser{}
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+	if err := jc.DB.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return
 	}

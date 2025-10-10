@@ -2,7 +2,6 @@ package controller
 
 import (
 	"HireMeMaybe-backend/internal/ai"
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -13,11 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
-
-type verificationInfo struct {
-	CompanyID string `json:"company_id" binding:"required"`
-	Status    string `json:"status" binding:"required"`
-}
 
 // GetCompanies function query the result from the database based on given query "status"
 // which mean VerifiedStatus is the condition for the query
@@ -34,7 +28,7 @@ type verificationInfo struct {
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /get-companies [get]
-func GetCompanies(c *gin.Context) {
+func (jc *JobController) GetCompanies(c *gin.Context) {
 	rawQ := c.Query("status")
 	var q []string
 	if rawQ == "" {
@@ -48,7 +42,7 @@ func GetCompanies(c *gin.Context) {
 
 	var companyUser []model.Company
 
-	err := database.DBinstance.
+	err := jc.DB.
 		Preload("User").
 		Where("verified_status IN ?", q).
 		Find(&companyUser).
@@ -70,43 +64,42 @@ func GetCompanies(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param Info body verificationInfo true "Company ID and status with only case insensitive unverified, or verified"
+// @Param company_id path string true "Company ID"
+// @Param status query string false "Status is case insensitive and allow only unverified, or verified (verified by default)" default(verified)
 // @Success 200 {object} model.Company
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or Invalid request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
 // @Failure 404 {object} utilities.ErrorResponse "Given company ID not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /verify-company [put]
-func VerifyCompany(c *gin.Context) {
-	var info verificationInfo
+// @Router /verify-company/{company_id} [patch]
+func (jc *JobController) VerifyCompany(c *gin.Context) {
+	companyID := c.Param("company_id")
+	status := c.Query("status")
 
-	if err := c.ShouldBindJSON(&info); err != nil {
-		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
-			Error: "CompanyID and Status must be provided",
-		})
-		return
+	if status == "" {
+		status = "verified"
 	}
 
-	info.Status = strings.ToUpper(info.Status[:1]) + strings.ToLower(info.Status[1:])
+	status = strings.ToUpper(status[:1]) + strings.ToLower(status[1:])
 	allowedStatus := map[string]bool{
 		model.StatusVerified:   true,
 		model.StatusUnverified: true,
 	}
 
-	if !allowedStatus[info.Status] {
+	if !allowedStatus[status] {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Unknown status: %s", info.Status),
+			Error: fmt.Sprintf("Unknown status: %s", status),
 		})
 		return
 	}
 
 	var company model.Company
-	err := database.DBinstance.Preload("User").Where("user_id = ?", info.CompanyID).First(&company).Error
+	err := jc.DB.Preload("User").Where("user_id = ?", companyID).First(&company).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		c.JSON(http.StatusNotFound, utilities.ErrorResponse{
-			Error: fmt.Sprintf("%s does not exist in the database", info.CompanyID),
+			Error: fmt.Sprintf("%s does not exist in the database", companyID),
 		})
 
 	case err == nil:
@@ -118,9 +111,9 @@ func VerifyCompany(c *gin.Context) {
 		})
 		return
 	}
-	company.VerifiedStatus = info.Status
+	company.VerifiedStatus = status
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),

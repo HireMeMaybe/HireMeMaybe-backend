@@ -27,6 +27,7 @@ func ExtractUser(c *gin.Context) model.User {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "User information not provided",
 		})
+		return model.User{}
 	}
 
 	user, ok := u.(model.User)
@@ -34,6 +35,7 @@ func ExtractUser(c *gin.Context) model.User {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to assert type",
 		})
+		return model.User{}
 	}
 	return user
 }

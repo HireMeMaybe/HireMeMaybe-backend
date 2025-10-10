@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -27,16 +26,17 @@ import (
 // @Success 201 {object} model.JobPost "Successfully create job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company, User is banned or suspended"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [post]
-func CreateJobPostHandler(c *gin.Context) {
+func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
+
 	// Get user
 	user := utilities.ExtractUser(c)
 
 	// Ensure that user is a verified company
 	var companyUser model.Company
-	if err := database.DBinstance.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
+	if err := jc.DB.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, utilities.ErrorResponse{Error: "Only company users can create job posts"})
 			return
@@ -66,7 +66,7 @@ func CreateJobPostHandler(c *gin.Context) {
 
 	// save job post
 	jobPost.CompanyID = user.ID
-	if err := database.DBinstance.Create(&jobPost).Error; err != nil {
+	if err := jc.DB.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to create job post: ", err),
 		})
@@ -96,9 +96,10 @@ func CreateJobPostHandler(c *gin.Context) {
 // @Success 200 {array} model.JobPost "Return non-expired job post(s)"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [get]
-func GetPosts(c *gin.Context) {
+func (jc *JobController) GetPosts(c *gin.Context) {
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
 	rawTag := c.Query("tag")
@@ -111,7 +112,7 @@ func GetPosts(c *gin.Context) {
 
 	var posts []model.JobPost
 
-	result := database.DBinstance.Where("expiring > ? OR expiring IS NULL", time.Now())
+	result := jc.DB.Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
 		result = result.Where("title ILIKE ?", "%"+rawSearch+"%")
@@ -176,11 +177,12 @@ func GetPosts(c *gin.Context) {
 // @Success 200 {object} model.JobPost "Successfully update job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to edit, User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /jobpost/{id} [put]
-func EditJobPost(c *gin.Context) {
+// @Router /jobpost/{id} [patch]
+func (jc *JobController) EditJobPost(c *gin.Context) {
+
 	// Use ExtractUser itiesity to get authenticated user
 	user := utilities.ExtractUser(c)
 
@@ -190,7 +192,7 @@ func EditJobPost(c *gin.Context) {
 	job := model.JobPost{}
 
 	// Find existing job post
-	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
@@ -222,7 +224,7 @@ func EditJobPost(c *gin.Context) {
 	}
 
 	// Update fields on the existing job record without saving associations
-	if err := database.DBinstance.Model(&job).Updates(updated).Error; err != nil {
+	if err := jc.DB.Model(&job).Updates(updated).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to update job post: %s", err.Error()),
 		})
@@ -230,7 +232,7 @@ func EditJobPost(c *gin.Context) {
 	}
 
 	// Reload the job post to return the latest data
-	if err := database.DBinstance.Where("id = ?", job.ID).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", job.ID).First(&job).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to retrieve updated job post: %s", err.Error()),
 		})
@@ -250,16 +252,16 @@ func EditJobPost(c *gin.Context) {
 // @Success 200 {object} utilities.MessageResponse "Successfully delete job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to delete this post"
+// @Failure 403 {object} utilities.ErrorResponse "Do not have permission to delete this post, User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [delete]
-func DeleteJobPost(c *gin.Context) {
+func (jc *JobController) DeleteJobPost(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 	id := c.Param("id")
 
 	job := model.JobPost{}
-	if err := database.DBinstance.Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
@@ -280,7 +282,7 @@ func DeleteJobPost(c *gin.Context) {
 		}
 	}
 
-	if err := database.DBinstance.Delete(&job).Error; err != nil {
+	if err := jc.DB.Delete(&job).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to delete job post: %s", err.Error()),
 		})

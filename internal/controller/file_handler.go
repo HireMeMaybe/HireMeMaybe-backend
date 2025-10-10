@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -28,18 +27,19 @@ import (
 // @Success 200 {object} model.CPSKUser "Successfully upload resume"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/profile/resume [post]
-func UploadResume(c *gin.Context) {
+func (jc *JobController) UploadResume(c *gin.Context) {
+
 	var cpskUser = model.CPSKUser{}
 
 	user := utilities.ExtractUser(c)
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
@@ -90,7 +90,7 @@ func UploadResume(c *gin.Context) {
 	cpskUser.Resume.Content = fileBytes
 	cpskUser.Resume.Extension = ".pdf"
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
@@ -101,29 +101,29 @@ func UploadResume(c *gin.Context) {
 }
 
 // companyUpload function handles process of reading files from company upload.
-func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string) {
+func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.Company, []byte, string) {
 	var company = model.Company{}
 
 	u, _ := c.Get("user")
 	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
+			Error: "User information not provided",
 		})
 		return company, nil, ""
 	}
 
 	user, ok := u.(model.User)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: "Failed to assert type",
 		})
 		return company, nil, ""
 	}
 
 	// Retrieve original profile from DB
-	if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID.String()).First(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
+	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&company).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
 		return company, nil, ""
 	}
@@ -131,14 +131,14 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string)
 	rawFile, err := c.FormFile(fName)
 	var maxBytesError *http.MaxBytesError
 	if errors.As(err, &maxBytesError) {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-			"error": err.Error(),
+		c.JSON(http.StatusRequestEntityTooLarge, utilities.ErrorResponse{
+			Error: err.Error(),
 		})
 		return company, nil, ""
 	}
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve file: %s", err.Error()),
 		})
 		return company, nil, ""
 	}
@@ -151,15 +151,15 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string)
 	extension := strings.ToLower(filepath.Ext(rawFile.Filename))
 
 	if !allowedExtensions[extension] {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{
-			"error": fmt.Sprintf("Unsupported file extension: %s", extension),
+		c.JSON(http.StatusUnsupportedMediaType, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Unsupported file extension: %s", extension),
 		})
 		return company, nil, ""
 	}
 
 	f, err := rawFile.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot open file"})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{Error: "Cannot open file"})
 		return company, nil, ""
 	}
 	defer func() {
@@ -170,7 +170,7 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string)
 
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot read file"})
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{Error: "Cannot read file"})
 		return company, nil, ""
 	}
 
@@ -188,14 +188,14 @@ func companyUpload(c *gin.Context, fName string) (model.Company, []byte, string)
 // @Success 200 {object} model.Company "Successfully upload logo"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/logo [post]
-func UploadLogo(c *gin.Context) {
+func (jc *JobController) UploadLogo(c *gin.Context) {
 
-	company, fileBytes, fileExtension := companyUpload(c, "logo")
+	company, fileBytes, fileExtension := jc.companyUpload(c, "logo")
 
 	if fileBytes == nil {
 		return
@@ -204,9 +204,9 @@ func UploadLogo(c *gin.Context) {
 	company.Logo.Content = fileBytes
 	company.Logo.Extension = fileExtension
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -225,13 +225,13 @@ func UploadLogo(c *gin.Context) {
 // @Success 200 {object} model.Company "Successfully upload banner"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
-// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company"
+// @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 413 {object} utilities.ErrorResponse "File size is larger than 10 MB"
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/banner [post]
-func UploadBanner(c *gin.Context) {
-	company, fileBytes, fileExtension := companyUpload(c, "banner")
+func (jc *JobController) UploadBanner(c *gin.Context) {
+	company, fileBytes, fileExtension := jc.companyUpload(c, "banner")
 
 	if fileBytes == nil {
 		return
@@ -240,9 +240,9 @@ func UploadBanner(c *gin.Context) {
 	company.Banner.Content = fileBytes
 	company.Banner.Extension = fileExtension
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to update user information: %s", err.Error()),
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 		})
 		return
 	}
@@ -260,14 +260,15 @@ func UploadBanner(c *gin.Context) {
 // @Success 200 {string} binary "Successfully retrieve file"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Given file id not found"
 // @Failure 500 {object} utilities.ErrorResponse "Fail to send file content"
 // @Router /file/{id} [get]
-func GetFile(c *gin.Context) {
+func (jc *JobController) GetFile(c *gin.Context) {
 	var file model.File
 	id := c.Param("id")
 
-	if err := database.DBinstance.First(&file, id).Error; err != nil {
+	if err := jc.DB.First(&file, id).Error; err != nil {
 		c.String(http.StatusNotFound, "File not found")
 		return
 	}
@@ -281,8 +282,8 @@ func GetFile(c *gin.Context) {
 	_, err := c.Writer.Write(file.Content)
 	if err != nil {
 		if !c.Writer.Written() {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to send file content",
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: "Failed to send file content",
 			})
 		} else {
 			c.Abort()

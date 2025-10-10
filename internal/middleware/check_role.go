@@ -11,20 +11,13 @@ import (
 func CheckRole(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := utilities.ExtractUser(ctx)
-
-		if !contains(roles, user.Role) {
+		if ctx.IsAborted() {
+			return
+		}
+		if !utilities.Contains(roles, user.Role) {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, utilities.ErrorResponse{
 				Error: "User doesn't have permission to access",
 			})
 		}
 	}
-}
-
-func contains(slice []string, s string) bool {
-	for _, v := range slice {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }

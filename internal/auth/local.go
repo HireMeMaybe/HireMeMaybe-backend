@@ -14,6 +14,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// LocalRegisterHandler holds DB reference for handler methods.
+type LocalRegisterHandler struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewLocalAuthHandler creates a new instance of LocalRegisterHandler with the provided database connection.
+func NewLocalAuthHandler(db *database.DBinstanceStruct) *LocalRegisterHandler {
+	return &LocalRegisterHandler{
+		DB: db,
+	}
+}
+
 type registerInfo struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -39,7 +51,7 @@ type loginInfo struct {
 // @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
 // @Router /auth/register [post]
-func LocalRegisterHandler(c *gin.Context) {
+func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 	var info registerInfo
 
 	if err := c.ShouldBindJSON(&info); err != nil {
@@ -50,7 +62,7 @@ func LocalRegisterHandler(c *gin.Context) {
 	}
 
 	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+	err := lh.DB.Where("username = ?", info.Username).First(&user).Error
 
 	switch {
 	case err == nil:
@@ -93,14 +105,14 @@ func LocalRegisterHandler(c *gin.Context) {
 				Role:     model.RoleCPSK,
 			},
 		}
-		if err := database.DBinstance.Create(&cpskUser).Error; err != nil {
+		if err := lh.DB.Create(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
 
-		accessToken, _, err := generateToken(cpskUser.UserID)
+		accessToken, _, err := GenerateStandardToken(cpskUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -126,14 +138,14 @@ func LocalRegisterHandler(c *gin.Context) {
 			},
 			VerifiedStatus: verified,
 		}
-		if err := database.DBinstance.Create(&companyUser).Error; err != nil {
+		if err := lh.DB.Create(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to create user: %s", err.Error()),
 			})
 			return
 		}
 
-		accessToken, _, err := generateToken(companyUser.UserID)
+		accessToken, _, err := GenerateStandardToken(companyUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -146,8 +158,8 @@ func LocalRegisterHandler(c *gin.Context) {
 			AccessToken: accessToken,
 		})
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Role '%s' not allowed", info.Role),
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Role '%s' not allowed", info.Role),
 		})
 	}
 }
@@ -167,7 +179,7 @@ func LocalRegisterHandler(c *gin.Context) {
 // @Failure 401 {object} utilities.ErrorResponse "Username not exist or password incorrect"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
 // @Router /auth/login [post]
-func LocalLoginHandler(c *gin.Context) {
+func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	var info loginInfo
 
 	if err := c.ShouldBindJSON(&info); err != nil {
@@ -178,7 +190,7 @@ func LocalLoginHandler(c *gin.Context) {
 	}
 
 	var user model.User
-	err := database.DBinstance.Where("username = ?", info.Username).First(&user).Error
+	err := lh.DB.Where("username = ?", info.Username).First(&user).Error
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -214,14 +226,14 @@ func LocalLoginHandler(c *gin.Context) {
 	switch user.Role {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
 
-		accessToken, _, err := generateToken(cpskUser.UserID)
+		accessToken, _, err := GenerateStandardToken(cpskUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -235,14 +247,14 @@ func LocalLoginHandler(c *gin.Context) {
 		})
 	case model.RoleCompany:
 		var companyUser model.Company
-		if err := database.DBinstance.Preload("User").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
 			return
 		}
 
-		accessToken, _, err := generateToken(companyUser.UserID)
+		accessToken, _, err := GenerateStandardToken(companyUser.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
@@ -255,7 +267,7 @@ func LocalLoginHandler(c *gin.Context) {
 			AccessToken: accessToken,
 		})
 	default:
-		accessToken, _, err := generateToken(user.ID)
+		accessToken, _, err := GenerateStandardToken(user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),

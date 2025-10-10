@@ -38,19 +38,17 @@ func generateUniqueUsername(db *gorm.DB) string {
 
 func main() {
 
-	if err := database.InitializeDatabase(); err != nil {
+	db, err := database.GetMainDB()
+	if err != nil {
 		log.Fatal("Fail to initialize database: ", err)
 	}
 
-	// Connect to database (SQLite for simplicity)
-	db := database.DBinstance
-
 	// Generate unique username and password
-	username := generateUniqueUsername(db)
+	username := generateUniqueUsername(db.DB)
 	password := generateRandomString(8)
 
 	// Hash the password before storing
-	utilities.CreateAdmin(password, username, db)
+	utilities.CreateAdmin(password, username, db.DB)
 
 	// Print credentials (only show plain password here!)
 	fmt.Println("Admin credentials generated successfully!")
