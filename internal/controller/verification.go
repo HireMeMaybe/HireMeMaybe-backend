@@ -144,13 +144,13 @@ type aiVerificationResponse struct {
 // @Failure 404 {object} utilities.ErrorResponse "Company profile not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error or AI service error"
 // @Router /company/ai-verify [post]
-func AIVerifyCompany(c *gin.Context) {
+func (jc *JobController) AIVerifyCompany(c *gin.Context) {
 	// Extract user from token (middleware already validated it's a company)
 	user := utilities.ExtractUser(c)
 
 	// Fetch company information with all necessary preloads
 	var company model.Company
-	err := database.DBinstance.
+	err := jc.DB.
 		Preload("User").
 		Preload("Logo").
 		Preload("Banner").
@@ -192,7 +192,7 @@ func AIVerifyCompany(c *gin.Context) {
 	// Update company verification status
 	company.VerifiedStatus = newStatus
 
-	if err := database.DBinstance.Session(&gorm.Session{FullSaveAssociations: true}).
+	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to update company verification status: %s", err.Error()),
