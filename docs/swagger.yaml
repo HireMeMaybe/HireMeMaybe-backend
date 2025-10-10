@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   auth.code:
     properties:
@@ -291,6 +292,10 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
+    app
+  title: HireMeMaybe API service
+  version: "1.0"
 paths:
   /application:
     post:
