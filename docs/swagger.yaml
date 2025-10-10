@@ -45,6 +45,26 @@ definitions:
     - role
     - username
     type: object
+  controller.PostReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: integer
+    required:
+    - reason
+    - reported_id
+    type: object
+  controller.UserReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: string
+    required:
+    - reason
+    - reported_id
+    type: object
   controller.editCPSKUser:
     properties:
       first_name:
@@ -1243,6 +1263,206 @@ paths:
       summary: Ban or suspend user
       tags:
       - Admin
+  /report:
+    get:
+      description: Retrieve reports from database, optionally filtered by status.
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Filter reports by status (e.g., pending, reviewed, resolved)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieve reports
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User doesn't have permission to access
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Retrieve reports from database
+      tags:
+      - Report
+  /report/{type}/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update the status of a report (either on a user or a post).
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the report to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of report to update (user or post)
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Report status update information
+        in: body
+        name: report
+        required: true
+        schema:
+          properties:
+            admin_note:
+              type: string
+            status:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Report status updated successfully
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid request body, report not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User doesn't have permission to access
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Update the status of a report
+      tags:
+      - Report
+  /report/post:
+    post:
+      consumes:
+      - application/json
+      description: Create a report against a job post.
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Report information
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PostReportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Report created successfully
+          schema:
+            properties:
+              message:
+                type: string
+              report_id:
+                type: integer
+            type: object
+        "400":
+          description: Invalid request body, reported post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User doesn't have permission to access
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create a report against a job post
+      tags:
+      - Report
+  /report/user:
+    post:
+      consumes:
+      - application/json
+      description: Create a report against a user. Cannot report admins or users with
+        the same role as the reporter.
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Report information
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UserReportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Report created successfully
+          schema:
+            properties:
+              message:
+                type: string
+              report_id:
+                type: integer
+            type: object
+        "400":
+          description: Invalid request body, reported user not found, cannot report
+            this user
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User doesn't have permission to access
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Create a report against a user
+      tags:
+      - Report
   /verify-company/{company_id}:
     patch:
       description: Only admin can access this endpoints

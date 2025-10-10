@@ -36,6 +36,11 @@ var (
 
 	// Add exported plain password
 	TestSeedPassword = "SeedPass123!"
+
+	// Exported seeded job posts
+	TestJobPost1 m.JobPost
+	TestJobPost2 m.JobPost
+	TestJobPost3 m.JobPost
 )
 
 // GetTestDB starts a PostgreSQL test container and returns a teardown function,
@@ -230,6 +235,75 @@ func seedTestData(db *DBinstanceStruct) error {
 	TestCompany1 = companies[0]
 	TestCompany2 = companies[1]
 
+	// Seed job posts (only if none exist yet)
+	var jobPostCount int64
+	if err := db.Model(&m.JobPost{}).Count(&jobPostCount).Error; err != nil {
+		return err
+	}
+	if jobPostCount == 0 {
+		exp1 := time.Now().AddDate(0, 1, 0)
+		exp2 := time.Now().AddDate(0, 2, 0)
+		exp3 := time.Now().AddDate(0, 3, 0)
+
+		jobPosts := []m.JobPost{
+			{
+				CompanyID: TestCompany1.UserID,
+				EditableJobPostInfo: m.EditableJobPostInfo{
+					Title:    "Backend Engineer Intern",
+					Desc:     "Work on Go microservices and database layers.",
+					Req:      "Go basics; SQL familiarity",
+					ExpLvl:   "Internship",
+					Location: "Bangkok (Hybrid)",
+					Type:     "Internship",
+					Salary:   "15000 THB",
+					Tags:     []string{"go", "backend", "api"},
+					Expiring: &exp1,
+				},
+			},
+			{
+				CompanyID: TestCompany1.UserID,
+				EditableJobPostInfo: m.EditableJobPostInfo{
+					Title:    "Frontend Developer Intern",
+					Desc:     "Assist building component library in React.",
+					Req:      "JS/TS fundamentals",
+					ExpLvl:   "Internship",
+					Location: "Remote",
+					Type:     "Internship",
+					Salary:   "12000 THB",
+					Tags:     []string{"react", "typescript", "ui"},
+					Expiring: &exp2,
+				},
+			},
+			{
+				CompanyID: TestCompany2.UserID,
+				EditableJobPostInfo: m.EditableJobPostInfo{
+					Title:    "Data Analyst Intern",
+					Desc:     "Support data cleansing and dashboard creation.",
+					Req:      "SQL; basic statistics",
+					ExpLvl:   "Internship",
+					Location: "Chiang Mai (On-site)",
+					Type:     "Internship",
+					Salary:   "13000 THB",
+					Tags:     []string{"data", "sql", "analytics"},
+					Expiring: &exp3,
+				},
+			},
+		}
+
+		if err := db.Create(&jobPosts).Error; err != nil {
+			return err
+		}
+		if len(jobPosts) > 0 {
+			TestJobPost1 = jobPosts[0]
+		}
+		if len(jobPosts) > 1 {
+			TestJobPost2 = jobPosts[1]
+		}
+		if len(jobPosts) > 2 {
+			TestJobPost3 = jobPosts[2]
+		}
+	}
+
 	return nil
 }
 
@@ -265,6 +339,20 @@ func loadTestData(db *DBinstanceStruct) error {
 	if err := db.Where("user_id IN ?", []uuid.UUID{TestUserCompany1.ID, TestUserCompany2.ID}).Find(&[]*m.Company{&TestCompany1, &TestCompany2}).Error; err != nil {
 		_ = db.First(&TestCompany1, "user_id = ?", TestUserCompany1.ID).Error
 		_ = db.First(&TestCompany2, "user_id = ?", TestUserCompany2.ID).Error
+	}
+
+	// Load first three job posts deterministically
+	var posts []m.JobPost
+	if err := db.Order("id ASC").Limit(3).Find(&posts).Error; err == nil {
+		if len(posts) > 0 {
+			TestJobPost1 = posts[0]
+		}
+		if len(posts) > 1 {
+			TestJobPost2 = posts[1]
+		}
+		if len(posts) > 2 {
+			TestJobPost3 = posts[2]
+		}
 	}
 
 	return nil
