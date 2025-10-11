@@ -90,6 +90,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		}			// Job post endpoints (company only)
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
+				jobPostRoute.GET("/:id", controller.GetPostByID)
 				jobPostRoute.GET("", controller.GetPosts)
 				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany), middleware.CheckPunishment(s.DB, model.SuspendPunishment))
 				jobPostRoute.POST("", controller.CreateJobPostHandler)

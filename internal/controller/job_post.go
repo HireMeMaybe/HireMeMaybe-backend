@@ -165,6 +165,39 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, posts)
 }
 
+// GetPostByID fetches a job post by its ID from the database
+// and returns it as a JSON response.
+// @Summary Get job post by ID
+// @Description Retrieve a specific job post using its unique ID
+// @Tags Jobpost
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param id path integer true "ID of desired job post"
+// @Success 200 {object} model.JobPost "Return the job post with the specified ID"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "User is banned"
+// @Failure 404 {object} utilities.ErrorResponse "Job post not found"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /jobpost/{id} [get]
+func (jc *JobController) GetPostByID(c *gin.Context) {
+	id := c.Param("id")
+
+	job := model.JobPost{}
+	if err := jc.DB.Preload("Company").Where("id = ?", id).First(&job).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve job post: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, job)
+}
+
 // EditJobPost allows a company user to update a job post they own.
 // @Summary Edit job post based on given json structure
 // @Description Only company that own the post or admin have access to this endpoint
