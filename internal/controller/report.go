@@ -19,8 +19,8 @@ type UserReportRequest struct {
 
 // PostReportRequest represents the request body for reporting a job post.
 type PostReportRequest struct {
-	ReportedID uint    `json:"reported_id" binding:"required"`
-	Reason     string  `json:"reason" binding:"required"`
+	ReportedID uint   `json:"reported_id" binding:"required"`
+	Reason     string `json:"reason" binding:"required"`
 }
 
 // CreateUserReport handles the creation of a report against a user.

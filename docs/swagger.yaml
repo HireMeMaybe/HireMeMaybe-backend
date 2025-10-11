@@ -292,10 +292,6 @@ definitions:
     type: object
 info:
   contact: {}
-  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
-    app
-  title: HireMeMaybe API service
-  version: "1.0"
 paths:
   /application:
     post:
@@ -1151,6 +1147,50 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
       summary: Delete given job post ID
+      tags:
+      - Jobpost
+    get:
+      description: Retrieve a specific job post using its unique ID
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of desired job post
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Return the job post with the specified ID
+          schema:
+            $ref: '#/definitions/model.JobPost'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: User is banned
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Job post not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get job post by ID
       tags:
       - Jobpost
     patch:
