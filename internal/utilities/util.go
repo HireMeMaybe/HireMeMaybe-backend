@@ -5,6 +5,7 @@ import (
 	"HireMeMaybe-backend/internal/model"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -55,5 +56,21 @@ func CreateAdmin(password string, username string, db *gorm.DB) {
 	}
 	if err := db.Create(&admin).Error; err != nil {
 		log.Fatal("failed to create admin: ", err)
+	}
+}
+
+// MergeNonEmpty help merge struct with non-empty field
+func MergeNonEmpty(dst, src interface{}) {
+	dv := reflect.ValueOf(dst).Elem()
+	sv := reflect.ValueOf(src).Elem()
+
+	for i := 0; i < sv.NumField(); i++ {
+		sf := sv.Field(i)
+		if !sf.IsZero() {
+			df := dv.FieldByName(sv.Type().Field(i).Name)
+			if df.IsValid() && df.CanSet() {
+				df.Set(sf)
+			}
+		}
 	}
 }
