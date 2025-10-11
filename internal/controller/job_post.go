@@ -165,6 +165,24 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, posts)
 }
 
+func (jc *JobController) GetPostByID(c *gin.Context) {
+	id := c.Param("id")
+
+	job := model.JobPost{}
+	if err := jc.DB.Preload("Company").Where("id = ?", id).First(&job).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve job post: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, job)
+}
+
 // EditJobPost allows a company user to update a job post they own.
 // @Summary Edit job post based on given json structure
 // @Description Only company that own the post or admin have access to this endpoint
