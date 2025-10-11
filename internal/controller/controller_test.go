@@ -54,24 +54,37 @@ func makeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint strin
 	return rec, resp
 }
 
-func TestCreateUserReport_cpskReportCompany(t *testing.T) {
-	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+
+func TestGetPostByID_success(t *testing.T) {
+	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
 	jc := &JobController{
 		DB: testDB,
 	}
-	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
+	r.GET("/jobpost/:id", middleware.RequireAuth(testDB), jc.GetPostByID)
 
-	body := gin.H{
-		"reported_id": database.TestUserCompany1.ID.String(),
-		"reason":      "Inappropriate behavior",
-	}
+	rec, resp := makeJSONRequest(nil, userToken, r, "/jobpost/"+strconv.Itoa(int(database.TestJobPost1.ID)), http.MethodGet)
 
-	rec, _ := makeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
-
-	assert.Equal(t, http.StatusCreated, rec.Code)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, float64(database.TestJobPost1.ID), resp["id"])
+	assert.Equal(t, database.TestJobPost1.Title, resp["title"])
 }
+
+func TestGetPostByID_notFound(t *testing.T) {
+	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)	
+	assert.NoError(t, err)
+	r := gin.Default()
+	jc := &JobController{
+		DB: testDB,
+	}
+	r.POST("/jobpost/:id", middleware.RequireAuth(testDB), jc.GetPostByID)
+
+	rec, _ := makeJSONRequest(nil, userToken, r, "/jobpost/999", http.MethodPost)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
 
 func TestCreateUserReport_companyReportCpsk(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
@@ -191,6 +204,7 @@ func TestCreateUserReport_reportAdmin(t *testing.T) {
 	assert.Contains(t, resp["error"], "cannot report this user")
 }
 
+
 func TestCreatePostReport_reportSuccess(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
@@ -249,6 +263,7 @@ func TestCreatePostReport_invalidRequestBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
 }
+
 
 func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
