@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"HireMeMaybe-backend/internal/ai"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -172,8 +171,8 @@ func (jc *JobController) AIVerifyCompany(c *gin.Context) {
 		return
 	}
 
-	// Call AI service to analyze company
-	result, err := ai.VerifyCompanyWithAI(company)
+	// Call AI service to analyze company (local function in controller package)
+	result, err := VerifyCompanyWithAI(company)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("AI verification failed: %s", err.Error()),
