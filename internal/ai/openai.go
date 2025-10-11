@@ -1,3 +1,4 @@
+// Package ai provides AI-related functionalities, including OpenAI integrations.
 package ai
 
 import (
