@@ -148,7 +148,12 @@ func VerifyCompanyWithAI(company model.Company) (*VerificationResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to call OpenAI API: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			// Log the error; do not override the returned error from the function
+			fmt.Printf("warning: failed to close response body: %v\n", cerr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
