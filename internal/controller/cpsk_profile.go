@@ -57,8 +57,8 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 		return
 	}
 
-	cpskUser.User.EditableUserInfo = edited.EditableUserInfo
-	cpskUser.EditableCPSKInfo = edited.EditableCPSKInfo
+	utilities.MergeNonEmpty(&cpskUser.User.EditableUserInfo, &edited.EditableUserInfo)
+	utilities.MergeNonEmpty(&cpskUser.EditableCPSKInfo, &edited.EditableCPSKInfo)
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{

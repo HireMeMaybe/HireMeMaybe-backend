@@ -91,8 +91,8 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 		return
 	}
 
-	company.EditableCompanyInfo = edited.EditableCompanyInfo
-	company.User.EditableUserInfo = edited.EditableUserInfo
+	utilities.MergeNonEmpty(&company.EditableCompanyInfo, &edited.EditableCompanyInfo)
+	utilities.MergeNonEmpty(&company.User.EditableUserInfo, &edited.EditableUserInfo)
 
 	// Save updated profile to database
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).
