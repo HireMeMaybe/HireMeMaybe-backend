@@ -87,8 +87,8 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
 				companyRoute.GET("myprofile", controller.GetCompanyProfile)
 				companyRoute.POST("ai-verify", controller.AIVerifyCompany)
-			}			
-			
+			}
+
 			// Job post endpoints (company only)
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
@@ -115,13 +115,15 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needCompanyAdmin.DELETE("jobpost/:id", controller.DeleteJobPost)
 			}
 
-		needAdmin := needAuth.Group("")
-		{
-			needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
-			needAdmin.GET("get-companies", controller.GetCompanies)
-			needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
-			needAdmin.PUT("punish/:user_id", controller.PunishUser)
-		}			// CPSK routes: apply role check once for all CPSK endpoints
+			needAdmin := needAuth.Group("")
+			{
+				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
+				needAdmin.GET("get-companies", controller.GetCompanies)
+				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
+				needAdmin.PUT("punish/:user_id", controller.PunishUser)
+			} 
+			
+			// CPSK routes: apply role check once for all CPSK endpoints
 			needCPSK := needAuth.Group("")
 			{
 				needCPSK.Use(middleware.CheckRole(model.RoleCPSK))
