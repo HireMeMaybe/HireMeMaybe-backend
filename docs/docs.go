@@ -2002,20 +2002,6 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.aiVerificationResponse": {
-            "type": "object",
-            "properties": {
-                "ai_decision": {
-                    "description": "\"Verified\" or \"Unverified\"",
-                    "type": "string"
-                },
-                "company": {
-                    "$ref": "#/definitions/model.Company"
-                },
-                "confidence": {
-                    "type": "string"
-                },
-                "reasoning": {
         "controller.PostReportRequest": {
             "type": "object",
             "required": [
@@ -2042,6 +2028,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "reported_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.aiVerificationResponse": {
+            "type": "object",
+            "properties": {
+                "ai_decision": {
+                    "type": "string"
+                },
+                "company": {
+                    "$ref": "#/definitions/model.Company"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "reasoning": {
                     "type": "string"
                 }
             }
