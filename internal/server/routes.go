@@ -86,6 +86,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
 				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
 				companyRoute.GET("myprofile", controller.GetCompanyProfile)
+				companyRoute.POST("ai-verify", controller.AIVerifyCompany)
 			}
 
 			// Job post endpoints (company only)
@@ -120,8 +121,8 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needAdmin.GET("get-companies", controller.GetCompanies)
 				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
 				needAdmin.PUT("punish/:user_id", controller.PunishUser)
-			}
-
+			} 
+			
 			// CPSK routes: apply role check once for all CPSK endpoints
 			needCPSK := needAuth.Group("")
 			{
