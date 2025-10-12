@@ -55,6 +55,11 @@ func makeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint strin
 	return rec, resp
 }
 
+// Helper function to create string pointers
+func stringPtr(s string) *string {
+	return &s
+}
+
 func TestGetPostByID_success(t *testing.T) {
 	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
@@ -517,9 +522,4 @@ func TestVerifyCompanyWithAI_TestCompany(t *testing.T) {
 	assert.Contains(t, []string{"High", "Medium", "Low"}, result.Confidence)
 	// Should NOT verify obvious test company
 	assert.False(t, result.ShouldVerify)
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
 }
