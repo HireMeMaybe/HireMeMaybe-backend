@@ -65,6 +65,17 @@ definitions:
     - reason
     - reported_id
     type: object
+  controller.aiVerificationResponse:
+    properties:
+      ai_decision:
+        type: string
+      company:
+        $ref: '#/definitions/model.Company'
+      confidence:
+        type: string
+      reasoning:
+        type: string
+    type: object
   controller.editCPSKUser:
     properties:
       first_name:
@@ -292,6 +303,10 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
+    app
+  title: HireMeMaybe API service
+  version: "1.0"
 paths:
   /application:
     post:
@@ -532,6 +547,47 @@ paths:
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
       summary: Retrieve company profile from database by given ID
+      tags:
+      - Company
+  /company/ai-verify:
+    post:
+      description: Company can request AI verification of their own profile. AI analyzes
+        company data and makes verification decision
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.aiVerificationResponse'
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as company
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: Company profile not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error or AI service error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Use AI to verify your company
       tags:
       - Company
   /company/myprofile:

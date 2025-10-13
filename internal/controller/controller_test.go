@@ -55,6 +55,11 @@ func makeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint strin
 	return rec, resp
 }
 
+// Helper function to create string pointers
+func stringPtr(s string) *string {
+	return &s
+}
+
 func TestGetPostByID_success(t *testing.T) {
 	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
@@ -420,4 +425,101 @@ func TestUpdateReportStatus_InvalidReportType(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Invalid report type")
+}
+
+// AI Verification Tests
+
+func TestAIVerifyCompany_Unauthorized(t *testing.T) {
+	// Test without authentication
+	r := gin.Default()
+	jc := &JobController{
+		DB: testDB,
+	}
+	r.POST("/company/ai-verify", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCompany), jc.AIVerifyCompany)
+
+	rec, resp := makeJSONRequest(nil, "", r, "/company/ai-verify", http.MethodPost)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, resp["error"], "authorization header")
+}
+
+func TestAIVerifyCompany_WrongRole(t *testing.T) {
+	// Test with CPSK user token (wrong role)
+	cpskToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	jc := &JobController{
+		DB: testDB,
+	}
+	r.POST("/company/ai-verify", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCompany), jc.AIVerifyCompany)
+
+	rec, resp := makeJSONRequest(nil, cpskToken, r, "/company/ai-verify", http.MethodPost)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Contains(t, resp["error"], "permission")
+}
+
+func TestVerifyCompanyWithAI_ValidCompany(t *testing.T) {
+	// Skip if no OpenAI API key is configured
+	if os.Getenv("OPENAI_API_KEY") == "" {
+		t.Skip("Skipping AI verification test: OPENAI_API_KEY not configured")
+	}
+
+	// Create a test company with professional information
+	testCompany := model.Company{
+		EditableCompanyInfo: model.EditableCompanyInfo{
+			Name:     "TechStart Solutions Inc",
+			Overview: "We are a leading software development company specializing in enterprise solutions, cloud computing, and AI integration. Our team of experienced developers works with Fortune 500 companies.",
+			Industry: "Technology",
+			Size:     stringPtr("M"),
+		},
+		User: model.User{
+			Email: stringPtr("contact@techstart.com"),
+			EditableUserInfo: model.EditableUserInfo{
+				Tel: stringPtr("+1-555-0123"),
+			},
+		},
+	}
+
+	result, err := VerifyCompanyWithAI(testCompany)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotEmpty(t, result.Reasoning)
+	assert.Contains(t, []string{"High", "Medium", "Low"}, result.Confidence)
+	// Should likely verify this professional company
+	assert.True(t, result.ShouldVerify)
+}
+
+func TestVerifyCompanyWithAI_TestCompany(t *testing.T) {
+	// Skip if no OpenAI API key is configured
+	if os.Getenv("OPENAI_API_KEY") == "" {
+		t.Skip("Skipping AI verification test: OPENAI_API_KEY not configured")
+	}
+
+	// Create a test company with obvious test data
+	testCompany := model.Company{
+		EditableCompanyInfo: model.EditableCompanyInfo{
+			Name:     "Test Company",
+			Overview: "This is a test company for testing purposes.",
+			Industry: "Testing",
+			Size:     stringPtr("XS"),
+		},
+		User: model.User{
+			Email: stringPtr("test@test.com"),
+			EditableUserInfo: model.EditableUserInfo{
+				Tel: stringPtr("123456"),
+			},
+		},
+	}
+
+	result, err := VerifyCompanyWithAI(testCompany)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotEmpty(t, result.Reasoning)
+	assert.Contains(t, []string{"High", "Medium", "Low"}, result.Confidence)
+	// Should NOT verify obvious test company
+	assert.False(t, result.ShouldVerify)
 }
