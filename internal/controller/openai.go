@@ -1,13 +1,13 @@
 package controller
 
 import (
-    "HireMeMaybe-backend/internal/model"
-    "bytes"
-    "encoding/json"
-    "fmt"
-    "io"
-    "net/http"
-    "os"
+	"HireMeMaybe-backend/internal/model"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 )
 
 // VerificationResult represents the AI's decision on company verification
@@ -39,7 +39,7 @@ type OpenAIResponse struct {
 }
 
 // VerifyCompanyWithAI analyzes company information and determines if it should be verified
-func VerifyCompanyWithAI(company model.Company) (*VerificationResult, error) {
+func VerifyCompanyWithAI(company model.CompanyUser) (*VerificationResult, error) {
     apiKey := os.Getenv("OPENAI_API_KEY")
     model := os.Getenv("OPENAI_MODEL")
 

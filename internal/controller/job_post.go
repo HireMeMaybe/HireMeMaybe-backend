@@ -35,7 +35,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	// Ensure that user is a verified company
-	var companyUser model.Company
+	var companyUser model.CompanyUser
 	if err := jc.DB.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, utilities.ErrorResponse{Error: "Only company users can create job posts"})

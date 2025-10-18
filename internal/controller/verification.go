@@ -39,7 +39,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 		}
 	}
 
-	var companyUser []model.Company
+	var companyUser []model.CompanyUser
 
 	err := jc.DB.
 		Preload("User").
@@ -93,7 +93,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 		return
 	}
 
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.Preload("User").Where("user_id = ?", companyID).First(&company).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -124,7 +124,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 }
 
 type aiVerificationResponse struct {
-	Company    model.Company `json:"company"`
+	Company    model.CompanyUser `json:"company"`
 	AIDecision string        `json:"ai_decision"`
 	Reasoning  string        `json:"reasoning"`
 	Confidence string        `json:"confidence"`
@@ -148,7 +148,7 @@ func (jc *JobController) AIVerifyCompany(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	// Fetch company information with all necessary preloads
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.
 		Preload("User").
 		Preload("Logo").

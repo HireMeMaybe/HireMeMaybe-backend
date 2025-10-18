@@ -101,8 +101,8 @@ func (jc *JobController) UploadResume(c *gin.Context) {
 }
 
 // companyUpload function handles process of reading files from company upload.
-func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.Company, []byte, string) {
-	var company = model.Company{}
+func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.CompanyUser, []byte, string) {
+	var company = model.CompanyUser{}
 
 	u, _ := c.Get("user")
 	if u == nil {

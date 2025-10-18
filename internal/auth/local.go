@@ -37,6 +37,11 @@ type loginInfo struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type adminResponse struct {
+	User        model.User `json:"user"`
+	AccessToken string     `json:"access_token"`
+}
+
 // LocalRegisterHandler function handles local registration by receiving username and password
 // do nothing if username already exist in the database
 // do nothing if password is shorter than 8 characters
@@ -130,7 +135,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			verified = model.StatusVerified
 		}
 
-		companyUser := model.Company{
+		companyUser := model.CompanyUser{
 			User: model.User{
 				Username: info.Username,
 				Password: hashedPassword,
@@ -246,7 +251,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			AccessToken: accessToken,
 		})
 	case model.RoleCompany:
-		var companyUser model.Company
+		var companyUser model.CompanyUser
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
@@ -275,7 +280,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, userResponse{
+		c.JSON(http.StatusOK, adminResponse{
 			User:        user,
 			AccessToken: accessToken,
 		})

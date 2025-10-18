@@ -32,7 +32,7 @@ type editCompanyUser struct {
 func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database.
 	if err := jc.DB.Preload("User").
@@ -68,7 +68,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database
 	if err := jc.DB.
@@ -123,7 +123,7 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 func (jc *JobController) GetCompanyByID(c *gin.Context) {
 	companyID := c.Param("company_id")
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database with JobPost preloaded.
 	if err := jc.DB.Preload("User").
