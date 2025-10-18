@@ -125,7 +125,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, cpskResponse{
+		c.JSON(http.StatusCreated, model.CPSKResponse{
 			User:        cpskUser,
 			AccessToken: accessToken,
 		})
@@ -158,7 +158,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, companyResponse{
+		c.JSON(http.StatusCreated, model.CompanyResponse{
 			User:        companyUser,
 			AccessToken: accessToken,
 		})
@@ -246,7 +246,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, cpskResponse{
+		c.JSON(http.StatusOK, model.CPSKResponse{
 			User:        cpskUser,
 			AccessToken: accessToken,
 		})
@@ -267,7 +267,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, companyResponse{
+		c.JSON(http.StatusOK, model.CompanyResponse{
 			User:        companyUser,
 			AccessToken: accessToken,
 		})
