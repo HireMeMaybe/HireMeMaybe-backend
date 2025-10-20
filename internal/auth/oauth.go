@@ -89,10 +89,9 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 	return uInfo, nil
 }
 
-func loginOrRegisterUser[T model.UserModel](h *OauthLoginHandler, uinfo model.GoogleUserInfo, c *gin.Context) {
+func loginOrRegisterUser(userModel model.UserModel, h *OauthLoginHandler, uinfo model.GoogleUserInfo, c *gin.Context) {
 
 	var user model.User
-	var userModel T
 	respStatus := http.StatusOK
 
 	err := h.DB.Where("google_id = ?", uinfo.GID).First(&user).Error
@@ -164,7 +163,7 @@ func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 		return
 	}
 
-	loginOrRegisterUser[*model.CPSKUser](h, uInfo, c)
+	loginOrRegisterUser(&model.CPSKUser{}, h, uInfo, c)
 }
 
 
@@ -189,7 +188,7 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 		return
 	}
 
-	loginOrRegisterUser[*model.CompanyUser](h, uInfo, c)
+	loginOrRegisterUser(&model.CompanyUser{}, h, uInfo, c)
 }
 
 
@@ -200,7 +199,7 @@ func (h *OauthLoginHandler) VisitorGoogleLoginHandler(c *gin.Context) {
 		return
 	}
 
-	loginOrRegisterUser[*model.VisitorUser](h, uInfo, c)
+	loginOrRegisterUser(&model.VisitorUser{}, h, uInfo, c)
 }
 
 

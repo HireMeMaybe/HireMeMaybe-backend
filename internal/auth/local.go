@@ -51,8 +51,9 @@ type adminResponse struct {
 // @Accept json
 // @Produce json
 // @Param Info body registerInfo true "role can be only 'cpsk' or 'company'"
-// @Success 200 {object} companyResponse "If role is company"
-// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Success 200 {object} model.CompanyResponse "If role is company"
+// @Success 200 {object} model.CPSKResponse "If role is cpsk"
+// @Success 200 {object} model.VisitorResponse "If role is visitor"
 // @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
 // @Router /auth/register [post]

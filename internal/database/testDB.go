@@ -247,7 +247,7 @@ func seedTestData(db *DBinstanceStruct) error {
 
 		jobPosts := []m.JobPost{
 			{
-				CompanyID: TestCompany1.UserID,
+				CompanyUserID: TestCompany1.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Backend Engineer Intern",
 					Desc:     "Work on Go microservices and database layers.",
@@ -261,7 +261,7 @@ func seedTestData(db *DBinstanceStruct) error {
 				},
 			},
 			{
-				CompanyID: TestCompany1.UserID,
+				CompanyUserID: TestCompany1.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Frontend Developer Intern",
 					Desc:     "Assist building component library in React.",
@@ -275,7 +275,7 @@ func seedTestData(db *DBinstanceStruct) error {
 				},
 			},
 			{
-				CompanyID: TestCompany2.UserID,
+				CompanyUserID: TestCompany2.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Data Analyst Intern",
 					Desc:     "Support data cleansing and dashboard creation.",

@@ -65,7 +65,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	}
 
 	// save job post
-	jobPost.CompanyID = user.ID
+	jobPost.CompanyUserID = user.ID
 	if err := jc.DB.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to create job post: ", err),
@@ -238,7 +238,7 @@ func (jc *JobController) EditJobPost(c *gin.Context) {
 
 	// Verify ownership: the job post must belong to the requesting company user
 	// Compare as strings to avoid type mismatches
-	if job.CompanyID.String() != user.ID.String() {
+	if job.CompanyUserID.String() != user.ID.String() {
 		c.JSON(http.StatusForbidden, utilities.ErrorResponse{
 			Error: "You are not allowed to edit this job post",
 		})
@@ -305,7 +305,7 @@ func (jc *JobController) DeleteJobPost(c *gin.Context) {
 		return
 	}
 
-	if job.CompanyID.String() != user.ID.String() {
+	if job.CompanyUserID.String() != user.ID.String() {
 		// Allow admins to bypass ownership check
 		if user.Role != model.RoleAdmin {
 			c.JSON(http.StatusForbidden, utilities.ErrorResponse{

@@ -22,9 +22,9 @@ type EditableJobPostInfo struct {
 
 // JobPost is gorm model for store job post data in DB
 type JobPost struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement;->" json:"id"`
-	CompanyID uuid.UUID `gorm:"not null;index;<-:create" json:"company_id"`
-	Company   CompanyUser   `gorm:"foreignKey:CompanyID;references:UserID" json:"-"`
+	ID            uint        `gorm:"primaryKey;autoIncrement;->" json:"id"`
+	CompanyUserID uuid.UUID   `gorm:"not null;index;<-:create" json:"company_id"`
+	CompanyUser   CompanyUser `gorm:"foreignKey:CompanyUserID;references:UserID" json:"-"`
 	EditableJobPostInfo
 	PostTime     time.Time     `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"post_time"`
 	Applications []Application `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE" json:"applications"`

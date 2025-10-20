@@ -125,7 +125,7 @@ func (c *CPSKUser) GetLoginResponse(accessToken string) interface{} {
 }
 
 func (c *CPSKUser) GetID() uuid.UUID {
-	return c.GetID()
+	return c.User.GetID()
 }
 
 func (c *CPSKUser) FillGoogleInfo(uInfo GoogleUserInfo) {
@@ -146,7 +146,7 @@ type CompanyUser struct {
 	Banner   File `json:"-"`
 
 	// JobPost holds the company's job posts
-	JobPost []JobPost `gorm:"foreignKey:CompanyID" json:"job_post"`
+	JobPost []JobPost `gorm:"foreignKey:CompanyUserID" json:"job_post"`
 }
 
 func (c *CompanyUser) GetLoginResponse(accessToken string) interface{} {
