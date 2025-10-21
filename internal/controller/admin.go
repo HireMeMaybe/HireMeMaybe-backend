@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -20,7 +21,8 @@ import (
 // @Tags Admin
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param status query string false "Only pending, unverified, or verified with case insensitive" example(pending+unverified)
+// @Param verify query string false "Only pending, unverified, or verified with case insensitive" example(pending+unverified)
+// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban+suspend)
 // @Success 200 {array} model.Company
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -28,26 +30,34 @@ import (
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /get-companies [get]
 func (jc *JobController) GetCompanies(c *gin.Context) {
-	rawQ := c.Query("status")
-	var q []string
-	if rawQ == "" {
-		q = []string{model.StatusPending, model.StatusUnverified, model.StatusVerified}
-	} else {
-		q = strings.Split(rawQ, " ")
-		for i := range q {
-			q[i] = strings.ToUpper(q[i][:1]) + strings.ToLower(q[i][1:])
+	rawVerify := c.Query("verify")
+	rawPunishment := c.Query("punishment")
+
+	result := jc.DB.Preload("User").Preload("User.Punishment")
+	if rawVerify != "" {
+		verify := strings.Split(rawVerify, " ")
+		for i := range verify {
+			verify[i] = strings.ToUpper(verify[i][:1]) + strings.ToLower(verify[i][1:])
 		}
+		result = result.Where("verified_status IN ?", verify)
+	}
+
+	if rawPunishment != "" {
+		punishment := strings.Split(rawPunishment, " ")
+		for i := range punishment {
+			punishment[i] = strings.ToLower(punishment[i])
+		}
+		result = result.Joins("JOIN users ON users.id = companies.user_id").
+			Joins("JOIN punishment_structs ON punishment_structs.id = users.punishment_id").
+			Where("punishment_type IN ?", punishment).
+			Where("punish_end > ?", time.Now())
 	}
 
 	var companyUser []model.Company
 
-	err := jc.DB.
-		Preload("User").
-		Where("verified_status IN ?", q).
-		Find(&companyUser).
-		Error
+	result = result.Find(&companyUser)
 
-	if err != nil {
+	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Database error: %s", err.Error()),
 		})

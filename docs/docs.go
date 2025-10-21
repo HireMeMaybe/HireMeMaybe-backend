@@ -1057,7 +1057,14 @@ const docTemplate = `{
                         "type": "string",
                         "example": "pending+unverified",
                         "description": "Only pending, unverified, or verified with case insensitive",
-                        "name": "status",
+                        "name": "verify",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "ban+suspend",
+                        "description": "Only ban, or suspend with case insensitive",
+                        "name": "punishment",
                         "in": "query"
                     }
                 ],

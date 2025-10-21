@@ -1010,7 +1010,12 @@ paths:
       - description: Only pending, unverified, or verified with case insensitive
         example: pending+unverified
         in: query
-        name: status
+        name: verify
+        type: string
+      - description: Only ban, or suspend with case insensitive
+        example: ban+suspend
+        in: query
+        name: punishment
         type: string
       produces:
       - application/json
