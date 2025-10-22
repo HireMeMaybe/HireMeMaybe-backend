@@ -125,9 +125,9 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 
 type aiVerificationResponse struct {
 	Company    model.CompanyUser `json:"company"`
-	AIDecision string        `json:"ai_decision"`
-	Reasoning  string        `json:"reasoning"`
-	Confidence string        `json:"confidence"`
+	AIDecision string            `json:"ai_decision"`
+	Reasoning  string            `json:"reasoning"`
+	Confidence string            `json:"confidence"`
 }
 
 // AIVerifyCompany uses AI to analyze company information and automatically verify or reject

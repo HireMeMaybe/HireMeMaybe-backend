@@ -121,8 +121,8 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needAdmin.GET("get-companies", controller.GetCompanies)
 				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
 				needAdmin.PUT("punish/:user_id", controller.PunishUser)
-			} 
-			
+			}
+
 			// CPSK routes: apply role check once for all CPSK endpoints
 			needCPSK := needAuth.Group("")
 			{

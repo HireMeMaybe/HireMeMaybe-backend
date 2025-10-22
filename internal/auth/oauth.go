@@ -21,8 +21,8 @@ import (
 
 // OauthLoginHandler struct holds the database connection and OAuth2 configuration for handling OAuth login.
 type OauthLoginHandler struct {
-	DB          *database.DBinstanceStruct
-	OauthConfig *oauth2.Config
+	DB               *database.DBinstanceStruct
+	OauthConfig      *oauth2.Config
 	UserInfoEndpoint string
 }
 
@@ -33,8 +33,8 @@ type code struct {
 // NewOauthLoginHandler creates a new instance of OauthLoginHandler with the provided database connection and OAuth2 configuration.
 func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config, userInfoEndpoint string) *OauthLoginHandler {
 	return &OauthLoginHandler{
-		DB:          db,
-		OauthConfig: oauthConfig,
+		DB:               db,
+		OauthConfig:      oauthConfig,
 		UserInfoEndpoint: userInfoEndpoint,
 	}
 }

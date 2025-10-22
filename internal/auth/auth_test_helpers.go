@@ -50,9 +50,9 @@ type mockInternalGoogleUserInfo struct {
 
 // MockOAuth2Server creates a mock OAuth2 server for testing
 type MockOAuth2Server struct {
-	Server         *httptest.Server
-	Config         *oauth2.Config
-	MockUserInfo   []*mockInternalGoogleUserInfo // Store pointers
+	Server           *httptest.Server
+	Config           *oauth2.Config
+	MockUserInfo     []*mockInternalGoogleUserInfo // Store pointers
 	MockInfoEndpoint string
 }
 
@@ -98,7 +98,7 @@ func NewMockOAuth2Server(userInfo []model.GoogleUserInfo) *MockOAuth2Server {
 	}
 
 	mock.MockInfoEndpoint = mock.Server.URL + "/userinfo"
-	
+
 	return mock
 }
 

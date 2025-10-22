@@ -33,7 +33,6 @@ func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
 	h.loginOrRegisterUser(&model.CPSKUser{}, uInfo, c)
 }
 
-
 // CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
 // info, checks and creates user in the database, generates an access token, and returns user
 // information with the access token.
@@ -58,7 +57,6 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 	h.loginOrRegisterUser(&model.CompanyUser{}, uInfo, c)
 }
 
-
 func (h *OauthLoginHandler) VisitorGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := h.getUserInfo(c)
@@ -68,7 +66,6 @@ func (h *OauthLoginHandler) VisitorGoogleLoginHandler(c *gin.Context) {
 
 	h.loginOrRegisterUser(&model.VisitorUser{}, uInfo, c)
 }
-
 
 // Callback function in Go retrieves a query parameter named "code" from the request and returns it
 // in a JSON response.

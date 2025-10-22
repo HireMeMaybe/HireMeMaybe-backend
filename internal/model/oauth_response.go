@@ -15,7 +15,7 @@ func (r *CPSKResponse) SetAccessToken(accessToken string) {
 
 type CompanyResponse struct {
 	User        CompanyUser `json:"user"`
-	AccessToken string  `json:"access_token"`
+	AccessToken string      `json:"access_token"`
 }
 
 func (r *CompanyResponse) SetAccessToken(accessToken string) {
@@ -24,7 +24,7 @@ func (r *CompanyResponse) SetAccessToken(accessToken string) {
 
 type VisitorResponse struct {
 	User        VisitorUser `json:"user"`
-	AccessToken string  `json:"access_token"`
+	AccessToken string      `json:"access_token"`
 }
 
 func (r *VisitorResponse) SetAccessToken(accessToken string) {
