@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	// It's something abt database I don't know 😭
 	_ "github.com/jackc/pgx/v5/stdlib"
 	// Load .env file to environments
@@ -98,7 +97,7 @@ func NewDBInstance(config *DBConfig) (*DBinstanceStruct, error) {
 		return nil, err
 	}
 
-	if gin.IsDebugging() {
+	if os.Getenv("DEBUG_DB") == "true" {
 		gdb = gdb.Debug()
 	}
 
