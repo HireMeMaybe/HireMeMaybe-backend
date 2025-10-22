@@ -57,6 +57,20 @@ func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
 	h.loginOrRegisterUser(&model.CompanyUser{}, uInfo, c)
 }
 
+// VisitorGoogleLoginHandler handles Google login authentication for visitor role, exchanges code for user
+// info, checks and creates user in the database, generates an access token, and returns user
+// information with the access token.
+// @Summary Handles Google login authentication for visitor role, exchanges code for user
+// @Description Checks and creates user in the database, generates an access token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param Code body code true "Authentication code from google"
+// @Success 200 {object} model.VisitorResponse "Login success"
+// @Success 201 {object} model.VisitorResponse "Register success"
+// @Failure 400 {object} utilities.ErrorResponse "Fail to receive token or fetch user info"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /auth/google/visitor [post]
 func (h *OauthLoginHandler) VisitorGoogleLoginHandler(c *gin.Context) {
 
 	uInfo, err := h.getUserInfo(c)

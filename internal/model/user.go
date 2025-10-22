@@ -32,6 +32,7 @@ var (
 	SuspendPunishment = "suspend"
 )
 
+// GoogleUserInfo struct holds the user information retrieved from Google OAuth	
 type GoogleUserInfo struct {
 	GID            string `json:"sub"`
 	FirstName      string `json:"given_name"`
@@ -62,6 +63,7 @@ type EditableCompanyInfo struct {
 	Size     *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
 }
 
+// EditableVisitorInfo is part of visitor field that allow overwrite		
 type EditableVisitorInfo struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -75,6 +77,7 @@ type PunishmentStruct struct {
 	PunishEnd      *time.Time `json:"end"`
 }
 
+// UserModel interface defines methods for user models
 type UserModel interface {
 	GetLoginResponse(string) interface{}
 	GetID() uuid.UUID
@@ -96,10 +99,12 @@ type User struct {
 	ProfilePicture string            `json:"profile_picture"`
 }
 
+// GetID returns the user's UUID
 func (u *User) GetID() uuid.UUID {
 	return u.ID
 }
 
+// FillGoogleInfo fills the user struct with Google user info and assigns the role
 func (u *User) FillGoogleInfo(uInfo GoogleUserInfo, role string) {
 	u.Email = &uInfo.Email
 	u.GoogleID = uInfo.GID
@@ -120,14 +125,17 @@ type CPSKUser struct {
 	Applications []Application `gorm:"foreignKey:CPSKID" json:"applications"`
 }
 
+// GetLoginResponse constructs the login response for CPSK user
 func (c *CPSKUser) GetLoginResponse(accessToken string) interface{} {
 	return CPSKResponse{User: *c, AccessToken: accessToken}
 }
 
+// GetID returns the CPSK user's UUID
 func (c *CPSKUser) GetID() uuid.UUID {
 	return c.User.GetID()
 }
 
+// FillGoogleInfo fills the CPSK user struct with Google user info
 func (c *CPSKUser) FillGoogleInfo(uInfo GoogleUserInfo) {
 	c.User.FillGoogleInfo(uInfo, RoleCPSK)
 	c.FirstName = uInfo.FirstName
@@ -149,14 +157,17 @@ type CompanyUser struct {
 	JobPost []JobPost `gorm:"foreignKey:CompanyUserID" json:"job_post"`
 }
 
+// GetLoginResponse constructs the login response for Company user
 func (c *CompanyUser) GetLoginResponse(accessToken string) interface{} {
 	return &CompanyResponse{User: *c, AccessToken: accessToken}
 }
 
+// GetID returns the Company user's UUID
 func (c *CompanyUser) GetID() uuid.UUID {
 	return c.User.GetID()
 }
 
+// FillGoogleInfo fills the Company user struct with Google user info and sets verification status
 func (c *CompanyUser) FillGoogleInfo(uInfo GoogleUserInfo) {
 
 	verified := StatusPending
@@ -168,20 +179,24 @@ func (c *CompanyUser) FillGoogleInfo(uInfo GoogleUserInfo) {
 	c.VerifiedStatus = verified
 }
 
+// VisitorUser is gorm model for store visitor relate data in DB
 type VisitorUser struct {
 	UserID uuid.UUID `json:"id" gorm:"primaryKey;<-:create"`
 	User   User
 	EditableVisitorInfo
 }
 
+// GetLoginResponse constructs the login response for Visitor user
 func (v *VisitorUser) GetLoginResponse(accessToken string) interface{} {
 	return &VisitorResponse{User: *v, AccessToken: accessToken}
 }
 
+// GetID returns the Visitor user's UUID
 func (v *VisitorUser) GetID() uuid.UUID {
 	return v.User.GetID()
 }
 
+// FillGoogleInfo fills the Visitor user struct with Google user info
 func (v *VisitorUser) FillGoogleInfo(uInfo GoogleUserInfo) {
 	v.User.FillGoogleInfo(uInfo, RoleVisitor)
 	v.FirstName = uInfo.FirstName

@@ -156,7 +156,11 @@ func (m *MockOAuth2Server) handleToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tokenResponse)
+	err := json.NewEncoder(w).Encode(tokenResponse)
+	if err != nil {
+		http.Error(w, "Failed to encode token response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // handleUserInfo handles user info requests
@@ -197,7 +201,11 @@ func (m *MockOAuth2Server) handleUserInfo(w http.ResponseWriter, r *http.Request
 
 	// Return user info (just the GoogleUserInfo part)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(foundUser.GoogleUserInfo)
+	err := json.NewEncoder(w).Encode(foundUser.GoogleUserInfo)
+	if err != nil {
+		http.Error(w, "Failed to encode user info", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Close shuts down the mock server
