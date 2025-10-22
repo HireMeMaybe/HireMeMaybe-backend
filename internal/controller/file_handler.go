@@ -185,7 +185,7 @@ func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.Comp
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param logo formData file true "Upload your logo file"
-// @Success 200 {object} model.Company "Successfully upload logo"
+// @Success 200 {object} model.CompanyUser "Successfully upload logo"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
@@ -222,7 +222,7 @@ func (jc *JobController) UploadLogo(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param banner formData file true "Upload your banner file"
-// @Success 200 {object} model.Company "Successfully upload banner"
+// @Success 200 {object} model.CompanyUser "Successfully upload banner"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"

@@ -179,8 +179,8 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param Info body loginInfo true "Credentials for login"
-// @Success 200 {object} companyResponse "If role is company"
-// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Success 200 {object} model.CompanyResponse "If role is company"
+// @Success 200 {object} model.CPSKResponse "If role is cpsk"
 // @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
 // @Failure 401 {object} utilities.ErrorResponse "Username not exist or password incorrect"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"

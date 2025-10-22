@@ -21,7 +21,7 @@ import (
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param status query string false "Only pending, unverified, or verified with case insensitive" example(pending+unverified)
-// @Success 200 {array} model.Company
+// @Success 200 {array} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
@@ -65,7 +65,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_id path string true "Company ID"
 // @Param status query string false "Status is case insensitive and allow only unverified, or verified (verified by default)" default(verified)
-// @Success 200 {object} model.Company
+// @Success 200 {object} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or Invalid request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"

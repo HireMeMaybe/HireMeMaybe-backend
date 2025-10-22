@@ -136,13 +136,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Login success",
                         "schema": {
-                            "$ref": "#/definitions/auth.companyResponse"
+                            "$ref": "#/definitions/model.CompanyResponse"
                         }
                     },
                     "201": {
                         "description": "Register success",
                         "schema": {
-                            "$ref": "#/definitions/auth.companyResponse"
+                            "$ref": "#/definitions/model.CompanyResponse"
                         }
                     },
                     "400": {
@@ -188,13 +188,65 @@ const docTemplate = `{
                     "200": {
                         "description": "Login success",
                         "schema": {
-                            "$ref": "#/definitions/auth.cpskResponse"
+                            "$ref": "#/definitions/model.CPSKResponse"
                         }
                     },
                     "201": {
                         "description": "Register success",
                         "schema": {
-                            "$ref": "#/definitions/auth.cpskResponse"
+                            "$ref": "#/definitions/model.CPSKResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Fail to receive token or fetch user info",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google/visitor": {
+            "post": {
+                "description": "Checks and creates user in the database, generates an access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Handles Google login authentication for visitor role, exchanges code for user",
+                "parameters": [
+                    {
+                        "description": "Authentication code from google",
+                        "name": "Code",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.code"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login success",
+                        "schema": {
+                            "$ref": "#/definitions/model.VisitorResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Register success",
+                        "schema": {
+                            "$ref": "#/definitions/model.VisitorResponse"
                         }
                     },
                     "400": {
@@ -240,7 +292,7 @@ const docTemplate = `{
                     "200": {
                         "description": "If role is cpsk",
                         "schema": {
-                            "$ref": "#/definitions/auth.cpskResponse"
+                            "$ref": "#/definitions/model.CPSKResponse"
                         }
                     },
                     "400": {
@@ -290,9 +342,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "If role is cpsk",
+                        "description": "If role is visitor",
                         "schema": {
-                            "$ref": "#/definitions/auth.cpskResponse"
+                            "$ref": "#/definitions/model.VisitorResponse"
                         }
                     },
                     "400": {
@@ -393,7 +445,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieve company profile",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
@@ -459,7 +511,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully overwrite",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
@@ -523,7 +575,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully upload banner",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
@@ -599,7 +651,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully upload logo",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
@@ -671,11 +723,11 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieve company profile",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
-                        "description": "Invalid authorization header\"S",
+                        "description": "Invalid authorization header",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -737,11 +789,11 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieve company profile",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
-                        "description": "Invalid authorization header\"S",
+                        "description": "Invalid authorization header",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }
@@ -1067,7 +1119,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Company"
+                                "$ref": "#/definitions/model.CompanyUser"
                             }
                         }
                     },
@@ -1896,7 +1948,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Company"
+                            "$ref": "#/definitions/model.CompanyUser"
                         }
                     },
                     "400": {
@@ -1936,31 +1988,12 @@ const docTemplate = `{
     "definitions": {
         "auth.code": {
             "type": "object",
+            "required": [
+                "code"
+            ],
             "properties": {
                 "code": {
                     "type": "string"
-                }
-            }
-        },
-        "auth.companyResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/model.Company"
-                }
-            }
-        },
-        "auth.cpskResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/model.CPSKUser"
                 }
             }
         },
@@ -2039,7 +2072,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "company": {
-                    "$ref": "#/definitions/model.Company"
+                    "$ref": "#/definitions/model.CompanyUser"
                 },
                 "confidence": {
                     "type": "string"
@@ -2165,6 +2198,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.CPSKResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.CPSKUser"
+                }
+            }
+        },
         "model.CPSKUser": {
             "type": "object",
             "properties": {
@@ -2204,7 +2248,18 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Company": {
+        "model.CompanyResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.CompanyUser"
+                }
+            }
+        },
+        "model.CompanyUser": {
             "type": "object",
             "properties": {
                 "banner_id": {
@@ -2371,6 +2426,34 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "model.VisitorResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.VisitorUser"
+                }
+            }
+        },
+        "model.VisitorUser": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.User"
                 }
             }
         },
