@@ -135,7 +135,7 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 	}
 
 	if rawCompany != "" || rawIndustry != "" {
-		result = result.Preload("Company").Joins("JOIN companies ON companies.user_id = job_posts.company_id")
+		result = result.Preload("CompanyUser").Joins("JOIN companies ON companies.user_id = job_posts.company_user_id")
 	}
 
 	if rawCompany != "" {
@@ -184,7 +184,7 @@ func (jc *JobController) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 
 	job := model.JobPost{}
-	if err := jc.DB.Preload("Company").Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Preload("CompanyUser").Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
