@@ -23,26 +23,25 @@ import (
 type OauthLoginHandler struct {
 	DB          *database.DBinstanceStruct
 	OauthConfig *oauth2.Config
+	UserInfoEndpoint string
 }
 
 type code struct {
-	Code string `json:"code"`
+	Code string `json:"code" binding:"required"`
 }
 
 // NewOauthLoginHandler creates a new instance of OauthLoginHandler with the provided database connection and OAuth2 configuration.
-func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config) *OauthLoginHandler {
+func NewOauthLoginHandler(db *database.DBinstanceStruct, oauthConfig *oauth2.Config, userInfoEndpoint string) *OauthLoginHandler {
 	return &OauthLoginHandler{
 		DB:          db,
 		OauthConfig: oauthConfig,
+		UserInfoEndpoint: userInfoEndpoint,
 	}
 }
 
 func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, error) {
 
-	var code struct {
-		Code string `json:"code" binding:"required"`
-	}
-
+	var code code
 	var uInfo model.GoogleUserInfo
 
 	// check does body has code
@@ -66,7 +65,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 	}
 
 	client := h.OauthConfig.Client(context.Background(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	resp, err := client.Get(h.UserInfoEndpoint)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
@@ -89,7 +88,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 	return uInfo, nil
 }
 
-func loginOrRegisterUser(userModel model.UserModel, h *OauthLoginHandler, uinfo model.GoogleUserInfo, c *gin.Context) {
+func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo model.GoogleUserInfo, c *gin.Context) {
 
 	var user model.User
 	respStatus := http.StatusOK
@@ -98,7 +97,7 @@ func loginOrRegisterUser(userModel model.UserModel, h *OauthLoginHandler, uinfo 
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
-    
+
 		userModel.FillGoogleInfo(uinfo)
 
 		if err := h.DB.Create(userModel).Error; err != nil {
@@ -110,6 +109,7 @@ func loginOrRegisterUser(userModel model.UserModel, h *OauthLoginHandler, uinfo 
 
 		respStatus = http.StatusCreated
 	case err == nil:
+
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(userModel).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
@@ -139,81 +139,4 @@ func loginOrRegisterUser(userModel model.UserModel, h *OauthLoginHandler, uinfo 
 	resp := userModel.GetLoginResponse(accessToken)
 
 	c.JSON(respStatus, resp)
-}
-
-
-// CPSKGoogleLoginHandler handles Google login authentication for cpsk role, exchanges code for user
-// info, checks and creates user in the database, generates an access token, and returns user
-// information with the access token.
-// @Summary Handles Google login authentication for cpsk role, exchanges code for user
-// @Description Checks and creates user in the database, generates an access token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param Code body code true "Authentication code from google"
-// @Success 200 {object} model.CPSKResponse "Login success"
-// @Success 201 {object} model.CPSKResponse "Register success"
-// @Failure 400 {object} utilities.ErrorResponse "Fail to receive token or fetch user info"
-// @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /auth/google/cpsk [post]
-func (h *OauthLoginHandler) CPSKGoogleLoginHandler(c *gin.Context) {
-
-	uInfo, err := h.getUserInfo(c)
-	if err != nil {
-		return
-	}
-
-	loginOrRegisterUser(&model.CPSKUser{}, h, uInfo, c)
-}
-
-
-// CompanyGoogleLoginHandler handles Google login authentication for company role, exchanges code for user
-// info, checks and creates user in the database, generates an access token, and returns user
-// information with the access token.
-// @Summary Handles Google login authentication for company role, exchanges code for user
-// @Description Checks and creates user in the database, generates an access token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param Code body code true "Authentication code from google"
-// @Success 200 {object} model.CompanyResponse "Login success"
-// @Success 201 {object} model.CompanyResponse "Register success"
-// @Failure 400 {object} utilities.ErrorResponse "Fail to receive token or fetch user info"
-// @Failure 500 {object} utilities.ErrorResponse "Database error"
-// @Router /auth/google/company [post]
-func (h *OauthLoginHandler) CompanyGoogleLoginHandler(c *gin.Context) {
-
-	uInfo, err := h.getUserInfo(c)
-	if err != nil {
-		return
-	}
-
-	loginOrRegisterUser(&model.CompanyUser{}, h, uInfo, c)
-}
-
-
-func (h *OauthLoginHandler) VisitorGoogleLoginHandler(c *gin.Context) {
-
-	uInfo, err := h.getUserInfo(c)
-	if err != nil {
-		return
-	}
-
-	loginOrRegisterUser(&model.VisitorUser{}, h, uInfo, c)
-}
-
-
-// Callback function in Go retrieves a query parameter named "code" from the request and returns it
-// in a JSON response.
-// @Summary Retrieves a query parameter named "code" from the request and returns it in a JSON response
-// @Tags Auth
-// @Produce json
-// @Param Code query string false "Authentication code from google"
-// @Success 200 {object} code
-// @Router /auth/google/callback [get]
-func (h *OauthLoginHandler) Callback(c *gin.Context) {
-	aCode := c.Query("code")
-	c.JSON(http.StatusOK, code{
-		Code: aCode,
-	})
 }

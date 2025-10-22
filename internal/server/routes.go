@@ -44,7 +44,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
 	}
 
-	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth)
+	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v2/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
 	controller := controller.NewJobController(s.DB)
 
