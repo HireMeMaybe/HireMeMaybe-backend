@@ -79,7 +79,6 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 			companyRoute := needAuth.Group("/company")
 			{
-				companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
 				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
 				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
 				companyRoute.PATCH("profile", controller.EditCompanyProfile)
