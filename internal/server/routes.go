@@ -63,6 +63,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		{
 			authRoute.POST("google/cpsk", gAuth.CPSKGoogleLoginHandler)
 			authRoute.POST("google/company", gAuth.CompanyGoogleLoginHandler)
+			authRoute.POST("google/visitor", gAuth.VisitorGoogleLoginHandler)
 			authRoute.GET("google/callback", gAuth.Callback)
 
 			authRoute.POST("login", lAuth.LocalLoginHandler)
@@ -88,7 +89,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				companyRoute.POST("ai-verify", controller.AIVerifyCompany)
 			}
 
-			// Job post endpoints (company only)
+			// Job post endpoints (company only) 
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
 				jobPostRoute.GET("/:id", controller.GetPostByID)
