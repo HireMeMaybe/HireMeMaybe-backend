@@ -111,6 +111,12 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 	case err == nil:
 
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(userModel).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+					Error: "You already registered as a different user type",
+				})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
 			})
