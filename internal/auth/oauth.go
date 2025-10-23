@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -72,6 +73,18 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 		})
 		return uInfo, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		// Read response body for better error message
+		var bodyBytes []byte
+		if resp.Body != nil {
+			bodyBytes, _ = io.ReadAll(resp.Body)
+		}
+		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to fetch user information: status=%d body=%s", resp.StatusCode, string(bodyBytes)),
+		})
+		// return a clear error so caller doesn't continue with empty user info
+		return uInfo, fmt.Errorf("userinfo endpoint returned status %d", resp.StatusCode)
+	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			log.Fatal("Failed to close response body")
@@ -85,10 +98,15 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 		})
 		return uInfo, err
 	}
+	// defensive logging: ensure GID is present
+	if uInfo.GID == "" {
+		log.Printf("warning: decoded Google user info has empty GID: %+v", uInfo)
+	}
 	return uInfo, nil
 }
 
 func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo model.GoogleUserInfo, c *gin.Context) {
+	log.Printf("User Info: %+v\n", uinfo)
 
 	var user model.User
 	respStatus := http.StatusOK
