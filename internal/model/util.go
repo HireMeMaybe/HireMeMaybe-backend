@@ -8,12 +8,13 @@ func init() {
 		MigrateAble,
 		&User{},
 		&CPSKUser{},
-		&Company{},
+		&CompanyUser{},
 		&File{},
 		&JobPost{},
 		&Application{},
 		&ApplicationAnswer{},
 		&ReportOnPost{},
 		&ReportOnUser{},
+		&VisitorUser{},
 	)
 }

@@ -35,7 +35,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	// Ensure that user is a verified company
-	var companyUser model.Company
+	var companyUser model.CompanyUser
 	if err := jc.DB.Where("user_id = ?", user.ID.String()).First(&companyUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, utilities.ErrorResponse{Error: "Only company users can create job posts"})
@@ -65,7 +65,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 	}
 
 	// save job post
-	jobPost.CompanyID = user.ID
+	jobPost.CompanyUserID = user.ID
 	if err := jc.DB.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to create job post: ", err),
@@ -135,7 +135,7 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 	}
 
 	if rawCompany != "" || rawIndustry != "" {
-		result = result.Preload("Company").Joins("JOIN companies ON companies.user_id = job_posts.company_id")
+		result = result.Preload("CompanyUser").Joins("JOIN companies ON companies.user_id = job_posts.company_user_id")
 	}
 
 	if rawCompany != "" {
@@ -184,7 +184,7 @@ func (jc *JobController) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 
 	job := model.JobPost{}
-	if err := jc.DB.Preload("Company").Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.Preload("CompanyUser").Where("id = ?", id).First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
@@ -238,7 +238,7 @@ func (jc *JobController) EditJobPost(c *gin.Context) {
 
 	// Verify ownership: the job post must belong to the requesting company user
 	// Compare as strings to avoid type mismatches
-	if job.CompanyID.String() != user.ID.String() {
+	if job.CompanyUserID.String() != user.ID.String() {
 		c.JSON(http.StatusForbidden, utilities.ErrorResponse{
 			Error: "You are not allowed to edit this job post",
 		})
@@ -305,7 +305,7 @@ func (jc *JobController) DeleteJobPost(c *gin.Context) {
 		return
 	}
 
-	if job.CompanyID.String() != user.ID.String() {
+	if job.CompanyUserID.String() != user.ID.String() {
 		// Allow admins to bypass ownership check
 		if user.Role != model.RoleAdmin {
 			c.JSON(http.StatusForbidden, utilities.ErrorResponse{

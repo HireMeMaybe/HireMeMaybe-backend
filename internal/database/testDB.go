@@ -31,8 +31,8 @@ var (
 	TestUserCompany2 m.User
 	TestCPSK1        m.CPSKUser
 	TestCPSK2        m.CPSKUser
-	TestCompany1     m.Company
-	TestCompany2     m.Company
+	TestCompany1     m.CompanyUser
+	TestCompany2     m.CompanyUser
 
 	// Add exported plain password
 	TestSeedPassword = "SeedPass123!"
@@ -203,7 +203,7 @@ func seedTestData(db *DBinstanceStruct) error {
 		return err
 	}
 
-	companies := []m.Company{
+	companies := []m.CompanyUser{
 		{
 			UserID:         TestUserCompany1.ID,
 			VerifiedStatus: m.StatusVerified,
@@ -247,7 +247,7 @@ func seedTestData(db *DBinstanceStruct) error {
 
 		jobPosts := []m.JobPost{
 			{
-				CompanyID: TestCompany1.UserID,
+				CompanyUserID: TestCompany1.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Backend Engineer Intern",
 					Desc:     "Work on Go microservices and database layers.",
@@ -261,7 +261,7 @@ func seedTestData(db *DBinstanceStruct) error {
 				},
 			},
 			{
-				CompanyID: TestCompany1.UserID,
+				CompanyUserID: TestCompany1.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Frontend Developer Intern",
 					Desc:     "Assist building component library in React.",
@@ -275,7 +275,7 @@ func seedTestData(db *DBinstanceStruct) error {
 				},
 			},
 			{
-				CompanyID: TestCompany2.UserID,
+				CompanyUserID: TestCompany2.UserID,
 				EditableJobPostInfo: m.EditableJobPostInfo{
 					Title:    "Data Analyst Intern",
 					Desc:     "Support data cleansing and dashboard creation.",
@@ -336,7 +336,7 @@ func loadTestData(db *DBinstanceStruct) error {
 	}
 
 	// Load Company profiles
-	if err := db.Where("user_id IN ?", []uuid.UUID{TestUserCompany1.ID, TestUserCompany2.ID}).Find(&[]*m.Company{&TestCompany1, &TestCompany2}).Error; err != nil {
+	if err := db.Where("user_id IN ?", []uuid.UUID{TestUserCompany1.ID, TestUserCompany2.ID}).Find(&[]*m.CompanyUser{&TestCompany1, &TestCompany2}).Error; err != nil {
 		_ = db.First(&TestCompany1, "user_id = ?", TestUserCompany1.ID).Error
 		_ = db.First(&TestCompany2, "user_id = ?", TestUserCompany2.ID).Error
 	}

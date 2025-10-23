@@ -467,7 +467,7 @@ func TestVerifyCompanyWithAI_ValidCompany(t *testing.T) {
 	}
 
 	// Create a test company with professional information
-	testCompany := model.Company{
+	testCompany := model.CompanyUser{
 		EditableCompanyInfo: model.EditableCompanyInfo{
 			Name:     "TechStart Solutions Inc",
 			Overview: "We are a leading software development company specializing in enterprise solutions, cloud computing, and AI integration. Our team of experienced developers works with Fortune 500 companies.",
@@ -499,7 +499,7 @@ func TestVerifyCompanyWithAI_TestCompany(t *testing.T) {
 	}
 
 	// Create a test company with obvious test data
-	testCompany := model.Company{
+	testCompany := model.CompanyUser{
 		EditableCompanyInfo: model.EditableCompanyInfo{
 			Name:     "Test Company",
 			Overview: "This is a test company for testing purposes.",

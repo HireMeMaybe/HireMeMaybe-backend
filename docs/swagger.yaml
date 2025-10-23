@@ -4,20 +4,8 @@ definitions:
     properties:
       code:
         type: string
-    type: object
-  auth.companyResponse:
-    properties:
-      access_token:
-        type: string
-      user:
-        $ref: '#/definitions/model.Company'
-    type: object
-  auth.cpskResponse:
-    properties:
-      access_token:
-        type: string
-      user:
-        $ref: '#/definitions/model.CPSKUser'
+    required:
+    - code
     type: object
   auth.loginInfo:
     properties:
@@ -70,7 +58,7 @@ definitions:
       ai_decision:
         type: string
       company:
-        $ref: '#/definitions/model.Company'
+        $ref: '#/definitions/model.CompanyUser'
       confidence:
         type: string
       reasoning:
@@ -153,6 +141,13 @@ definitions:
       year_of_experience:
         type: integer
     type: object
+  model.CPSKResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.CPSKUser'
+    type: object
   model.CPSKUser:
     properties:
       applications:
@@ -179,7 +174,14 @@ definitions:
       year:
         type: string
     type: object
-  model.Company:
+  model.CompanyResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.CompanyUser'
+    type: object
+  model.CompanyUser:
     properties:
       banner_id:
         type: integer
@@ -291,6 +293,24 @@ definitions:
       username:
         type: string
     type: object
+  model.VisitorResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/model.VisitorUser'
+    type: object
+  model.VisitorUser:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
   utilities.ErrorResponse:
     properties:
       error:
@@ -303,10 +323,6 @@ definitions:
     type: object
 info:
   contact: {}
-  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
-    app
-  title: HireMeMaybe API service
-  version: "1.0"
 paths:
   /application:
     post:
@@ -388,11 +404,11 @@ paths:
         "200":
           description: Login success
           schema:
-            $ref: '#/definitions/auth.companyResponse'
+            $ref: '#/definitions/model.CompanyResponse'
         "201":
           description: Register success
           schema:
-            $ref: '#/definitions/auth.companyResponse'
+            $ref: '#/definitions/model.CompanyResponse'
         "400":
           description: Fail to receive token or fetch user info
           schema:
@@ -423,11 +439,11 @@ paths:
         "200":
           description: Login success
           schema:
-            $ref: '#/definitions/auth.cpskResponse'
+            $ref: '#/definitions/model.CPSKResponse'
         "201":
           description: Register success
           schema:
-            $ref: '#/definitions/auth.cpskResponse'
+            $ref: '#/definitions/model.CPSKResponse'
         "400":
           description: Fail to receive token or fetch user info
           schema:
@@ -438,6 +454,41 @@ paths:
             $ref: '#/definitions/utilities.ErrorResponse'
       summary: Handles Google login authentication for cpsk role, exchanges code for
         user
+      tags:
+      - Auth
+  /auth/google/visitor:
+    post:
+      consumes:
+      - application/json
+      description: Checks and creates user in the database, generates an access token
+      parameters:
+      - description: Authentication code from google
+        in: body
+        name: Code
+        required: true
+        schema:
+          $ref: '#/definitions/auth.code'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login success
+          schema:
+            $ref: '#/definitions/model.VisitorResponse'
+        "201":
+          description: Register success
+          schema:
+            $ref: '#/definitions/model.VisitorResponse'
+        "400":
+          description: Fail to receive token or fetch user info
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Handles Google login authentication for visitor role, exchanges code
+        for user
       tags:
       - Auth
   /auth/login:
@@ -458,7 +509,7 @@ paths:
         "200":
           description: If role is cpsk
           schema:
-            $ref: '#/definitions/auth.cpskResponse'
+            $ref: '#/definitions/model.CPSKResponse'
         "400":
           description: Info provided not met the condition
           schema:
@@ -491,9 +542,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: If role is cpsk
+          description: If role is visitor
           schema:
-            $ref: '#/definitions/auth.cpskResponse'
+            $ref: '#/definitions/model.VisitorResponse'
         "400":
           description: Info provided not met the condition
           schema:
@@ -525,9 +576,9 @@ paths:
         "200":
           description: Successfully retrieve company profile
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
-          description: Invalid authorization header"S
+          description: Invalid authorization header
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
@@ -605,7 +656,7 @@ paths:
         "200":
           description: Successfully retrieve company profile
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
           description: Invalid authorization header
           schema:
@@ -651,7 +702,7 @@ paths:
         "200":
           description: Successfully overwrite
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
           description: Invalid authorization header or request body
           schema:
@@ -691,9 +742,9 @@ paths:
         "200":
           description: Successfully retrieve company profile
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
-          description: Invalid authorization header"S
+          description: Invalid authorization header
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
         "401":
@@ -739,7 +790,7 @@ paths:
         "200":
           description: Successfully upload banner
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
           description: Invalid authorization header
           schema:
@@ -791,7 +842,7 @@ paths:
         "200":
           description: Successfully upload logo
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
           description: Invalid authorization header
           schema:
@@ -1019,7 +1070,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Company'
+              $ref: '#/definitions/model.CompanyUser'
             type: array
         "400":
           description: Invalid authorization header
@@ -1586,7 +1637,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Company'
+            $ref: '#/definitions/model.CompanyUser'
         "400":
           description: Invalid authorization header, or Invalid request body
           schema:

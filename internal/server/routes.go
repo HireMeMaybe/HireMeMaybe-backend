@@ -44,7 +44,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
 	}
 
-	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth)
+	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
 	controller := controller.NewJobController(s.DB)
 
@@ -63,6 +63,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		{
 			authRoute.POST("google/cpsk", gAuth.CPSKGoogleLoginHandler)
 			authRoute.POST("google/company", gAuth.CompanyGoogleLoginHandler)
+			authRoute.POST("google/visitor", gAuth.VisitorGoogleLoginHandler)
 			authRoute.GET("google/callback", gAuth.Callback)
 
 			authRoute.POST("login", lAuth.LocalLoginHandler)
@@ -79,7 +80,6 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 			companyRoute := needAuth.Group("/company")
 			{
-				companyRoute.GET("profile/:company_id", controller.GetCompanyByID)
 				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
 				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
 				companyRoute.PATCH("profile", controller.EditCompanyProfile)
@@ -89,7 +89,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				companyRoute.POST("ai-verify", controller.AIVerifyCompany)
 			}
 
-			// Job post endpoints (company only)
+			// Job post endpoints (company only) 
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
 				jobPostRoute.GET("/:id", controller.GetPostByID)
@@ -121,8 +121,8 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needAdmin.GET("get-companies", controller.GetCompanies)
 				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
 				needAdmin.PUT("punish/:user_id", controller.PunishUser)
-			} 
-			
+			}
+
 			// CPSK routes: apply role check once for all CPSK endpoints
 			needCPSK := needAuth.Group("")
 			{

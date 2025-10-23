@@ -21,7 +21,7 @@ import (
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param status query string false "Only pending, unverified, or verified with case insensitive" example(pending+unverified)
-// @Success 200 {array} model.Company
+// @Success 200 {array} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
@@ -39,7 +39,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 		}
 	}
 
-	var companyUser []model.Company
+	var companyUser []model.CompanyUser
 
 	err := jc.DB.
 		Preload("User").
@@ -65,7 +65,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_id path string true "Company ID"
 // @Param status query string false "Status is case insensitive and allow only unverified, or verified (verified by default)" default(verified)
-// @Success 200 {object} model.Company
+// @Success 200 {object} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or Invalid request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
@@ -93,7 +93,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 		return
 	}
 
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.Preload("User").Where("user_id = ?", companyID).First(&company).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -124,10 +124,10 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 }
 
 type aiVerificationResponse struct {
-	Company    model.Company `json:"company"`
-	AIDecision string        `json:"ai_decision"`
-	Reasoning  string        `json:"reasoning"`
-	Confidence string        `json:"confidence"`
+	Company    model.CompanyUser `json:"company"`
+	AIDecision string            `json:"ai_decision"`
+	Reasoning  string            `json:"reasoning"`
+	Confidence string            `json:"confidence"`
 }
 
 // AIVerifyCompany uses AI to analyze company information and automatically verify or reject
@@ -148,7 +148,7 @@ func (jc *JobController) AIVerifyCompany(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	// Fetch company information with all necessary preloads
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.
 		Preload("User").
 		Preload("Logo").

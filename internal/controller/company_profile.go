@@ -23,7 +23,7 @@ type editCompanyUser struct {
 // @Tags Company
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Success 200 {object} model.Company "Successfully retrieve company profile"
+// @Success 200 {object} model.CompanyUser "Successfully retrieve company profile"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
@@ -32,7 +32,7 @@ type editCompanyUser struct {
 func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database.
 	if err := jc.DB.Preload("User").
@@ -59,7 +59,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_profile body editCompanyUser true "Company info to be written"
-// @Success 200 {object} model.Company "Successfully overwrite"
+// @Success 200 {object} model.CompanyUser "Successfully overwrite"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header or request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
@@ -68,7 +68,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database
 	if err := jc.DB.
@@ -112,8 +112,8 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_id path string true "ID of company"
-// @Success 200 {object} model.Company "Successfully retrieve company profile"
-// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"S
+// @Success 200 {object} model.CompanyUser "Successfully retrieve company profile"
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 404 {object} utilities.ErrorResponse "Company not exist"
@@ -123,7 +123,7 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 func (jc *JobController) GetCompanyByID(c *gin.Context) {
 	companyID := c.Param("company_id")
 
-	company := model.Company{}
+	company := model.CompanyUser{}
 
 	// Retrieve company profile from database with JobPost preloaded.
 	if err := jc.DB.Preload("User").
