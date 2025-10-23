@@ -1352,6 +1352,49 @@ paths:
       tags:
       - Jobpost
   /punish/{user_id}:
+    delete:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of user to be unpunished
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully remove punishment record from user
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid authorization header, request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as Admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Remove punishment record from user
+      tags:
+      - Admin
     put:
       consumes:
       - application/json

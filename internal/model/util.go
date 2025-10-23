@@ -15,5 +15,6 @@ func init() {
 		&ApplicationAnswer{},
 		&ReportOnPost{},
 		&ReportOnUser{},
+		&PunishmentStruct{},
 	)
 }
