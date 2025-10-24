@@ -8,7 +8,7 @@ func init() {
 		MigrateAble,
 		&User{},
 		&CPSKUser{},
-		&Company{},
+		&CompanyUser{},
 		&File{},
 		&JobPost{},
 		&Application{},
@@ -16,5 +16,6 @@ func init() {
 		&ReportOnPost{},
 		&ReportOnUser{},
 		&PunishmentStruct{},
+		&VisitorUser{},
 	)
 }

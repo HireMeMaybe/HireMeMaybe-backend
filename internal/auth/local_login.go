@@ -37,6 +37,11 @@ type loginInfo struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type adminResponse struct {
+	User        model.User `json:"user"`
+	AccessToken string     `json:"access_token"`
+}
+
 // LocalRegisterHandler function handles local registration by receiving username and password
 // do nothing if username already exist in the database
 // do nothing if password is shorter than 8 characters
@@ -46,8 +51,9 @@ type loginInfo struct {
 // @Accept json
 // @Produce json
 // @Param Info body registerInfo true "role can be only 'cpsk' or 'company'"
-// @Success 200 {object} companyResponse "If role is company"
-// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Success 200 {object} model.CompanyResponse "If role is company"
+// @Success 200 {object} model.CPSKResponse "If role is cpsk"
+// @Success 200 {object} model.VisitorResponse "If role is visitor"
 // @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
 // @Router /auth/register [post]
@@ -120,7 +126,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, cpskResponse{
+		c.JSON(http.StatusCreated, model.CPSKResponse{
 			User:        cpskUser,
 			AccessToken: accessToken,
 		})
@@ -130,7 +136,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			verified = model.StatusVerified
 		}
 
-		companyUser := model.Company{
+		companyUser := model.CompanyUser{
 			User: model.User{
 				Username: info.Username,
 				Password: hashedPassword,
@@ -153,7 +159,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, companyResponse{
+		c.JSON(http.StatusCreated, model.CompanyResponse{
 			User:        companyUser,
 			AccessToken: accessToken,
 		})
@@ -173,8 +179,8 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param Info body loginInfo true "Credentials for login"
-// @Success 200 {object} companyResponse "If role is company"
-// @Success 200 {object} cpskResponse "If role is cpsk"
+// @Success 200 {object} model.CompanyResponse "If role is company"
+// @Success 200 {object} model.CPSKResponse "If role is cpsk"
 // @Failure 400 {object} utilities.ErrorResponse "Info provided not met the condition"
 // @Failure 401 {object} utilities.ErrorResponse "Username not exist or password incorrect"
 // @Failure 500 {object} utilities.ErrorResponse "Database or password hashing error"
@@ -241,12 +247,12 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, cpskResponse{
+		c.JSON(http.StatusOK, model.CPSKResponse{
 			User:        cpskUser,
 			AccessToken: accessToken,
 		})
 	case model.RoleCompany:
-		var companyUser model.Company
+		var companyUser model.CompanyUser
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
@@ -262,7 +268,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, companyResponse{
+		c.JSON(http.StatusOK, model.CompanyResponse{
 			User:        companyUser,
 			AccessToken: accessToken,
 		})
@@ -275,7 +281,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, userResponse{
+		c.JSON(http.StatusOK, adminResponse{
 			User:        user,
 			AccessToken: accessToken,
 		})

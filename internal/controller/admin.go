@@ -52,7 +52,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 			Where("punish_end > ?", time.Now())
 	}
 
-	var companyUser []model.Company
+	var companyUser []model.CompanyUser
 
 	result = result.Find(&companyUser)
 
@@ -144,7 +144,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 		return
 	}
 
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.Preload("User").Where("user_id = ?", companyID).First(&company).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):

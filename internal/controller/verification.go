@@ -12,10 +12,10 @@ import (
 )
 
 type aiVerificationResponse struct {
-	Company    model.Company `json:"company"`
-	AIDecision string        `json:"ai_decision"`
-	Reasoning  string        `json:"reasoning"`
-	Confidence string        `json:"confidence"`
+	Company    model.CompanyUser `json:"company"`
+	AIDecision string            `json:"ai_decision"`
+	Reasoning  string            `json:"reasoning"`
+	Confidence string            `json:"confidence"`
 }
 
 // AIVerifyCompany uses AI to analyze company information and automatically verify or reject
@@ -36,7 +36,7 @@ func (jc *JobController) AIVerifyCompany(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	// Fetch company information with all necessary preloads
-	var company model.Company
+	var company model.CompanyUser
 	err := jc.DB.
 		Preload("User").
 		Preload("Logo").

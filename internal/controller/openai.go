@@ -1,58 +1,58 @@
 package controller
 
 import (
-    "HireMeMaybe-backend/internal/model"
-    "bytes"
-    "encoding/json"
-    "fmt"
-    "io"
-    "net/http"
-    "os"
+	"HireMeMaybe-backend/internal/model"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 )
 
 // VerificationResult represents the AI's decision on company verification
 type VerificationResult struct {
-    ShouldVerify bool   `json:"should_verify"`
-    Reasoning    string `json:"reasoning"`
-    Confidence   string `json:"confidence"` // High, Medium, Low
+	ShouldVerify bool   `json:"should_verify"`
+	Reasoning    string `json:"reasoning"`
+	Confidence   string `json:"confidence"` // High, Medium, Low
 }
 
 // OpenAIRequest represents the request structure for OpenAI API
 type OpenAIRequest struct {
-    Model    string    `json:"model"`
-    Messages []Message `json:"messages"`
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
 }
 
 // Message represents a chat message
 type Message struct {
-    Role    string `json:"role"`
-    Content string `json:"content"`
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 // OpenAIResponse represents the response from OpenAI API
 type OpenAIResponse struct {
-    Choices []struct {
-        Message struct {
-            Content string `json:"content"`
-        } `json:"message"`
-    } `json:"choices"`
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
 }
 
 // VerifyCompanyWithAI analyzes company information and determines if it should be verified
-func VerifyCompanyWithAI(company model.Company) (*VerificationResult, error) {
-    apiKey := os.Getenv("OPENAI_API_KEY")
-    model := os.Getenv("OPENAI_MODEL")
+func VerifyCompanyWithAI(company model.CompanyUser) (*VerificationResult, error) {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	model := os.Getenv("OPENAI_MODEL")
 
-    if apiKey == "" {
-        return nil, fmt.Errorf("OPENAI_API_KEY is not configured")
-    }
+	if apiKey == "" {
+		return nil, fmt.Errorf("OPENAI_API_KEY is not configured")
+	}
 
-    if model == "" {
-        model = "gpt-4" // Default model
-    }
+	if model == "" {
+		model = "gpt-4" // Default model
+	}
 
-    // Construct the prompt with company information
-    prompt := fmt.Sprintf(`You are an expert company verification analyst. Analyze the following company information and determine if this company should be verified as legitimate.
+	// Construct the prompt with company information
+	prompt := fmt.Sprintf(`You are an expert company verification analyst. Analyze the following company information and determine if this company should be verified as legitimate.
 		Company Information:
 		- Company Name: %s
 		- Industry: %s
@@ -106,98 +106,98 @@ func VerifyCompanyWithAI(company model.Company) (*VerificationResult, error) {
 		"reasoning": "your detailed reasoning focusing on company name quality and overview professionalism",
 		"confidence": "High" or "Medium" or "Low"
 		}`,
-        company.Name,
-        company.Industry,
-        getStringValue(company.Size),
-        company.Overview,
-        extractEmailDomain(company.User.Email),
-        getStringValue(company.User.Tel),
-    )
+		company.Name,
+		company.Industry,
+		getStringValue(company.Size),
+		company.Overview,
+		extractEmailDomain(company.User.Email),
+		getStringValue(company.User.Tel),
+	)
 
-    // Prepare the request
-    requestBody := OpenAIRequest{
-        Model: model,
-        Messages: []Message{
-            {
-                Role:    "system",
-                Content: "You are a company verification expert. You must respond only with valid JSON.",
-            },
-            {
-                Role:    "user",
-                Content: prompt,
-            },
-        },
-    }
+	// Prepare the request
+	requestBody := OpenAIRequest{
+		Model: model,
+		Messages: []Message{
+			{
+				Role:    "system",
+				Content: "You are a company verification expert. You must respond only with valid JSON.",
+			},
+			{
+				Role:    "user",
+				Content: prompt,
+			},
+		},
+	}
 
-    jsonData, err := json.Marshal(requestBody)
-    if err != nil {
-        return nil, fmt.Errorf("failed to marshal request: %w", err)
-    }
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
 
-    req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonData))
-    if err != nil {
-        return nil, fmt.Errorf("failed to create request: %w", err)
-    }
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
 
-    req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return nil, fmt.Errorf("failed to call OpenAI API: %w", err)
-    }
-    defer func() {
-        if cerr := resp.Body.Close(); cerr != nil {
-            fmt.Printf("warning: failed to close response body: %v\n", cerr)
-        }
-    }()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call OpenAI API: %w", err)
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("warning: failed to close response body: %v\n", cerr)
+		}
+	}()
 
-    if resp.StatusCode != http.StatusOK {
-        body, _ := io.ReadAll(resp.Body)
-        return nil, fmt.Errorf("OpenAI API error (status %d): %s", resp.StatusCode, string(body))
-    }
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("OpenAI API error (status %d): %s", resp.StatusCode, string(body))
+	}
 
-    var openAIResp OpenAIResponse
-    if err := json.NewDecoder(resp.Body).Decode(&openAIResp); err != nil {
-        return nil, fmt.Errorf("failed to decode response: %w", err)
-    }
+	var openAIResp OpenAIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&openAIResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
 
-    if len(openAIResp.Choices) == 0 {
-        return nil, fmt.Errorf("no response from OpenAI")
-    }
+	if len(openAIResp.Choices) == 0 {
+		return nil, fmt.Errorf("no response from OpenAI")
+	}
 
-    // Parse the AI's response
-    content := openAIResp.Choices[0].Message.Content
-    var result VerificationResult
-    if err := json.Unmarshal([]byte(content), &result); err != nil {
-        return nil, fmt.Errorf("failed to parse AI response: %w (response: %s)", err, content)
-    }
+	// Parse the AI's response
+	content := openAIResp.Choices[0].Message.Content
+	var result VerificationResult
+	if err := json.Unmarshal([]byte(content), &result); err != nil {
+		return nil, fmt.Errorf("failed to parse AI response: %w (response: %s)", err, content)
+	}
 
-    return &result, nil
+	return &result, nil
 }
 
 // Helper function to safely get string value from pointer
 func getStringValue(ptr *string) string {
-    if ptr == nil {
-        return "Not provided"
-    }
-    return *ptr
+	if ptr == nil {
+		return "Not provided"
+	}
+	return *ptr
 }
 
 // Helper function to extract domain from email
 func extractEmailDomain(emailPtr *string) string {
-    if emailPtr == nil {
-        return "Not provided"
-    }
-    email := *emailPtr
-    for i := len(email) - 1; i >= 0; i-- {
-        if email[i] == '@' {
-            if i+1 < len(email) {
-                return email[i+1:]
-            }
-            break
-        }
-    }
-    return email
+	if emailPtr == nil {
+		return "Not provided"
+	}
+	email := *emailPtr
+	for i := len(email) - 1; i >= 0; i-- {
+		if email[i] == '@' {
+			if i+1 < len(email) {
+				return email[i+1:]
+			}
+			break
+		}
+	}
+	return email
 }
