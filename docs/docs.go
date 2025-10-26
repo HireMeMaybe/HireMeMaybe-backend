@@ -1107,14 +1107,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "example": "pending+unverified",
+                        "example": "pending unverified",
                         "description": "Only pending, unverified, or verified with case insensitive",
                         "name": "verify",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "example": "ban+suspend",
+                        "example": "ban suspend",
                         "description": "Only ban, or suspend with case insensitive",
                         "name": "punishment",
                         "in": "query"
@@ -1178,7 +1178,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "example": "ban+suspend",
+                        "example": "ban suspend",
                         "description": "Only ban, or suspend with case insensitive",
                         "name": "punishment",
                         "in": "query"

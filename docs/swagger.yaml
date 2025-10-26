@@ -323,6 +323,10 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
+    app
+  title: HireMeMaybe API service
+  version: "1.0"
 paths:
   /application:
     post:
@@ -1059,12 +1063,12 @@ paths:
         required: true
         type: string
       - description: Only pending, unverified, or verified with case insensitive
-        example: pending+unverified
+        example: pending unverified
         in: query
         name: verify
         type: string
       - description: Only ban, or suspend with case insensitive
-        example: ban+suspend
+        example: ban suspend
         in: query
         name: punishment
         type: string
@@ -1109,7 +1113,7 @@ paths:
         required: true
         type: string
       - description: Only ban, or suspend with case insensitive
-        example: ban+suspend
+        example: ban suspend
         in: query
         name: punishment
         type: string

@@ -20,9 +20,9 @@ import (
 // @Tags Admin
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param verify query string false "Only pending, unverified, or verified with case insensitive" example(pending+unverified)
-// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban+suspend)
-// @Success 200 {array} model.Company
+// @Param verify query string false "Only pending, unverified, or verified with case insensitive" example(pending unverified)
+// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban suspend)
+// @Success 200 {array} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
@@ -30,6 +30,7 @@ import (
 // @Router /get-companies [get]
 func (jc *JobController) GetCompanies(c *gin.Context) {
 	rawVerify := c.Query("verify")
+	fmt.Println(rawVerify)
 	rawPunishment := c.Query("punishment")
 
 	result := jc.DB.Preload("User").Preload("User.Punishment")
@@ -46,10 +47,10 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 		for i := range punishment {
 			punishment[i] = strings.ToLower(punishment[i])
 		}
-		result = result.Joins("JOIN users ON users.id = companies.user_id").
+		result = result.Joins("JOIN users ON users.id = company_users.user_id").
 			Joins("JOIN punishment_structs ON punishment_structs.id = users.punishment_id").
 			Where("punishment_type IN ?", punishment).
-			Where("punish_end > ?", time.Now())
+			Where("(punish_end > ? OR punish_end IS NULL)", time.Now())
 	}
 
 	var companyUser []model.CompanyUser
@@ -73,7 +74,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban+suspend)
+// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban suspend)
 // @Success 200 {array} model.CPSKUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -91,7 +92,7 @@ func (jc *JobController) GetCPSK(c *gin.Context) {
 		result = result.Joins("JOIN users ON users.id = cpsk_users.user_id").
 			Joins("JOIN punishment_structs ON punishment_structs.id = users.punishment_id").
 			Where("punishment_type IN ?", punishment).
-			Where("punish_end > ?", time.Now())
+			Where("(punish_end > ? OR punish_end IS NULL)", time.Now())
 	}
 
 	var cpskUser []model.CPSKUser
@@ -116,7 +117,7 @@ func (jc *JobController) GetCPSK(c *gin.Context) {
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param company_id path string true "Company ID"
 // @Param status query string false "Status is case insensitive and allow only unverified, or verified (verified by default)" default(verified)
-// @Success 200 {object} model.Company
+// @Success 200 {object} model.CompanyUser
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or Invalid request body"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
