@@ -1095,7 +1095,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin"
                 ],
-                "summary": "Get companies based on given status",
+                "summary": "Get companies based on given query",
                 "parameters": [
                     {
                         "type": "string",
@@ -1107,9 +1107,16 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "example": "pending+unverified",
+                        "example": "pending unverified",
                         "description": "Only pending, unverified, or verified with case insensitive",
-                        "name": "status",
+                        "name": "verify",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "ban suspend",
+                        "description": "Only ban, or suspend with case insensitive",
+                        "name": "punishment",
                         "in": "query"
                     }
                 ],
@@ -1120,6 +1127,70 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/model.CompanyUser"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Do not logged in as admin",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get-cpsk": {
+            "get": {
+                "description": "Only admin can access this endpoints\nIf no query given, the server will return all CPSK",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get CPSK based on given query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "ban suspend",
+                        "description": "Only ban, or suspend with case insensitive",
+                        "name": "punishment",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.CPSKUser"
                             }
                         }
                     },
@@ -1594,6 +1665,70 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Not logged in as Admin, trying to punish other Admin",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Remove punishment record from user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cyour access token\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of user to be unpunished",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully remove punishment record from user",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header, request body",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/utilities.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not logged in as Admin",
                         "schema": {
                             "$ref": "#/definitions/utilities.ErrorResponse"
                         }

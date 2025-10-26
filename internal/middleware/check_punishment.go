@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // CheckPunishment check whether user is punished or not
@@ -51,13 +50,24 @@ func CheckPunishment(db *database.DBinstanceStruct, punishmentType string) gin.H
 			return
 		}
 
+		punishment := model.PunishmentStruct{}
+		punishmentID := user.PunishmentID
 		user.Punishment = nil
-		if err := db.Session(&gorm.Session{FullSaveAssociations: true}).
-			Save(&user).Error; err != nil {
+
+		if err := db.Save(&user).Error; err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to update user information: %s", err.Error()),
 			})
 			return
+		}
+
+		if punishmentID != nil {
+			if err := db.Where("id = ?", punishmentID).Delete(&punishment).Error; err != nil {
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, utilities.ErrorResponse{
+					Error: fmt.Sprintf("Failed to delete punishment record: %s", err.Error()),
+				})
+				return
+			}
 		}
 
 		ctx.Next()

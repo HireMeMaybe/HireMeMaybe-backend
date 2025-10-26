@@ -323,6 +323,10 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
+    app
+  title: HireMeMaybe API service
+  version: "1.0"
 paths:
   /application:
     post:
@@ -1059,9 +1063,14 @@ paths:
         required: true
         type: string
       - description: Only pending, unverified, or verified with case insensitive
-        example: pending+unverified
+        example: pending unverified
         in: query
-        name: status
+        name: verify
+        type: string
+      - description: Only ban, or suspend with case insensitive
+        example: ban suspend
+        in: query
+        name: punishment
         type: string
       produces:
       - application/json
@@ -1088,7 +1097,52 @@ paths:
           description: Database error
           schema:
             $ref: '#/definitions/utilities.ErrorResponse'
-      summary: Get companies based on given status
+      summary: Get companies based on given query
+      tags:
+      - Admin
+  /get-cpsk:
+    get:
+      description: |-
+        Only admin can access this endpoints
+        If no query given, the server will return all CPSK
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Only ban, or suspend with case insensitive
+        example: ban suspend
+        in: query
+        name: punishment
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CPSKUser'
+            type: array
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get CPSK based on given query
       tags:
       - Admin
   /jobpost:
@@ -1353,6 +1407,49 @@ paths:
       tags:
       - Jobpost
   /punish/{user_id}:
+    delete:
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of user to be unpunished
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully remove punishment record from user
+          schema:
+            $ref: '#/definitions/utilities.MessageResponse'
+        "400":
+          description: Invalid authorization header, request body
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Not logged in as Admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Remove punishment record from user
+      tags:
+      - Admin
     put:
       consumes:
       - application/json

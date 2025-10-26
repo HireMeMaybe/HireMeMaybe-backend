@@ -523,3 +523,27 @@ func TestVerifyCompanyWithAI_TestCompany(t *testing.T) {
 	// Should NOT verify obvious test company
 	assert.False(t, result.ShouldVerify)
 }
+
+func TestGetCompanies(t *testing.T) {
+	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+	r := gin.Default()
+	jc := &JobController{
+		DB: testDB,
+	}
+	r.GET("/get-companies", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.GetCompanies)
+	rec, _ := makeJSONRequest(nil, adminToken, r, "/get-companies", http.MethodGet)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestGetCPSK(t *testing.T) {
+	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+	r := gin.Default()
+	jc := &JobController{
+		DB: testDB,
+	}
+	r.GET("/get-cpsk", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.GetCompanies)
+	rec, _ := makeJSONRequest(nil, adminToken, r, "/get-cpsk", http.MethodGet)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
