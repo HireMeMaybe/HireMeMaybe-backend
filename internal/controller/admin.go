@@ -33,7 +33,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 	fmt.Println(rawVerify)
 	rawPunishment := c.Query("punishment")
 
-	result := jc.DB.Preload("User").Preload("User.Punishment")
+	result := jc.DB.Preload("User").Preload("User.Punishment").Preload("JobPost")
 	if rawVerify != "" {
 		verify := strings.Split(rawVerify, " ")
 		for i := range verify {
@@ -107,6 +107,48 @@ func (jc *JobController) GetCPSK(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, cpskUser)
+}
+
+// GetVisitors function query the result from the database based on given query "punishment"
+// @Summary Get visitors based on given query
+// @Description Only admin can access this endpoints
+// @Description If no query given, the server will return all visitors
+// @Tags Admin
+// @Produce json
+// @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
+// @Param punishment query string false "Only ban, or suspend with case insensitive" example(ban suspend)
+// @Success 200 {array} model.VisitorUser
+// @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
+// @Failure 401 {object} utilities.ErrorResponse "Invalid token"
+// @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
+// @Failure 500 {object} utilities.ErrorResponse "Database error"
+// @Router /get-visitors [get]
+func (jc *JobController) GetVisitors(c *gin.Context) {
+	rawPunishment := c.Query("punishment")
+	result := jc.DB.Preload("User").Preload("User.Punishment")
+	if rawPunishment != "" {
+		punishment := strings.Split(rawPunishment, " ")
+		for i := range punishment {
+			punishment[i] = strings.ToLower(punishment[i])
+		}
+		result = result.Joins("JOIN users ON users.id = visitor_users.user_id").
+			Joins("JOIN punishment_structs ON punishment_structs.id = users.punishment_id").
+			Where("punishment_type IN ?", punishment).
+			Where("(punish_end > ? OR punish_end IS NULL)", time.Now())
+	}
+
+	var visitorUser []model.VisitorUser
+
+	result = result.Find(&visitorUser)
+
+	if err := result.Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Database error: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, visitorUser)
 }
 
 // VerifyCompany function allow admin to change status of given company id to Verified or Unverified

@@ -120,6 +120,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
 				needAdmin.GET("get-companies", controller.GetCompanies)
 				needAdmin.GET("get-cpsk", controller.GetCPSK)
+				needAdmin.GET("get-visitors", controller.GetVisitors)
 				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
 				needAdmin.PUT("punish/:user_id", controller.PunishUser)
 				needAdmin.DELETE("punish/:user_id", controller.DeletePunishmentRecord)
