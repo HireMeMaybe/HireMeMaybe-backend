@@ -1,0 +1,2 @@
+FAIL	HireMeMaybe-backend/internal/authn [setup failed]
+FAIL
