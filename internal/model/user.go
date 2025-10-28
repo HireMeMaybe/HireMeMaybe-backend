@@ -93,7 +93,7 @@ type User struct {
 	GoogleID       string            `json:"-" gorm:"<-:create"`
 	Username       string            `json:"username" gorm:"<-:create"`
 	Password       string            `json:"-"`
-	Role           string            `json:"-"`
+	Role           string            `json:"role"`
 	PunishmentID   *int              `json:"-"`
 	Punishment     *PunishmentStruct `json:"punishment"`
 	ProfilePicture string            `json:"profile_picture"`
