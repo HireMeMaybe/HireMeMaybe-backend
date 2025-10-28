@@ -184,8 +184,8 @@ func (jc *JobController) GetReport(c *gin.Context) {
 	var userReports []model.ReportOnUser
 
 	// If status is provided, filter by status
-	postQuery := jc.DB.Preload("Reporter").Preload("ReportedPost")
-	userQuery := jc.DB.Preload("Reporter").Preload("ReportedUser")
+	postQuery := jc.DB.Preload("ReporterUser").Preload("ReportedPost")
+	userQuery := jc.DB.Preload("ReporterUser").Preload("ReportedUser")
 
 	if reportStatus != "" {
 		postQuery = postQuery.Where("status = ?", reportStatus)
@@ -195,14 +195,10 @@ func (jc *JobController) GetReport(c *gin.Context) {
 	if err := postQuery.Find(&postReports).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Post not found",
+				Error: "Database error: " + err.Error(),
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + err.Error(),
-		})
-		return
 	}
 
 	if err := userQuery.Find(&userReports).Error; err != nil {
