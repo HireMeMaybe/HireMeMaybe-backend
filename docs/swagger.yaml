@@ -1145,6 +1145,51 @@ paths:
       summary: Get CPSK based on given query
       tags:
       - Admin
+  /get-visitors:
+    get:
+      description: |-
+        Only admin can access this endpoints
+        If no query given, the server will return all visitors
+      parameters:
+      - default: Bearer <your access token>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Only ban, or suspend with case insensitive
+        example: ban suspend
+        in: query
+        name: punishment
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.VisitorUser'
+            type: array
+        "400":
+          description: Invalid authorization header
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "401":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "403":
+          description: Do not logged in as admin
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/utilities.ErrorResponse'
+      summary: Get visitors based on given query
+      tags:
+      - Admin
   /jobpost:
     get:
       description: Every query are not required, but they have specific use defined
