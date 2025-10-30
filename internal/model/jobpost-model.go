@@ -24,7 +24,7 @@ type EditableJobPostInfo struct {
 type JobPost struct {
 	ID            uint        `gorm:"primaryKey;autoIncrement;->" json:"id"`
 	CompanyUserID uuid.UUID   `gorm:"not null;index;<-:create" json:"company_id"`
-	CompanyUser   CompanyUser `gorm:"foreignKey:CompanyUserID;references:UserID" json:"-"`
+	CompanyUser   CompanyUser `gorm:"foreignKey:CompanyUserID;references:UserID" json:"company_user"`
 	EditableJobPostInfo
 	PostTime     time.Time     `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"post_time"`
 	Applications []Application `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE" json:"applications"`

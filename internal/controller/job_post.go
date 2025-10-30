@@ -112,7 +112,9 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 
 	var posts []model.JobPost
 
-	result := jc.DB.Where("expiring > ? OR expiring IS NULL", time.Now())
+	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").
+		Joins("JOIN company_users ON company_users.user_id = job_posts.company_user_id").
+		Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
 		result = result.Where("title ILIKE ?", "%"+rawSearch+"%")
@@ -132,10 +134,6 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 
 	if rawExp != "" {
 		result = result.Where("exp_lvl = ?", rawExp)
-	}
-
-	if rawCompany != "" || rawIndustry != "" {
-		result = result.Preload("CompanyUser").Joins("JOIN companies ON companies.user_id = job_posts.company_user_id")
 	}
 
 	if rawCompany != "" {
