@@ -1,6 +1,8 @@
-package controller
+// Package punishment provides HTTP handlers for user punishment operations.
+package punishment
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"fmt"
@@ -12,6 +14,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// PunishmentController handles ban and suspend process for admin
+type PunishmentController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewPunishmentController creates a new instance of PunishmentController
+func NewPunishmentController(db *database.DBinstanceStruct) *PunishmentController {
+	return &PunishmentController{
+		DB: db,
+	}
+}
 
 // PunishUser handles ban and suspend process for admin
 // @Summary Ban or suspend user
@@ -33,7 +47,7 @@ import (
 // @Failure 404 {object} utilities.ErrorResponse "User not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /punish/{user_id} [put]
-func (jc *JobController) PunishUser(c *gin.Context) {
+func (jc *PunishmentController) PunishUser(c *gin.Context) {
 	userID := c.Param("user_id")
 
 	user := model.User{}
@@ -106,7 +120,7 @@ func (jc *JobController) PunishUser(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "User not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /punish/{user_id} [delete]
-func (jc *JobController) DeletePunishmentRecord(c *gin.Context) {
+func (jc *PunishmentController) DeletePunishmentRecord(c *gin.Context) {
 	userID := c.Param("user_id")
 
 	user := model.User{}

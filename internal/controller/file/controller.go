@@ -1,6 +1,8 @@
-package controller
+// Package file provides HTTP handlers for file-related operations.
+package file
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -14,6 +16,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// FileController handles file related endpoints
+type FileController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewFileController creates a new instance of FileController
+func NewFileController(db *database.DBinstanceStruct) *FileController {
+	return &FileController{
+		DB: db,
+	}
+}
 
 // UploadResume function handles the process of uploading a resume file for a user and updating the
 // user's information in the database.
@@ -32,7 +46,7 @@ import (
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/profile/resume [post]
-func (jc *JobController) UploadResume(c *gin.Context) {
+func (jc *FileController) UploadResume(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
@@ -101,7 +115,7 @@ func (jc *JobController) UploadResume(c *gin.Context) {
 }
 
 // companyUpload function handles process of reading files from company upload.
-func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.CompanyUser, []byte, string) {
+func (jc *FileController) companyUpload(c *gin.Context, fName string) (model.CompanyUser, []byte, string) {
 	var company = model.CompanyUser{}
 
 	u, _ := c.Get("user")
@@ -193,7 +207,7 @@ func (jc *JobController) companyUpload(c *gin.Context, fName string) (model.Comp
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/logo [post]
-func (jc *JobController) UploadLogo(c *gin.Context) {
+func (jc *FileController) UploadLogo(c *gin.Context) {
 
 	company, fileBytes, fileExtension := jc.companyUpload(c, "logo")
 
@@ -230,7 +244,7 @@ func (jc *JobController) UploadLogo(c *gin.Context) {
 // @Failure 415 {object} utilities.ErrorResponse "File extension is not allowed"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/banner [post]
-func (jc *JobController) UploadBanner(c *gin.Context) {
+func (jc *FileController) UploadBanner(c *gin.Context) {
 	company, fileBytes, fileExtension := jc.companyUpload(c, "banner")
 
 	if fileBytes == nil {
@@ -264,7 +278,7 @@ func (jc *JobController) UploadBanner(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "Given file id not found"
 // @Failure 500 {object} utilities.ErrorResponse "Fail to send file content"
 // @Router /file/{id} [get]
-func (jc *JobController) GetFile(c *gin.Context) {
+func (jc *FileController) GetFile(c *gin.Context) {
 	var file model.File
 	id := c.Param("id")
 

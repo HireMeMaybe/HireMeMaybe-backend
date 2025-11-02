@@ -1,6 +1,8 @@
-package controller
+// Package verification provides HTTP handlers for company verification operations.
+package verification
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -10,6 +12,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// VerificationController handles company verification related endpoints
+type VerificationController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewVerificationController creates a new instance of VerificationController
+func NewVerificationController(db *database.DBinstanceStruct) *VerificationController {
+	return &VerificationController{
+		DB: db,
+	}
+}
 
 type aiVerificationResponse struct {
 	Company    model.CompanyUser `json:"company"`
@@ -31,7 +45,7 @@ type aiVerificationResponse struct {
 // @Failure 404 {object} utilities.ErrorResponse "Company profile not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error or AI service error"
 // @Router /company/ai-verify [post]
-func (jc *JobController) AIVerifyCompany(c *gin.Context) {
+func (jc *VerificationController) AIVerifyCompany(c *gin.Context) {
 	// Extract user from token (middleware already validated it's a company)
 	user := utilities.ExtractUser(c)
 

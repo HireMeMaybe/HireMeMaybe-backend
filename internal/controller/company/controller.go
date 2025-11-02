@@ -1,4 +1,7 @@
-package controller
+// Package company provides HTTP handlers for company-related operations.
+package company
+
+import "HireMeMaybe-backend/internal/database"
 
 import (
 	"HireMeMaybe-backend/internal/model"
@@ -11,6 +14,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// CompanyController handles company related endpoints
+type CompanyController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewCompanyController creates a new instance of CompanyController
+func NewCompanyController(db *database.DBinstanceStruct) *CompanyController {
+	return &CompanyController{
+		DB: db,
+	}
+}
 
 type editCompanyUser struct {
 	model.EditableCompanyInfo
@@ -29,7 +44,7 @@ type editCompanyUser struct {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/myprofile [get]
-func (jc *JobController) GetCompanyProfile(c *gin.Context) {
+func (jc *CompanyController) GetCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.CompanyUser{}
@@ -65,7 +80,7 @@ func (jc *JobController) GetCompanyProfile(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile [patch]
-func (jc *JobController) EditCompanyProfile(c *gin.Context) {
+func (jc *CompanyController) EditCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.CompanyUser{}
@@ -120,7 +135,7 @@ func (jc *JobController) EditCompanyProfile(c *gin.Context) {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile/{company_id} [get]
 // @Router /company/{company_id} [get]
-func (jc *JobController) GetCompanyByID(c *gin.Context) {
+func (jc *CompanyController) GetCompanyByID(c *gin.Context) {
 	companyID := c.Param("company_id")
 
 	company := model.CompanyUser{}

@@ -1,4 +1,5 @@
-package controller
+// Package report provides HTTP handlers for report-related operations.
+package report
 
 import (
 	"HireMeMaybe-backend/internal/model"
@@ -6,10 +7,23 @@ import (
 	"errors"
 	"net/http"
 
+	"HireMeMaybe-backend/internal/database"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// ReportController handles report related endpoints
+type ReportController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewReportController creates a new instance of ReportController
+func NewReportController(db *database.DBinstanceStruct) *ReportController {
+	return &ReportController{
+		DB: db,
+	}
+}
 
 // UserReportRequest represents the request body for reporting a user.
 type UserReportRequest struct {
@@ -37,7 +51,7 @@ type PostReportRequest struct {
 // @Failure 403 {object} utilities.ErrorResponse "User doesn't have permission to access"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /report/user [post]
-func (jc *JobController) CreateUserReport(c *gin.Context) {
+func (jc *ReportController) CreateUserReport(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 	if c.IsAborted() {
 		return
@@ -115,7 +129,7 @@ func (jc *JobController) CreateUserReport(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "User doesn't have permission to access"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /report/post [post]
-func (jc *JobController) CreatePostReport(c *gin.Context) {
+func (jc *ReportController) CreatePostReport(c *gin.Context) {
 
 	user := utilities.ExtractUser(c)
 	if c.IsAborted() {
@@ -177,7 +191,7 @@ func (jc *JobController) CreatePostReport(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "User doesn't have permission to access"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /report [get]
-func (jc *JobController) GetReport(c *gin.Context) {
+func (jc *ReportController) GetReport(c *gin.Context) {
 	reportStatus := c.Query("status")
 
 	var postReports []model.ReportOnPost
@@ -232,7 +246,7 @@ func (jc *JobController) GetReport(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "User doesn't have permission to access"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /report/{type}/{id} [put]
-func (jc *JobController) UpdateReportStatus(c *gin.Context) {
+func (jc *ReportController) UpdateReportStatus(c *gin.Context) {
 	reportID := c.Param("id")
 	rType := c.Param("type")
 

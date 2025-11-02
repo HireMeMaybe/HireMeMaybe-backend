@@ -1,6 +1,8 @@
-package controller
+// Package application provides HTTP handlers for job application operations.
+package application
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -11,6 +13,18 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
+
+// ApplicationController handles job application related endpoints
+type ApplicationController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewApplicationController creates a new instance of ApplicationController with the provided database connection.
+func NewApplicationController(db *database.DBinstanceStruct) *ApplicationController {
+	return &ApplicationController{
+		DB: db,
+	}
+}
 
 // ApplicationHandler handles the creation of a new job application by a CPSK user.
 // @Summary Create job application
@@ -26,7 +40,7 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned or suspended"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /application [post]
-func (j *JobController) ApplicationHandler(c *gin.Context) {
+func (j *ApplicationController) ApplicationHandler(c *gin.Context) {
 	// ExtractUser(c)
 	user := utilities.ExtractUser(c)
 

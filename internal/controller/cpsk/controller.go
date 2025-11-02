@@ -1,7 +1,8 @@
-// Package controller contains handler for several endpoints
-package controller
+// Package cpsk provides HTTP handlers for CPSK-related operations.
+package cpsk
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -11,6 +12,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// CPSKController handles CPSK related endpoints
+type CPSKController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewCPSKController creates a new instance of CPSKController
+func NewCPSKController(db *database.DBinstanceStruct) *CPSKController {
+	return &CPSKController{
+		DB: db,
+	}
+}
 
 type editCPSKUser struct {
 	model.EditableCPSKInfo
@@ -33,7 +46,7 @@ type editCPSKUser struct {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/profile [patch]
-func (jc *JobController) EditCPSKProfile(c *gin.Context) {
+func (jc *CPSKController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
@@ -82,7 +95,7 @@ func (jc *JobController) EditCPSKProfile(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as CPSK, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
-func (jc *JobController) GetMyCPSKProfile(c *gin.Context) {
+func (jc *CPSKController) GetMyCPSKProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	cpskUser := model.CPSKUser{}

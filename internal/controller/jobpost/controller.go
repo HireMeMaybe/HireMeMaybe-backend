@@ -1,6 +1,8 @@
-package controller
+// Package jobpost provides HTTP handlers for job post related operations.
+package jobpost
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -14,6 +16,18 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+// JobPostController handles job post related endpoints
+type JobPostController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewJobPostController creates a new instance of JobPostController
+func NewJobPostController(db *database.DBinstanceStruct) *JobPostController {
+	return &JobPostController{
+		DB: db,
+	}
+}
 
 // CreateJobPostHandler handles the creation of a new job post by a company user.
 // @Summary Create job post based on given json structure
@@ -29,7 +43,7 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as verified company, User is banned or suspended"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [post]
-func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
+func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 
 	// Get user
 	user := utilities.ExtractUser(c)
@@ -99,7 +113,7 @@ func (jc *JobController) CreateJobPostHandler(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [get]
-func (jc *JobController) GetPosts(c *gin.Context) {
+func (jc *JobPostController) GetPosts(c *gin.Context) {
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
 	rawTag := c.Query("tag")
@@ -188,7 +202,7 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "Job post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [get]
-func (jc *JobController) GetPostByID(c *gin.Context) {
+func (jc *JobPostController) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 
 	job := model.JobPost{}
@@ -222,7 +236,7 @@ func (jc *JobController) GetPostByID(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [patch]
-func (jc *JobController) EditJobPost(c *gin.Context) {
+func (jc *JobPostController) EditJobPost(c *gin.Context) {
 
 	// Use ExtractUser itiesity to get authenticated user
 	user := utilities.ExtractUser(c)
@@ -297,7 +311,7 @@ func (jc *JobController) EditJobPost(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "Post not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [delete]
-func (jc *JobController) DeleteJobPost(c *gin.Context) {
+func (jc *JobPostController) DeleteJobPost(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 	id := c.Param("id")
 

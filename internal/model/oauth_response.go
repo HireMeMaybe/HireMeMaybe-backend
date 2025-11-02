@@ -22,7 +22,7 @@ type CompanyResponse struct {
 	AccessToken string      `json:"access_token"`
 }
 
-// SetAccessToken sets the access token in the CompanyResponse			
+// SetAccessToken sets the access token in the CompanyResponse
 func (r *CompanyResponse) SetAccessToken(accessToken string) {
 	r.AccessToken = accessToken
 }

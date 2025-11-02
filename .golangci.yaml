@@ -13,4 +13,9 @@ linters:
     - misspell
     - errcheck
     - unused
-
+  settings:
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - "disableStutteringCheck"
