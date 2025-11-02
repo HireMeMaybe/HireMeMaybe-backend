@@ -150,15 +150,20 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	}
 
 	if rawCompany != "" {
-		result = result.Where("name ILIKE ?", "%"+rawCompany+"%")
+		result = result.Joins("JOIN company_users ON company_users.user_id = job_posts.company_user_id").
+			Where("company_users.name ILIKE ?", "%"+rawCompany+"%")
 	}
 
 	if rawIndustry != "" {
-		result = result.Where("industry ILIKE ?", "%"+rawIndustry+"%")
+		if rawCompany == "" {
+			// Only add JOIN if not already joined
+			result = result.Joins("JOIN company_users ON company_users.user_id = job_posts.company_user_id")
+		}
+		result = result.Where("company_users.industry ILIKE ?", "%"+rawIndustry+"%")
 	}
 
 	if rawLocation != "" {
-		result = result.Where("location ILIKE ?", "%"+rawLocation+"%")
+		result = result.Where("job_posts.location ILIKE ?", "%"+rawLocation+"%")
 	}
 
 	result = result.Order(clause.OrderByColumn{
