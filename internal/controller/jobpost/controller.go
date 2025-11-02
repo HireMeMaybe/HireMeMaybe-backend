@@ -149,16 +149,21 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 		result = result.Where("exp_lvl = ?", rawExp)
 	}
 
+	// Join company_users table only once if needed for company or industry filters
+	if rawCompany != "" || rawIndustry != "" {
+		result = result.Joins("JOIN company_users ON company_users.user_id = job_posts.company_user_id")
+	}
+
 	if rawCompany != "" {
-		result = result.Where("name ILIKE ?", "%"+rawCompany+"%")
+		result = result.Where("company_users.name ILIKE ?", "%"+rawCompany+"%")
 	}
 
 	if rawIndustry != "" {
-		result = result.Where("industry ILIKE ?", "%"+rawIndustry+"%")
+		result = result.Where("company_users.industry ILIKE ?", "%"+rawIndustry+"%")
 	}
 
 	if rawLocation != "" {
-		result = result.Where("location ILIKE ?", "%"+rawLocation+"%")
+		result = result.Where("job_posts.location ILIKE ?", "%"+rawLocation+"%")
 	}
 
 	result = result.Order(clause.OrderByColumn{
