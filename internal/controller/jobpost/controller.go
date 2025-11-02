@@ -124,9 +124,10 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	rawLocation := c.Query("location")
 	rawDesc := c.Query("desc")
 
-	var posts []model.JobPost
+	var rawPosts []model.JobPost
 
-	result := jc.DB.Where("expiring > ? OR expiring IS NULL", time.Now())
+	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").Preload("CompanyUser.User.Punishment").
+		Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
 		result = result.Where("title ILIKE ?", "%"+rawSearch+"%")
@@ -148,10 +149,6 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 		result = result.Where("exp_lvl = ?", rawExp)
 	}
 
-	if rawCompany != "" || rawIndustry != "" {
-		result = result.Preload("CompanyUser").Joins("JOIN companies ON companies.user_id = job_posts.company_user_id")
-	}
-
 	if rawCompany != "" {
 		result = result.Where("name ILIKE ?", "%"+rawCompany+"%")
 	}
@@ -168,7 +165,20 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 		Column: clause.Column{Name: "post_time"},
 		Desc:   strings.ToLower(rawDesc) == "true",
 	}).
-		Find(&posts)
+		Find(&rawPosts)
+
+	posts := []model.JobPost{}
+	for i := range rawPosts {
+		if rawPosts[i].CompanyUser.User.Punishment != nil {
+			if rawPosts[i].CompanyUser.User.Punishment.PunishmentType == "ban" &&
+				(rawPosts[i].CompanyUser.User.Punishment.PunishEnd == nil ||
+					rawPosts[i].CompanyUser.User.Punishment.PunishEnd.After(time.Now())) {
+				continue
+			}
+		}
+		posts = append(posts, rawPosts[i])
+	}
+
 	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),

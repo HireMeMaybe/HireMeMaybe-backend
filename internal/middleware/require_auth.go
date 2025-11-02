@@ -33,7 +33,7 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
-		if !token.Valid {
+		if err != nil {
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
 					Error: "Access token expired",
@@ -50,6 +50,13 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to validate token: %s", err.Error()),
+			})
+			return
+		}
+
+		if !token.Valid {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
+				Error: "Invalid access token",
 			})
 			return
 		}
