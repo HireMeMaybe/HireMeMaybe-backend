@@ -110,10 +110,9 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 	rawLocation := c.Query("location")
 	rawDesc := c.Query("desc")
 
-	var posts []model.JobPost
+	var rawPosts []model.JobPost
 
-	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").
-		Joins("JOIN company_users ON company_users.user_id = job_posts.company_user_id").
+	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").Preload("CompanyUser.User.Punishment").
 		Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
@@ -152,7 +151,18 @@ func (jc *JobController) GetPosts(c *gin.Context) {
 		Column: clause.Column{Name: "post_time"},
 		Desc:   strings.ToLower(rawDesc) == "true",
 	}).
-		Find(&posts)
+		Find(&rawPosts)
+
+	posts := []model.JobPost{}
+	for i := range rawPosts {
+		if rawPosts[i].CompanyUser.User.Punishment != nil {
+			if rawPosts[i].CompanyUser.User.Punishment.PunishmentType == "ban" {
+				continue
+			}
+		}
+		posts = append(posts, rawPosts[i])
+	}
+
 	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
