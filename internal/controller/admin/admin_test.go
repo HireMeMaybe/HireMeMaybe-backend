@@ -1,9 +1,12 @@
+// Package admin provides HTTP handlers for admin-related operations.
 package admin
 
 import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
+	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/testutil"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -12,8 +15,6 @@ import (
 	"os"
 	"testing"
 	"time"
-	"HireMeMaybe-backend/internal/testutil"
-	"HireMeMaybe-backend/internal/model"
 )
 
 var testDB *database.DBinstanceStruct

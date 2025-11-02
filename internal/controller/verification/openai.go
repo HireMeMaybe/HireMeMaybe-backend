@@ -10,8 +10,8 @@ import (
 	"os"
 )
 
-// VerificationResult represents the AI's decision on company verification
-type VerificationResult struct {
+// Result represents the AI's decision on company verification
+type Result struct {
 	ShouldVerify bool   `json:"should_verify"`
 	Reasoning    string `json:"reasoning"`
 	Confidence   string `json:"confidence"` // High, Medium, Low
@@ -39,7 +39,7 @@ type OpenAIResponse struct {
 }
 
 // VerifyCompanyWithAI analyzes company information and determines if it should be verified
-func VerifyCompanyWithAI(company model.CompanyUser) (*VerificationResult, error) {
+func VerifyCompanyWithAI(company model.CompanyUser) (*Result, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	model := os.Getenv("OPENAI_MODEL")
 
@@ -169,7 +169,7 @@ func VerifyCompanyWithAI(company model.CompanyUser) (*VerificationResult, error)
 
 	// Parse the AI's response
 	content := openAIResp.Choices[0].Message.Content
-	var result VerificationResult
+	var result Result
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
 		return nil, fmt.Errorf("failed to parse AI response: %w (response: %s)", err, content)
 	}

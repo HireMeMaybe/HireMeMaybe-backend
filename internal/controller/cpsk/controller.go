@@ -1,3 +1,4 @@
+// Package cpsk provides HTTP handlers for CPSK-related operations.
 package cpsk
 
 import (
@@ -12,10 +13,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// CPSKController handles CPSK related endpoints
 type CPSKController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewCPSKController creates a new instance of CPSKController
 func NewCPSKController(db *database.DBinstanceStruct) *CPSKController {
 	return &CPSKController{
 		DB: db,

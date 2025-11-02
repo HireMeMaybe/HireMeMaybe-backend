@@ -1,5 +1,5 @@
+// Package report provides HTTP handlers for report-related operations.
 package report
-
 
 import (
 	"HireMeMaybe-backend/internal/model"
@@ -7,16 +7,18 @@ import (
 	"errors"
 	"net/http"
 
+	"HireMeMaybe-backend/internal/database"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"HireMeMaybe-backend/internal/database"
 )
 
+// ReportController handles report related endpoints
 type ReportController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewReportController creates a new instance of ReportController
 func NewReportController(db *database.DBinstanceStruct) *ReportController {
 	return &ReportController{
 		DB: db,

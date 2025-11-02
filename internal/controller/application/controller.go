@@ -1,3 +1,4 @@
+// Package application provides HTTP handlers for job application operations.
 package application
 
 import (
@@ -13,6 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ApplicationController handles job application related endpoints
 type ApplicationController struct {
 	DB *database.DBinstanceStruct
 }

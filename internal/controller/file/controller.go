@@ -1,3 +1,4 @@
+// Package file provides HTTP handlers for file-related operations.
 package file
 
 import (
@@ -16,10 +17,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// FileController handles file related endpoints
 type FileController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewFileController creates a new instance of FileController
 func NewFileController(db *database.DBinstanceStruct) *FileController {
 	return &FileController{
 		DB: db,

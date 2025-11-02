@@ -1,3 +1,4 @@
+// Package jobpost provides HTTP handlers for job post related operations.
 package jobpost
 
 import (
@@ -16,16 +17,18 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// JobPostController handles job post related endpoints
 type JobPostController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewJobPostController creates a new instance of JobPostController
 func NewJobPostController(db *database.DBinstanceStruct) *JobPostController {
 	return &JobPostController{
 		DB: db,
 	}
 }
-	
+
 // CreateJobPostHandler handles the creation of a new job post by a company user.
 // @Summary Create job post based on given json structure
 // @Description Only verified company have access to this endpoint

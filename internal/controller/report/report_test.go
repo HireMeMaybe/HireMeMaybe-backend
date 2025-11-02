@@ -37,7 +37,6 @@ func TestMain(m *testing.M) {
 	}
 }
 
-
 func TestCreateUserReport_companyReportCpsk(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)

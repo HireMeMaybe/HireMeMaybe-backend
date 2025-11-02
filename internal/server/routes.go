@@ -56,7 +56,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
 	// controller := controller.NewJobController(s.DB)
-	
+
 	fileController := file.NewFileController(s.DB)
 	companyController := company.NewCompanyController(s.DB)
 	adminController := admin.NewAdminController(s.DB)

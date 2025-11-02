@@ -1,3 +1,4 @@
+// Package testutil provides utility functions for testing HTTP handlers.
 package testutil
 
 import (
@@ -25,6 +26,7 @@ func MakeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint strin
 	return rec, resp
 }
 
+// StringPtr is a helper function to get a pointer to a string
 func StringPtr(s string) *string {
 	return &s
 }

@@ -1,3 +1,4 @@
+// Package verification provides HTTP handlers for company verification operations.
 package verification
 
 import (
@@ -12,10 +13,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// VerificationController handles company verification related endpoints
 type VerificationController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewVerificationController creates a new instance of VerificationController
 func NewVerificationController(db *database.DBinstanceStruct) *VerificationController {
 	return &VerificationController{
 		DB: db,
@@ -108,4 +111,3 @@ func (jc *VerificationController) AIVerifyCompany(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
-

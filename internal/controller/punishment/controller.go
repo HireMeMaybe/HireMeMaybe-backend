@@ -1,3 +1,4 @@
+// Package punishment provides HTTP handlers for user punishment operations.
 package punishment
 
 import (
@@ -14,10 +15,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// PunishmentController handles ban and suspend process for admin
 type PunishmentController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewPunishmentController creates a new instance of PunishmentController
 func NewPunishmentController(db *database.DBinstanceStruct) *PunishmentController {
 	return &PunishmentController{
 		DB: db,
@@ -44,7 +47,7 @@ func NewPunishmentController(db *database.DBinstanceStruct) *PunishmentControlle
 // @Failure 404 {object} utilities.ErrorResponse "User not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /punish/{user_id} [put]
-func (jc *PunishmentController ) PunishUser(c *gin.Context) {
+func (jc *PunishmentController) PunishUser(c *gin.Context) {
 	userID := c.Param("user_id")
 
 	user := model.User{}
@@ -117,7 +120,7 @@ func (jc *PunishmentController ) PunishUser(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "User not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /punish/{user_id} [delete]
-func (jc *PunishmentController ) DeletePunishmentRecord(c *gin.Context) {
+func (jc *PunishmentController) DeletePunishmentRecord(c *gin.Context) {
 	userID := c.Param("user_id")
 
 	user := model.User{}

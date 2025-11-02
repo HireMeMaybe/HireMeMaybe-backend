@@ -32,7 +32,7 @@ var (
 	SuspendPunishment = "suspend"
 )
 
-// GoogleUserInfo struct holds the user information retrieved from Google OAuth	
+// GoogleUserInfo struct holds the user information retrieved from Google OAuth
 type GoogleUserInfo struct {
 	GID            string `json:"sub"`
 	FirstName      string `json:"given_name"`
@@ -63,7 +63,7 @@ type EditableCompanyInfo struct {
 	Size     *string `json:"size" gorm:"check:size IN ('XS', 'S', 'M', 'L', 'XL')"`
 }
 
-// EditableVisitorInfo is part of visitor field that allow overwrite		
+// EditableVisitorInfo is part of visitor field that allow overwrite
 type EditableVisitorInfo struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`

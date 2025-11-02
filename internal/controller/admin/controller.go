@@ -14,10 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// AdminController handles admin related endpoints
 type AdminController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewAdminController creates a new instance of AdminController
 func NewAdminController(db *database.DBinstanceStruct) *AdminController {
 	return &AdminController{
 		DB: db,

@@ -1,3 +1,4 @@
+// Package company provides HTTP handlers for company-related operations.
 package company
 
 import "HireMeMaybe-backend/internal/database"
@@ -14,11 +15,12 @@ import (
 	"gorm.io/gorm"
 )
 
-
+// CompanyController handles company related endpoints
 type CompanyController struct {
 	DB *database.DBinstanceStruct
 }
 
+// NewCompanyController creates a new instance of CompanyController
 func NewCompanyController(db *database.DBinstanceStruct) *CompanyController {
 	return &CompanyController{
 		DB: db,
