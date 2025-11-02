@@ -124,7 +124,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				reportRoute.PUT("/:type/:id", middleware.CheckRole(model.RoleAdmin), reportController.UpdateReportStatus)
 				reportRoute.GET("", middleware.CheckRole(model.RoleAdmin), reportController.GetReport)
 				reportRoute.POST("/user", reportController.CreateUserReport)
-				reportRoute.POST("/post", middleware.CheckRole(model.RoleCPSK), reportController.CreatePostReport)
+				reportRoute.POST("/post", middleware.CheckRole(model.RoleCPSK, model.RoleVisitor), reportController.CreatePostReport)
 			}
 
 			needCompanyAdmin := needAuth.Group("")
