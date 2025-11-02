@@ -1,6 +1,7 @@
-package controller
+package admin
 
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"errors"
@@ -12,6 +13,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// AdminController handles admin related endpoints
+type AdminController struct {
+	DB *database.DBinstanceStruct
+}
+
+// NewAdminController creates a new instance of AdminController
+func NewAdminController(db *database.DBinstanceStruct) *AdminController {
+	return &AdminController{
+		DB: db,
+	}
+}
 
 // GetCompanies function query the result from the database based on given query "verify" and "punishment"
 // @Summary Get companies based on given query
@@ -28,7 +41,7 @@ import (
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /get-companies [get]
-func (jc *JobController) GetCompanies(c *gin.Context) {
+func (jc *AdminController) GetCompanies(c *gin.Context) {
 	rawVerify := c.Query("verify")
 	fmt.Println(rawVerify)
 	rawPunishment := c.Query("punishment")
@@ -81,7 +94,7 @@ func (jc *JobController) GetCompanies(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /get-cpsk [get]
-func (jc *JobController) GetCPSK(c *gin.Context) {
+func (jc *AdminController) GetCPSK(c *gin.Context) {
 	rawPunishment := c.Query("punishment")
 	result := jc.DB.Preload("User").Preload("User.Punishment")
 	if rawPunishment != "" {
@@ -123,7 +136,7 @@ func (jc *JobController) GetCPSK(c *gin.Context) {
 // @Failure 403 {object} utilities.ErrorResponse "Do not logged in as admin"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /get-visitors [get]
-func (jc *JobController) GetVisitors(c *gin.Context) {
+func (jc *AdminController) GetVisitors(c *gin.Context) {
 	rawPunishment := c.Query("punishment")
 	result := jc.DB.Preload("User").Preload("User.Punishment")
 	if rawPunishment != "" {
@@ -166,7 +179,7 @@ func (jc *JobController) GetVisitors(c *gin.Context) {
 // @Failure 404 {object} utilities.ErrorResponse "Given company ID not found"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /verify-company/{company_id} [patch]
-func (jc *JobController) VerifyCompany(c *gin.Context) {
+func (jc *AdminController) VerifyCompany(c *gin.Context) {
 	companyID := c.Param("company_id")
 	status := c.Query("status")
 
@@ -194,6 +207,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 		c.JSON(http.StatusNotFound, utilities.ErrorResponse{
 			Error: fmt.Sprintf("%s does not exist in the database", companyID),
 		})
+		return
 
 	case err == nil:
 		// Do nothing
