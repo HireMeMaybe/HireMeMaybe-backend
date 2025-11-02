@@ -194,6 +194,7 @@ func (jc *JobController) VerifyCompany(c *gin.Context) {
 		c.JSON(http.StatusNotFound, utilities.ErrorResponse{
 			Error: fmt.Sprintf("%s does not exist in the database", companyID),
 		})
+		return
 
 	case err == nil:
 		// Do nothing

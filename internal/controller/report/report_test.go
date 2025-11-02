@@ -1,17 +1,14 @@
-package controller
+package report
 
 import (
 	"HireMeMaybe-backend/internal/auth"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
-	"bytes"
+	"HireMeMaybe-backend/internal/testutil"
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strconv"
 	"testing"
@@ -40,61 +37,12 @@ func TestMain(m *testing.M) {
 	}
 }
 
-func MakeJSONRequest(body gin.H, authToken string, r *gin.Engine, endpoint string, method string) (*httptest.ResponseRecorder, map[string]interface{}) {
-	payload, _ := json.Marshal(body)
-
-	req, _ := http.NewRequest(method, endpoint, bytes.NewReader(payload))
-	req.Header.Set("Authorization", "Bearer "+authToken)
-
-	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, req)
-
-	resp := map[string]interface{}{}
-	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
-
-	return rec, resp
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
-}
-
-func TestGetPostByID_success(t *testing.T) {
-	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
-	assert.NoError(t, err)
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.GET("/jobpost/:id", middleware.RequireAuth(testDB), jc.GetPostByID)
-
-	rec, resp := MakeJSONRequest(nil, userToken, r, "/jobpost/"+fmt.Sprintf("%d", database.TestJobPost1.ID), http.MethodGet)
-
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, float64(database.TestJobPost1.ID), resp["id"])
-	assert.Equal(t, database.TestJobPost1.Title, resp["title"])
-}
-
-func TestGetPostByID_notFound(t *testing.T) {
-	userToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
-	assert.NoError(t, err)
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.POST("/jobpost/:id", middleware.RequireAuth(testDB), jc.GetPostByID)
-
-	rec, _ := MakeJSONRequest(nil, userToken, r, "/jobpost/999", http.MethodPost)
-
-	assert.Equal(t, http.StatusNotFound, rec.Code)
-}
 
 func TestCreateUserReport_companyReportCpsk(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -104,7 +52,7 @@ func TestCreateUserReport_companyReportCpsk(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, _ := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, _ := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 }
@@ -113,7 +61,7 @@ func TestCreateUserReport_cpskReportcpsk(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -123,7 +71,7 @@ func TestCreateUserReport_cpskReportcpsk(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.Contains(t, resp["error"], "cannot report this user")
@@ -133,7 +81,7 @@ func TestCreateUserReport_NotEnoughInfo(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -142,7 +90,7 @@ func TestCreateUserReport_NotEnoughInfo(t *testing.T) {
 		"reason": "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
@@ -152,7 +100,7 @@ func TestCreateUserReport_NotFoundUser(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -162,7 +110,7 @@ func TestCreateUserReport_NotFoundUser(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 	assert.Contains(t, resp["error"], "Reported user not found")
@@ -172,7 +120,7 @@ func TestCreateUserReport_InvalidUUID(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -182,7 +130,7 @@ func TestCreateUserReport_InvalidUUID(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
@@ -192,7 +140,7 @@ func TestCreateUserReport_reportAdmin(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -202,7 +150,7 @@ func TestCreateUserReport_reportAdmin(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.Contains(t, resp["error"], "cannot report this user")
@@ -212,7 +160,7 @@ func TestCreatePostReport_reportSuccess(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report/post", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), jc.CreatePostReport)
@@ -222,7 +170,7 @@ func TestCreatePostReport_reportSuccess(t *testing.T) {
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	log.Println(resp["error"])
 	assert.Equal(t, http.StatusCreated, rec.Code)
@@ -232,7 +180,7 @@ func TestCreatePostReport_postNotFound(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report/post", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), jc.CreatePostReport)
@@ -242,7 +190,7 @@ func TestCreatePostReport_postNotFound(t *testing.T) {
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 	assert.Contains(t, resp["error"], "Reported post not found")
@@ -252,7 +200,7 @@ func TestCreatePostReport_invalidRequestBody(t *testing.T) {
 	reporterToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
 	assert.NoError(t, err)
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report/post", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), jc.CreatePostReport)
@@ -261,7 +209,7 @@ func TestCreatePostReport_invalidRequestBody(t *testing.T) {
 		"reason": "Inappropriate content",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, resp["error"], "Invalid request body")
@@ -276,7 +224,7 @@ func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -287,7 +235,7 @@ func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -299,7 +247,7 @@ func TestUpdateReportStatus_ResolvedUser(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := MakeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := testutil.MakeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	log.Println(updateResp["error"])
@@ -315,7 +263,7 @@ func TestUpdateReportStatus_ResolvedPost(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report/post", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), jc.CreatePostReport)
@@ -326,7 +274,7 @@ func TestUpdateReportStatus_ResolvedPost(t *testing.T) {
 		"reason":      "Inappropriate content",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report/post", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -338,7 +286,7 @@ func TestUpdateReportStatus_ResolvedPost(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := MakeJSONRequest(updateBody, adminToken, r, "/report/post/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := testutil.MakeJSONRequest(updateBody, adminToken, r, "/report/post/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	log.Println(updateResp["error"])
@@ -354,7 +302,7 @@ func TestUpdateReportStatus_InvalidStatus(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.POST("/report", middleware.RequireAuth(testDB), jc.CreateUserReport)
@@ -365,7 +313,7 @@ func TestUpdateReportStatus_InvalidStatus(t *testing.T) {
 		"reason":      "Inappropriate behavior",
 	}
 
-	rec, resp := MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
+	rec, resp := testutil.MakeJSONRequest(body, reporterToken, r, "/report", http.MethodPost)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	floatID, _ := resp["report_id"].(float64)
@@ -377,7 +325,7 @@ func TestUpdateReportStatus_InvalidStatus(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := MakeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
+	rec, updateResp := testutil.MakeJSONRequest(updateBody, adminToken, r, "/report/user/"+strconv.Itoa(reportID), http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Invalid request body")
@@ -388,7 +336,7 @@ func TestUpdateReportStatus_ReportNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.PUT("/report/:type/:id", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.UpdateReportStatus)
@@ -399,7 +347,7 @@ func TestUpdateReportStatus_ReportNotFound(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := MakeJSONRequest(updateBody, adminToken, r, "/report/user/9999", http.MethodPut)
+	rec, updateResp := testutil.MakeJSONRequest(updateBody, adminToken, r, "/report/user/9999", http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Report not found")
@@ -410,7 +358,7 @@ func TestUpdateReportStatus_InvalidReportType(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := gin.Default()
-	jc := &JobController{
+	jc := &ReportController{
 		DB: testDB,
 	}
 	r.PUT("/report/:type/:id", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.UpdateReportStatus)
@@ -421,129 +369,8 @@ func TestUpdateReportStatus_InvalidReportType(t *testing.T) {
 		"admin_note": "Reviewed and resolved",
 	}
 
-	rec, updateResp := MakeJSONRequest(updateBody, adminToken, r, "/report/invalid_type/1", http.MethodPut)
+	rec, updateResp := testutil.MakeJSONRequest(updateBody, adminToken, r, "/report/invalid_type/1", http.MethodPut)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Contains(t, updateResp["error"], "Invalid report type")
-}
-
-// AI Verification Tests
-
-func TestAIVerifyCompany_Unauthorized(t *testing.T) {
-	// Test without authentication
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.POST("/company/ai-verify", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCompany), jc.AIVerifyCompany)
-
-	rec, resp := MakeJSONRequest(nil, "", r, "/company/ai-verify", http.MethodPost)
-
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	assert.Contains(t, resp["error"], "authorization header")
-}
-
-func TestAIVerifyCompany_WrongRole(t *testing.T) {
-	// Test with CPSK user token (wrong role)
-	cpskToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
-	assert.NoError(t, err)
-
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.POST("/company/ai-verify", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCompany), jc.AIVerifyCompany)
-
-	rec, resp := MakeJSONRequest(nil, cpskToken, r, "/company/ai-verify", http.MethodPost)
-
-	assert.Equal(t, http.StatusForbidden, rec.Code)
-	assert.Contains(t, resp["error"], "permission")
-}
-
-func TestVerifyCompanyWithAI_ValidCompany(t *testing.T) {
-	// Skip if no OpenAI API key is configured
-	if os.Getenv("OPENAI_API_KEY") == "" {
-		t.Skip("Skipping AI verification test: OPENAI_API_KEY not configured")
-	}
-
-	// Create a test company with professional information
-	testCompany := model.CompanyUser{
-		EditableCompanyInfo: model.EditableCompanyInfo{
-			Name:     "TechStart Solutions Inc",
-			Overview: "We are a leading software development company specializing in enterprise solutions, cloud computing, and AI integration. Our team of experienced developers works with Fortune 500 companies.",
-			Industry: "Technology",
-			Size:     stringPtr("M"),
-		},
-		User: model.User{
-			Email: stringPtr("contact@techstart.com"),
-			EditableUserInfo: model.EditableUserInfo{
-				Tel: stringPtr("+1-555-0123"),
-			},
-		},
-	}
-
-	result, err := VerifyCompanyWithAI(testCompany)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.NotEmpty(t, result.Reasoning)
-	assert.Contains(t, []string{"High", "Medium", "Low"}, result.Confidence)
-	// Should likely verify this professional company
-	assert.True(t, result.ShouldVerify)
-}
-
-func TestVerifyCompanyWithAI_TestCompany(t *testing.T) {
-	// Skip if no OpenAI API key is configured
-	if os.Getenv("OPENAI_API_KEY") == "" {
-		t.Skip("Skipping AI verification test: OPENAI_API_KEY not configured")
-	}
-
-	// Create a test company with obvious test data
-	testCompany := model.CompanyUser{
-		EditableCompanyInfo: model.EditableCompanyInfo{
-			Name:     "Test Company",
-			Overview: "This is a test company for testing purposes.",
-			Industry: "Testing",
-			Size:     stringPtr("XS"),
-		},
-		User: model.User{
-			Email: stringPtr("test@test.com"),
-			EditableUserInfo: model.EditableUserInfo{
-				Tel: stringPtr("123456"),
-			},
-		},
-	}
-
-	result, err := VerifyCompanyWithAI(testCompany)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.NotEmpty(t, result.Reasoning)
-	assert.Contains(t, []string{"High", "Medium", "Low"}, result.Confidence)
-	// Should NOT verify obvious test company
-	assert.False(t, result.ShouldVerify)
-}
-
-func TestGetCompanies(t *testing.T) {
-	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
-	assert.NoError(t, err)
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.GET("/get-companies", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.GetCompanies)
-	rec, _ := MakeJSONRequest(nil, adminToken, r, "/get-companies", http.MethodGet)
-	assert.Equal(t, http.StatusOK, rec.Code)
-}
-
-func TestGetCPSK(t *testing.T) {
-	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
-	assert.NoError(t, err)
-	r := gin.Default()
-	jc := &JobController{
-		DB: testDB,
-	}
-	r.GET("/get-cpsk", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleAdmin), jc.GetCompanies)
-	rec, _ := MakeJSONRequest(nil, adminToken, r, "/get-cpsk", http.MethodGet)
-	assert.Equal(t, http.StatusOK, rec.Code)
 }

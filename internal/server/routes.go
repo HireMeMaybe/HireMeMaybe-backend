@@ -3,7 +3,16 @@ package server
 
 import (
 	"HireMeMaybe-backend/internal/auth"
-	"HireMeMaybe-backend/internal/controller"
+	"HireMeMaybe-backend/internal/controller/admin"
+	"HireMeMaybe-backend/internal/controller/application"
+	"HireMeMaybe-backend/internal/controller/company"
+	"HireMeMaybe-backend/internal/controller/cpsk"
+	"HireMeMaybe-backend/internal/controller/file"
+	"HireMeMaybe-backend/internal/controller/jobpost"
+	"HireMeMaybe-backend/internal/controller/punishment"
+	"HireMeMaybe-backend/internal/controller/report"
+	"HireMeMaybe-backend/internal/controller/verification"
+
 	"HireMeMaybe-backend/internal/middleware"
 	"HireMeMaybe-backend/internal/model"
 	"net/http"
@@ -46,7 +55,17 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
-	controller := controller.NewJobController(s.DB)
+	// controller := controller.NewJobController(s.DB)
+	
+	fileController := file.NewFileController(s.DB)
+	companyController := company.NewCompanyController(s.DB)
+	adminController := admin.NewAdminController(s.DB)
+	applicationController := application.NewApplicationController(s.DB)
+	cpskController := cpsk.NewCPSKController(s.DB)
+	jobPostController := jobpost.NewJobPostController(s.DB)
+	punishmentController := punishment.NewPunishmentController(s.DB)
+	reportController := report.NewReportController(s.DB)
+	verificationController := verification.NewVerificationController(s.DB)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     allowOrgins, // Add your frontend URL
@@ -73,57 +92,57 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		needAuth := v1.Group("")
 		{
 			needAuth.Use(middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
-			file := needAuth.Group("/file")
+			fileRoute := needAuth.Group("/file")
 			{
-				file.GET(":id", controller.GetFile)
+				fileRoute.GET(":id", fileController.GetFile)
 			}
 
 			companyRoute := needAuth.Group("/company")
 			{
-				companyRoute.GET(":company_id", controller.GetCompanyByID) // New route: same handler, different path
+				companyRoute.GET(":company_id", companyController.GetCompanyByID) // New route: same handler, different path
 				companyRoute.Use(middleware.CheckRole(model.RoleCompany))
-				companyRoute.PATCH("profile", controller.EditCompanyProfile)
-				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), controller.UploadLogo)
-				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), controller.UploadBanner)
-				companyRoute.GET("myprofile", controller.GetCompanyProfile)
-				companyRoute.POST("ai-verify", controller.AIVerifyCompany)
+				companyRoute.PATCH("profile", companyController.EditCompanyProfile)
+				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), fileController.UploadLogo)
+				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), fileController.UploadBanner)
+				companyRoute.GET("myprofile", companyController.GetCompanyProfile)
+				companyRoute.POST("ai-verify", verificationController.AIVerifyCompany)
 			}
 
 			// Job post endpoints (company only)
 			jobPostRoute := needAuth.Group("/jobpost")
 			{
-				jobPostRoute.GET("/:id", controller.GetPostByID)
-				jobPostRoute.GET("", controller.GetPosts)
+				jobPostRoute.GET("/:id", jobPostController.GetPostByID)
+				jobPostRoute.GET("", jobPostController.GetPosts)
 				jobPostRoute.Use(middleware.CheckRole(model.RoleCompany), middleware.CheckPunishment(s.DB, model.SuspendPunishment))
-				jobPostRoute.POST("", controller.CreateJobPostHandler)
+				jobPostRoute.POST("", jobPostController.CreateJobPostHandler)
 
 			}
 
 			// Reporting endpoints
 			reportRoute := needAuth.Group("/report")
 			{
-				reportRoute.PUT("/:type/:id", middleware.CheckRole(model.RoleAdmin), controller.UpdateReportStatus)
-				reportRoute.GET("", middleware.CheckRole(model.RoleAdmin), controller.GetReport)
-				reportRoute.POST("/user", controller.CreateUserReport)
-				reportRoute.POST("/post", middleware.CheckRole(model.RoleCPSK), controller.CreatePostReport)
+				reportRoute.PUT("/:type/:id", middleware.CheckRole(model.RoleAdmin), reportController.UpdateReportStatus)
+				reportRoute.GET("", middleware.CheckRole(model.RoleAdmin), reportController.GetReport)
+				reportRoute.POST("/user", reportController.CreateUserReport)
+				reportRoute.POST("/post", middleware.CheckRole(model.RoleCPSK), reportController.CreatePostReport)
 			}
 
 			needCompanyAdmin := needAuth.Group("")
 			{
 				needCompanyAdmin.Use(middleware.CheckRole(model.RoleAdmin, model.RoleCompany))
-				needCompanyAdmin.PATCH("jobpost/:id", controller.EditJobPost)
-				needCompanyAdmin.DELETE("jobpost/:id", controller.DeleteJobPost)
+				needCompanyAdmin.PATCH("jobpost/:id", jobPostController.EditJobPost)
+				needCompanyAdmin.DELETE("jobpost/:id", jobPostController.DeleteJobPost)
 			}
 
 			needAdmin := needAuth.Group("")
 			{
 				needAdmin.Use(middleware.CheckRole(model.RoleAdmin))
-				needAdmin.GET("get-companies", controller.GetCompanies)
-				needAdmin.GET("get-cpsk", controller.GetCPSK)
-				needAdmin.GET("get-visitors", controller.GetVisitors)
-				needAdmin.PATCH("verify-company/:company_id", controller.VerifyCompany)
-				needAdmin.PUT("punish/:user_id", controller.PunishUser)
-				needAdmin.DELETE("punish/:user_id", controller.DeletePunishmentRecord)
+				needAdmin.GET("get-companies", adminController.GetCompanies)
+				needAdmin.GET("get-cpsk", adminController.GetCPSK)
+				needAdmin.GET("get-visitors", adminController.GetVisitors)
+				needAdmin.PATCH("verify-company/:company_id", adminController.VerifyCompany)
+				needAdmin.PUT("punish/:user_id", punishmentController.PunishUser)
+				needAdmin.DELETE("punish/:user_id", punishmentController.DeletePunishmentRecord)
 			}
 
 			// CPSK routes: apply role check once for all CPSK endpoints
@@ -132,13 +151,13 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				needCPSK.Use(middleware.CheckRole(model.RoleCPSK))
 				cpskRoute := needCPSK.Group("/cpsk")
 				{
-					cpskRoute.PATCH("profile", controller.EditCPSKProfile)
-					cpskRoute.GET("myprofile", controller.GetMyCPSKProfile)
-					cpskRoute.POST("profile/resume", middleware.SizeLimit(10<<20), controller.UploadResume)
+					cpskRoute.PATCH("profile", cpskController.EditCPSKProfile)
+					cpskRoute.GET("myprofile", cpskController.GetMyCPSKProfile)
+					cpskRoute.POST("profile/resume", middleware.SizeLimit(10<<20), fileController.UploadResume)
 				}
 
 				needCPSK.Use(middleware.CheckPunishment(s.DB, model.SuspendPunishment))
-				needCPSK.POST("application", controller.ApplicationHandler)
+				needCPSK.POST("application", applicationController.ApplicationHandler)
 			}
 
 		}
