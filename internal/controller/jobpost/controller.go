@@ -170,7 +170,9 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	posts := []model.JobPost{}
 	for i := range rawPosts {
 		if rawPosts[i].CompanyUser.User.Punishment != nil {
-			if rawPosts[i].CompanyUser.User.Punishment.PunishmentType == "ban" {
+			if rawPosts[i].CompanyUser.User.Punishment.PunishmentType == "ban" &&
+				(rawPosts[i].CompanyUser.User.Punishment.PunishEnd == nil ||
+					rawPosts[i].CompanyUser.User.Punishment.PunishEnd.After(time.Now())) {
 				continue
 			}
 		}
