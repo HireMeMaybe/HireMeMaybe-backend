@@ -126,7 +126,11 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 
 	var rawPosts []model.JobPost
 
-	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").Preload("CompanyUser.User.Punishment").
+	result := jc.DB.
+		Preload("CompanyUser").
+		Preload("CompanyUser.User").
+		Preload("CompanyUser.User.Punishment").
+		Preload("Applications").
 		Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
