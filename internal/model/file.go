@@ -14,4 +14,6 @@ type File struct {
 	ID        int `gorm:"primaryKey"`
 	Content   []byte
 	Extension string
+	StorageObjectName string `gorm:"uniqueIndex"`
 }
+

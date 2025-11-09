@@ -20,12 +20,14 @@ import (
 // FileController handles file related endpoints
 type FileController struct {
 	DB *database.DBinstanceStruct
+	CloudStorage *CloudStorageClient
 }
 
 // NewFileController creates a new instance of FileController
-func NewFileController(db *database.DBinstanceStruct) *FileController {
+func NewFileController(db *database.DBinstanceStruct, cloudStorage *CloudStorageClient) *FileController {
 	return &FileController{
 		DB: db,
+		CloudStorage: cloudStorage,
 	}
 }
 

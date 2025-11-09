@@ -4,10 +4,7 @@ import (
 	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
-	"google.golang.org/api/iterator"
 	"io"
-	"log"
-	"os"
 )
 
 type CloudStorageClient struct {
@@ -40,4 +37,14 @@ func (c *CloudStorageClient) UploadFile(objectName string, fileData io.Reader) e
 		return fmt.Errorf("failed to close object writer: %v", err)
 	}
 	return nil
+}
+
+func (c *CloudStorageClient) DownloadFile(objectName string) (io.Reader, error) {
+	bucket := c.Client.Bucket(c.BucketName)
+	obj := bucket.Object(objectName)
+	rc, err := obj.NewReader(c.Ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create object reader: %v", err)
+	}
+	return rc, nil
 }
