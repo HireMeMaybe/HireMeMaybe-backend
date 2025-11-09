@@ -1,9 +1,8 @@
 // Package company provides HTTP handlers for company-related operations.
 package company
 
-import "HireMeMaybe-backend/internal/database"
-
 import (
+	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
 	"encoding/json"
@@ -32,7 +31,7 @@ type editCompanyUser struct {
 	model.EditableUserInfo
 }
 
-// GetCompanyProfile function retrieve company profile from database
+// GetMyCompanyProfile function retrieve company profile from database
 // and response as JSON format.
 // @Summary Retrieve company profile from database
 // @Tags Company
@@ -44,7 +43,7 @@ type editCompanyUser struct {
 // @Failure 403 {object} utilities.ErrorResponse "Not logged in as company, User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/myprofile [get]
-func (jc *CompanyController) GetCompanyProfile(c *gin.Context) {
+func (jc *CompanyController) GetMyCompanyProfile(c *gin.Context) {
 	user := utilities.ExtractUser(c)
 
 	company := model.CompanyUser{}
@@ -54,6 +53,7 @@ func (jc *CompanyController) GetCompanyProfile(c *gin.Context) {
 		Preload("Logo").
 		Preload("Banner").
 		Preload("JobPost").
+		Preload("JobPost.Applications").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
