@@ -33,38 +33,20 @@ definitions:
     - role
     - username
     type: object
-  controller.PostReportRequest:
+  company.editCompanyUser:
     properties:
-      reason:
+      industry:
         type: string
-      reported_id:
-        type: integer
-    required:
-    - reason
-    - reported_id
-    type: object
-  controller.UserReportRequest:
-    properties:
-      reason:
+      name:
         type: string
-      reported_id:
+      overview:
         type: string
-    required:
-    - reason
-    - reported_id
-    type: object
-  controller.aiVerificationResponse:
-    properties:
-      ai_decision:
+      size:
         type: string
-      company:
-        $ref: '#/definitions/model.CompanyUser'
-      confidence:
-        type: string
-      reasoning:
+      tel:
         type: string
     type: object
-  controller.editCPSKUser:
+  cpsk.editCPSKUser:
     properties:
       first_name:
         type: string
@@ -79,19 +61,6 @@ definitions:
       tel:
         type: string
       year:
-        type: string
-    type: object
-  controller.editCompanyUser:
-    properties:
-      industry:
-        type: string
-      name:
-        type: string
-      overview:
-        type: string
-      size:
-        type: string
-      tel:
         type: string
     type: object
   gorm.DeletedAt:
@@ -238,6 +207,8 @@ definitions:
         type: array
       company_id:
         type: string
+      company_user:
+        $ref: '#/definitions/model.CompanyUser'
       desc:
         type: string
       exp_lvl:
@@ -263,6 +234,39 @@ definitions:
       type:
         type: string
     type: object
+  model.JobPostResponse:
+    properties:
+      company_id:
+        type: string
+      company_user:
+        $ref: '#/definitions/model.CompanyUser'
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      post_time:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+      user_apply:
+        type: boolean
+    type: object
   model.PunishmentStruct:
     properties:
       at:
@@ -286,6 +290,8 @@ definitions:
         type: string
       punishment:
         $ref: '#/definitions/model.PunishmentStruct'
+      role:
+        type: string
       tel:
         type: string
       updatedAt:
@@ -311,6 +317,26 @@ definitions:
       user:
         $ref: '#/definitions/model.User'
     type: object
+  report.PostReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: integer
+    required:
+    - reason
+    - reported_id
+    type: object
+  report.UserReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: string
+    required:
+    - reason
+    - reported_id
+    type: object
   utilities.ErrorResponse:
     properties:
       error:
@@ -321,12 +347,19 @@ definitions:
       message:
         type: string
     type: object
+  verification.aiVerificationResponse:
+    properties:
+      ai_decision:
+        type: string
+      company:
+        $ref: '#/definitions/model.CompanyUser'
+      confidence:
+        type: string
+      reasoning:
+        type: string
+    type: object
 info:
   contact: {}
-  description: This is HireMeMaybe API service that provide data for HireMeMaybe web
-    app
-  title: HireMeMaybe API service
-  version: "1.0"
 paths:
   /application:
     post:
@@ -621,7 +654,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.aiVerificationResponse'
+            $ref: '#/definitions/verification.aiVerificationResponse'
         "400":
           description: Invalid authorization header
           schema:
@@ -699,7 +732,7 @@ paths:
         name: company_profile
         required: true
         schema:
-          $ref: '#/definitions/controller.editCompanyUser'
+          $ref: '#/definitions/company.editCompanyUser'
       produces:
       - application/json
       responses:
@@ -928,7 +961,7 @@ paths:
         name: cpsk_profile
         required: true
         schema:
-          $ref: '#/definitions/controller.editCPSKUser'
+          $ref: '#/definitions/cpsk.editCPSKUser'
       produces:
       - application/json
       responses:
@@ -1246,7 +1279,7 @@ paths:
           description: Return non-expired job post(s)
           schema:
             items:
-              $ref: '#/definitions/model.JobPost'
+              $ref: '#/definitions/model.JobPostResponse'
             type: array
         "400":
           description: Invalid authorization header, or invalid job post struct
@@ -1375,7 +1408,7 @@ paths:
         "200":
           description: Return the job post with the specified ID
           schema:
-            $ref: '#/definitions/model.JobPost'
+            $ref: '#/definitions/model.JobPostResponse'
         "400":
           description: Invalid authorization header
           schema:
@@ -1669,7 +1702,7 @@ paths:
         name: report
         required: true
         schema:
-          $ref: '#/definitions/controller.PostReportRequest'
+          $ref: '#/definitions/report.PostReportRequest'
       produces:
       - application/json
       responses:
@@ -1719,7 +1752,7 @@ paths:
         name: report
         required: true
         schema:
-          $ref: '#/definitions/controller.UserReportRequest'
+          $ref: '#/definitions/report.UserReportRequest'
       produces:
       - application/json
       responses:

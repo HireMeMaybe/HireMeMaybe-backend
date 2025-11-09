@@ -386,7 +386,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.aiVerificationResponse"
+                            "$ref": "#/definitions/verification.aiVerificationResponse"
                         }
                     },
                     "400": {
@@ -503,7 +503,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.editCompanyUser"
+                            "$ref": "#/definitions/company.editCompanyUser"
                         }
                     }
                 ],
@@ -906,7 +906,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.editCPSKUser"
+                            "$ref": "#/definitions/cpsk.editCPSKUser"
                         }
                     }
                 ],
@@ -1365,7 +1365,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.JobPost"
+                                "$ref": "#/definitions/model.JobPostResponse"
                             }
                         }
                     },
@@ -1491,7 +1491,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Return the job post with the specified ID",
                         "schema": {
-                            "$ref": "#/definitions/model.JobPost"
+                            "$ref": "#/definitions/model.JobPostResponse"
                         }
                     },
                     "400": {
@@ -1901,7 +1901,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.PostReportRequest"
+                            "$ref": "#/definitions/report.PostReportRequest"
                         }
                     }
                 ],
@@ -1975,7 +1975,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.UserReportRequest"
+                            "$ref": "#/definitions/report.UserReportRequest"
                         }
                     }
                 ],
@@ -2234,54 +2234,27 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.PostReportRequest": {
+        "company.editCompanyUser": {
             "type": "object",
-            "required": [
-                "reason",
-                "reported_id"
-            ],
             "properties": {
-                "reason": {
+                "industry": {
                     "type": "string"
                 },
-                "reported_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "controller.UserReportRequest": {
-            "type": "object",
-            "required": [
-                "reason",
-                "reported_id"
-            ],
-            "properties": {
-                "reason": {
+                "name": {
                     "type": "string"
                 },
-                "reported_id": {
+                "overview": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "tel": {
                     "type": "string"
                 }
             }
         },
-        "controller.aiVerificationResponse": {
-            "type": "object",
-            "properties": {
-                "ai_decision": {
-                    "type": "string"
-                },
-                "company": {
-                    "$ref": "#/definitions/model.CompanyUser"
-                },
-                "confidence": {
-                    "type": "string"
-                },
-                "reasoning": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.editCPSKUser": {
+        "cpsk.editCPSKUser": {
             "type": "object",
             "properties": {
                 "first_name": {
@@ -2303,26 +2276,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "year": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.editCompanyUser": {
-            "type": "object",
-            "properties": {
-                "industry": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "overview": {
-                    "type": "string"
-                },
-                "size": {
-                    "type": "string"
-                },
-                "tel": {
                     "type": "string"
                 }
             }
@@ -2544,6 +2497,9 @@ const docTemplate = `{
                 "company_id": {
                     "type": "string"
                 },
+                "company_user": {
+                    "$ref": "#/definitions/model.CompanyUser"
+                },
                 "desc": {
                     "type": "string"
                 },
@@ -2582,6 +2538,56 @@ const docTemplate = `{
                 }
             }
         },
+        "model.JobPostResponse": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string"
+                },
+                "company_user": {
+                    "$ref": "#/definitions/model.CompanyUser"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "exp_lvl": {
+                    "type": "string"
+                },
+                "expiring": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "post_time": {
+                    "type": "string"
+                },
+                "req": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_apply": {
+                    "type": "boolean"
+                }
+            }
+        },
         "model.PunishmentStruct": {
             "type": "object",
             "properties": {
@@ -2616,6 +2622,9 @@ const docTemplate = `{
                 },
                 "punishment": {
                     "$ref": "#/definitions/model.PunishmentStruct"
+                },
+                "role": {
+                    "type": "string"
                 },
                 "tel": {
                     "type": "string"
@@ -2656,6 +2665,36 @@ const docTemplate = `{
                 }
             }
         },
+        "report.PostReportRequest": {
+            "type": "object",
+            "required": [
+                "reason",
+                "reported_id"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "reported_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "report.UserReportRequest": {
+            "type": "object",
+            "required": [
+                "reason",
+                "reported_id"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "reported_id": {
+                    "type": "string"
+                }
+            }
+        },
         "utilities.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -2668,6 +2707,23 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "verification.aiVerificationResponse": {
+            "type": "object",
+            "properties": {
+                "ai_decision": {
+                    "type": "string"
+                },
+                "company": {
+                    "$ref": "#/definitions/model.CompanyUser"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "reasoning": {
                     "type": "string"
                 }
             }
