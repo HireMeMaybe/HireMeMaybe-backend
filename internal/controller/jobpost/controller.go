@@ -107,13 +107,19 @@ func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 // @Param industry query string false "Search from industry of company with substring matching and case insensitive"
 // @Param location query string false "Search from location with substring matching and case insensitive"
 // @Param desc query boolean false "Sorting by post time in descending if true, otherwise ascendind"
-// @Success 200 {array} model.JobPost "Return non-expired job post(s)"
+// @Success 200 {array} model.JobPostResponse "Return non-expired job post(s)"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "User is banned"
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost [get]
 func (jc *JobPostController) GetPosts(c *gin.Context) {
+
+	user := utilities.ExtractUser(c)
+	if c.IsAborted() {
+		return
+	}
+
 	rawSearch := c.Query("search")
 	rawJobType := c.Query("type")
 	rawTag := c.Query("tag")
@@ -126,7 +132,10 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 
 	var rawPosts []model.JobPost
 
-	result := jc.DB.Preload("CompanyUser").Preload("CompanyUser.User").Preload("CompanyUser.User.Punishment").
+	result := jc.DB.Preload("CompanyUser").
+		Preload("CompanyUser.User").
+		Preload("CompanyUser.User.Punishment").
+		Preload("Applications").
 		Where("expiring > ? OR expiring IS NULL", time.Now())
 
 	if rawSearch != "" {
@@ -167,29 +176,36 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	}
 
 	result = result.Order(clause.OrderByColumn{
-		Column: clause.Column{Name: "post_time"},
-		Desc:   strings.ToLower(rawDesc) == "true",
-	}).
-		Find(&rawPosts)
-
-	posts := []model.JobPost{}
-	for i := range rawPosts {
-		if rawPosts[i].CompanyUser.User.Punishment != nil {
-			if rawPosts[i].CompanyUser.User.Punishment.PunishmentType == "ban" &&
-				(rawPosts[i].CompanyUser.User.Punishment.PunishEnd == nil ||
-					rawPosts[i].CompanyUser.User.Punishment.PunishEnd.After(time.Now())) {
-				continue
-			}
-		}
-		posts = append(posts, rawPosts[i])
-	}
-
+			Column: clause.Column{Name: "post_time"},
+			Desc:   strings.ToLower(rawDesc) == "true",
+		}).Find(&rawPosts)
+		
 	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
 		})
 		return
 	}
+
+	posts := []model.JobPostResponse{}
+	for _, rawPost := range rawPosts {
+		if rawPost.CompanyUser.User.Punishment != nil {
+			if rawPost.CompanyUser.User.Punishment.PunishmentType == "ban" &&
+				(rawPost.CompanyUser.User.Punishment.PunishEnd == nil ||
+					rawPost.CompanyUser.User.Punishment.PunishEnd.After(time.Now())) {
+				continue
+			}
+		}
+		rawPostResp, err := rawPost.ToJobPostResponse(user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprint("Failed to process job post: ", err.Error()),
+			})
+			return
+		}
+		posts = append(posts, rawPostResp)
+	}
+
 
 	c.JSON(http.StatusOK, posts)
 }
@@ -202,7 +218,7 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
 // @Param id path integer true "ID of desired job post"
-// @Success 200 {object} model.JobPost "Return the job post with the specified ID"
+// @Success 200 {object} model.JobPostResponse "Return the job post with the specified ID"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
 // @Failure 403 {object} utilities.ErrorResponse "User is banned"
@@ -212,8 +228,18 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 func (jc *JobPostController) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 
+	user := utilities.ExtractUser(c)
+	if c.IsAborted() {
+		return
+	}
+
 	job := model.JobPost{}
-	if err := jc.DB.Preload("CompanyUser").Where("id = ?", id).First(&job).Error; err != nil {
+	if err := jc.DB.
+		Preload("CompanyUser").
+		Preload("CompanyUser.User").
+		Preload("Applications").
+		Where("id = ?", id).
+		First(&job).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
 			return
@@ -224,7 +250,15 @@ func (jc *JobPostController) GetPostByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, job)
+	rawPostResp, err := job.ToJobPostResponse(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprint("Failed to process job post: ", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, rawPostResp)
 }
 
 // EditJobPost allows a company user to update a job post they own.
