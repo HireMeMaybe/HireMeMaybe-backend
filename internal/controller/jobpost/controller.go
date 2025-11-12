@@ -176,10 +176,16 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	}
 
 	result = result.Order(clause.OrderByColumn{
-		Column: clause.Column{Name: "post_time"},
-		Desc:   strings.ToLower(rawDesc) == "true",
-	}).
-		Find(&rawPosts)
+			Column: clause.Column{Name: "post_time"},
+			Desc:   strings.ToLower(rawDesc) == "true",
+		}).Find(&rawPosts)
+		
+	if err := result.Error; err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
+		})
+		return
+	}
 
 	posts := []model.JobPostResponse{}
 	for _, rawPost := range rawPosts {
@@ -200,12 +206,6 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 		posts = append(posts, rawPostResp)
 	}
 
-	if err := result.Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
-		})
-		return
-	}
 
 	c.JSON(http.StatusOK, posts)
 }
