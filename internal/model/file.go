@@ -11,9 +11,8 @@ package model
 // extension of the file. This could be something like ".txt", ".jpg", ".pdf", etc. It is used to
 // identify the type of file and determine how it should be handled or processed.
 type File struct {
-	ID        int `gorm:"primaryKey"`
-	Content   []byte
-	Extension string
-	StorageObjectName string `gorm:"uniqueIndex"`
+	ID                int `gorm:"primaryKey"`
+	Content           []byte
+	Extension         string
+	StorageObjectName *string `gorm:"uniqueIndex"`
 }
-

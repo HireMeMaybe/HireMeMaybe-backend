@@ -7,6 +7,13 @@ import (
 	"io"
 )
 
+// StorageClient defines the methods required by FileController to work with any
+// object storage backend.
+type StorageClient interface {
+	UploadFile(objectName string, fileData io.Reader) error
+	DownloadFile(objectName string) (io.ReadCloser, int64, error)
+}
+
 type CloudStorageClient struct {
 	BucketName string
 	Ctx        context.Context
@@ -14,6 +21,9 @@ type CloudStorageClient struct {
 }
 
 func NewCloudStorageClient(bucketName string) (*CloudStorageClient, error) {
+	if bucketName == "" {
+		return nil, fmt.Errorf("CLOUD_STORAGE_BUCKET is required when cloud storage is enabled")
+	}
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -39,12 +49,12 @@ func (c *CloudStorageClient) UploadFile(objectName string, fileData io.Reader) e
 	return nil
 }
 
-func (c *CloudStorageClient) DownloadFile(objectName string) (io.Reader, error) {
+func (c *CloudStorageClient) DownloadFile(objectName string) (io.ReadCloser, int64, error) {
 	bucket := c.Client.Bucket(c.BucketName)
 	obj := bucket.Object(objectName)
 	rc, err := obj.NewReader(c.Ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create object reader: %v", err)
+		return nil, 0, fmt.Errorf("failed to create object reader: %v", err)
 	}
-	return rc, nil
+	return rc, rc.Attrs.Size, nil
 }
