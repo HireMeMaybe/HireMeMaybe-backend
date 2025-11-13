@@ -33,38 +33,20 @@ definitions:
     - role
     - username
     type: object
-  controller.PostReportRequest:
+  company.editCompanyUser:
     properties:
-      reason:
+      industry:
         type: string
-      reported_id:
-        type: integer
-    required:
-    - reason
-    - reported_id
-    type: object
-  controller.UserReportRequest:
-    properties:
-      reason:
+      name:
         type: string
-      reported_id:
+      overview:
         type: string
-    required:
-    - reason
-    - reported_id
-    type: object
-  controller.aiVerificationResponse:
-    properties:
-      ai_decision:
+      size:
         type: string
-      company:
-        $ref: '#/definitions/model.CompanyUser'
-      confidence:
-        type: string
-      reasoning:
+      tel:
         type: string
     type: object
-  controller.editCPSKUser:
+  cpsk.editCPSKUser:
     properties:
       first_name:
         type: string
@@ -81,19 +63,6 @@ definitions:
       year:
         type: string
     type: object
-  controller.editCompanyUser:
-    properties:
-      industry:
-        type: string
-      name:
-        type: string
-      overview:
-        type: string
-      size:
-        type: string
-      tel:
-        type: string
-    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -101,6 +70,35 @@ definitions:
       valid:
         description: Valid is true if Time is not NULL
         type: boolean
+    type: object
+  jobpost.jobPostCreateRequest:
+    properties:
+      default_form:
+        type: boolean
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      location:
+        type: string
+      optional_forms:
+        items:
+          type: string
+        type: array
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
     type: object
   model.Application:
     properties:
@@ -238,6 +236,10 @@ definitions:
         type: array
       company_id:
         type: string
+      company_user:
+        $ref: '#/definitions/model.CompanyUser'
+      default_form:
+        type: boolean
       desc:
         type: string
       exp_lvl:
@@ -248,6 +250,10 @@ definitions:
         type: integer
       location:
         type: string
+      optional_forms:
+        items:
+          type: string
+        type: array
       post_time:
         type: string
       req:
@@ -286,6 +292,8 @@ definitions:
         type: string
       punishment:
         $ref: '#/definitions/model.PunishmentStruct'
+      role:
+        type: string
       tel:
         type: string
       updatedAt:
@@ -311,6 +319,26 @@ definitions:
       user:
         $ref: '#/definitions/model.User'
     type: object
+  report.PostReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: integer
+    required:
+    - reason
+    - reported_id
+    type: object
+  report.UserReportRequest:
+    properties:
+      reason:
+        type: string
+      reported_id:
+        type: string
+    required:
+    - reason
+    - reported_id
+    type: object
   utilities.ErrorResponse:
     properties:
       error:
@@ -319,6 +347,17 @@ definitions:
   utilities.MessageResponse:
     properties:
       message:
+        type: string
+    type: object
+  verification.aiVerificationResponse:
+    properties:
+      ai_decision:
+        type: string
+      company:
+        $ref: '#/definitions/model.CompanyUser'
+      confidence:
+        type: string
+      reasoning:
         type: string
     type: object
 info:
@@ -621,7 +660,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.aiVerificationResponse'
+            $ref: '#/definitions/verification.aiVerificationResponse'
         "400":
           description: Invalid authorization header
           schema:
@@ -699,7 +738,7 @@ paths:
         name: company_profile
         required: true
         schema:
-          $ref: '#/definitions/controller.editCompanyUser'
+          $ref: '#/definitions/company.editCompanyUser'
       produces:
       - application/json
       responses:
@@ -928,7 +967,7 @@ paths:
         name: cpsk_profile
         required: true
         schema:
-          $ref: '#/definitions/controller.editCPSKUser'
+          $ref: '#/definitions/cpsk.editCPSKUser'
       produces:
       - application/json
       responses:
@@ -1283,7 +1322,7 @@ paths:
         name: Jobpost
         required: true
         schema:
-          $ref: '#/definitions/model.EditableJobPostInfo'
+          $ref: '#/definitions/jobpost.jobPostCreateRequest'
       produces:
       - application/json
       responses:
@@ -1669,7 +1708,7 @@ paths:
         name: report
         required: true
         schema:
-          $ref: '#/definitions/controller.PostReportRequest'
+          $ref: '#/definitions/report.PostReportRequest'
       produces:
       - application/json
       responses:
@@ -1719,7 +1758,7 @@ paths:
         name: report
         required: true
         schema:
-          $ref: '#/definitions/controller.UserReportRequest'
+          $ref: '#/definitions/report.UserReportRequest'
       produces:
       - application/json
       responses:

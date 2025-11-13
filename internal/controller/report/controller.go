@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"HireMeMaybe-backend/internal/database"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ type PostReportRequest struct {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param report body controller.UserReportRequest true "Report information"
+// @Param report body UserReportRequest true "Report information"
 // @Success 201 {object} object{message=string,report_id=integer}"Report created successfully"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid request body, reported user not found, cannot report this user"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -122,7 +123,7 @@ func (jc *ReportController) CreateUserReport(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param report body controller.PostReportRequest true "Report information"
+// @Param report body PostReportRequest true "Report information"
 // @Success 201 {object} object{message=string,report_id=integer}"Report created successfully"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid request body, reported post not found"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"

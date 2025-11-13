@@ -26,6 +26,8 @@ type JobPost struct {
 	CompanyUserID uuid.UUID   `gorm:"not null;index;<-:create" json:"company_id"`
 	CompanyUser   CompanyUser `gorm:"foreignKey:CompanyUserID;references:UserID" json:"company_user"`
 	EditableJobPostInfo
-	PostTime     time.Time     `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"post_time"`
-	Applications []Application `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE" json:"applications"`
+	PostTime      time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;->" json:"post_time"`
+	Applications  []Application  `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE" json:"applications"`
+	DefaultForm   bool           `gorm:"type:boolean;default:true" json:"default_form"`
+	OptionalForms pq.StringArray `gorm:"type:text[]" json:"optional_forms"`
 }

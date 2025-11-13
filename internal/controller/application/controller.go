@@ -76,6 +76,11 @@ func (j *ApplicationController) ApplicationHandler(c *gin.Context) {
 
 	application.Status = model.ApplicationStatusPending
 
+	if !application.JobPost.DefaultForm {
+		application.Answer = nil
+		application.AnswerID = nil
+	}
+
 	// Save application to database
 	if err := j.DB.Create(&application).Error; err != nil {
 		var pqErr *pgconn.PgError
