@@ -53,11 +53,17 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		RedirectURL: os.Getenv("OAUTH_REDIRECT_URL"),
 	}
 
+	cloudStorageClient, err := file.NewCloudStorageClient(os.Getenv("CLOUD_STORAGE_BUCKET"))
+
+	if err != nil {
+		panic("Failed to create cloud storage client: " + err.Error())
+	}
+
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
 	// controller := controller.NewJobController(s.DB)
 
-	fileController := file.NewFileController(s.DB)
+	fileController := file.NewFileController(s.DB, cloudStorageClient)
 	companyController := company.NewCompanyController(s.DB)
 	adminController := admin.NewAdminController(s.DB)
 	applicationController := application.NewApplicationController(s.DB)
