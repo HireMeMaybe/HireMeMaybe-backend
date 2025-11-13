@@ -316,7 +316,7 @@ func (jc *FileController) writeFileResponse(c *gin.Context, file *model.File) {
 	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+fmt.Sprint(file.ID)+file.Extension)
 	c.Writer.Header().Set("Content-Type", "application/octet-stream")
 
-	if file.StorageObjectName != nil && *file.StorageObjectName != "" {
+	if file.StorageObjectName != nil {
 		if jc.Storage == nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: "Cloud storage is disabled while the requested file is stored remotely",
