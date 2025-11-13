@@ -269,6 +269,39 @@ definitions:
       type:
         type: string
     type: object
+  model.JobPostResponse:
+    properties:
+      company_id:
+        type: string
+      company_user:
+        $ref: '#/definitions/model.CompanyUser'
+      desc:
+        type: string
+      exp_lvl:
+        type: string
+      expiring:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      post_time:
+        type: string
+      req:
+        type: string
+      salary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+      user_apply:
+        type: boolean
+    type: object
   model.PunishmentStruct:
     properties:
       at:
@@ -1285,7 +1318,7 @@ paths:
           description: Return non-expired job post(s)
           schema:
             items:
-              $ref: '#/definitions/model.JobPost'
+              $ref: '#/definitions/model.JobPostResponse'
             type: array
         "400":
           description: Invalid authorization header, or invalid job post struct
@@ -1414,7 +1447,7 @@ paths:
         "200":
           description: Return the job post with the specified ID
           schema:
-            $ref: '#/definitions/model.JobPost'
+            $ref: '#/definitions/model.JobPostResponse'
         "400":
           description: Invalid authorization header
           schema:

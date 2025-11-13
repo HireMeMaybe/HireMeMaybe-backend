@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,4 +31,44 @@ type JobPost struct {
 	Applications  []Application  `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE" json:"applications"`
 	DefaultForm   bool           `gorm:"type:boolean;default:true" json:"default_form"`
 	OptionalForms pq.StringArray `gorm:"type:text[]" json:"optional_forms"`
+}
+
+// JobPostResponse is the response struct for job post with user application status
+type JobPostResponse struct {
+	ID            uint        `json:"id"`
+	CompanyUserID uuid.UUID   `json:"company_id"`
+	CompanyUser   CompanyUser `json:"company_user"`
+	PostTime      time.Time   `json:"post_time"`
+	UserApply     bool        `json:"user_apply"`
+	EditableJobPostInfo
+}
+
+// ToJobPostResponse converts JobPost to JobPostResponse
+func (j *JobPost) ToJobPostResponse(user User) (JobPostResponse, error) {
+
+	var resp JobPostResponse
+
+	b, err := json.Marshal(j)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(b, &resp)
+	if err != nil {
+		return resp, err
+	}
+
+	userApply := false
+
+	if user.Role == RoleCPSK {
+		for _, application := range j.Applications {
+			if application.CPSKID.String() == user.ID.String() {
+				userApply = true
+				break
+			}
+		}
+	}
+	resp.UserApply = userApply
+
+	return resp, nil
 }

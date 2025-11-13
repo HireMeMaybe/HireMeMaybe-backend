@@ -104,7 +104,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 				companyRoute.PATCH("profile", companyController.EditCompanyProfile)
 				companyRoute.POST("profile/logo", middleware.SizeLimit(10<<20), fileController.UploadLogo)
 				companyRoute.POST("profile/banner", middleware.SizeLimit(10<<20), fileController.UploadBanner)
-				companyRoute.GET("myprofile", companyController.GetCompanyProfile)
+				companyRoute.GET("myprofile", companyController.GetMyCompanyProfile)
 				companyRoute.POST("ai-verify", verificationController.AIVerifyCompany)
 			}
 

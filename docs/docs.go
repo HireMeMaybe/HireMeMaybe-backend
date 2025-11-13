@@ -1365,7 +1365,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.JobPost"
+                                "$ref": "#/definitions/model.JobPostResponse"
                             }
                         }
                     },
@@ -1491,7 +1491,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Return the job post with the specified ID",
                         "schema": {
-                            "$ref": "#/definitions/model.JobPost"
+                            "$ref": "#/definitions/model.JobPostResponse"
                         }
                     },
                     "400": {
@@ -2588,6 +2588,56 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "model.JobPostResponse": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string"
+                },
+                "company_user": {
+                    "$ref": "#/definitions/model.CompanyUser"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "exp_lvl": {
+                    "type": "string"
+                },
+                "expiring": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "post_time": {
+                    "type": "string"
+                },
+                "req": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_apply": {
+                    "type": "boolean"
                 }
             }
         },
