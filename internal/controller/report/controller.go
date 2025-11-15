@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"HireMeMaybe-backend/internal/database"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"

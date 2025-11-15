@@ -1422,7 +1422,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.EditableJobPostInfo"
+                            "$ref": "#/definitions/jobpost.jobPostCreateRequest"
                         }
                     }
                 ],
@@ -2292,6 +2292,50 @@ const docTemplate = `{
                 }
             }
         },
+        "jobpost.jobPostCreateRequest": {
+            "type": "object",
+            "properties": {
+                "default_form": {
+                    "type": "boolean"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "exp_lvl": {
+                    "type": "string"
+                },
+                "expiring": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "req": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Application": {
             "type": "object",
             "required": [
@@ -2500,6 +2544,9 @@ const docTemplate = `{
                 "company_user": {
                     "$ref": "#/definitions/model.CompanyUser"
                 },
+                "default_form": {
+                    "type": "boolean"
+                },
                 "desc": {
                     "type": "string"
                 },
@@ -2514,6 +2561,12 @@ const docTemplate = `{
                 },
                 "location": {
                     "type": "string"
+                },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "post_time": {
                     "type": "string"

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -20,6 +21,12 @@ import (
 // JobPostController handles job post related endpoints
 type JobPostController struct {
 	DB *database.DBinstanceStruct
+}
+
+type jobPostCreateRequest struct {
+	model.EditableJobPostInfo
+	DefaultForm   bool     `json:"default_form"`
+	OptionalForms []string `json:"optional_forms"`
 }
 
 // NewJobPostController creates a new instance of JobPostController
@@ -36,7 +43,7 @@ func NewJobPostController(db *database.DBinstanceStruct) *JobPostController {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Insert your access token" default(Bearer <your access token>)
-// @Param Jobpost body model.EditableJobPostInfo true "Input jobpost information"
+// @Param Jobpost body jobPostCreateRequest true "Input jobpost information"
 // @Success 201 {object} model.JobPost "Successfully create job post"
 // @Failure 400 {object} utilities.ErrorResponse "Invalid authorization header, or invalid job post struct"
 // @Failure 401 {object} utilities.ErrorResponse "Invalid token"
@@ -68,18 +75,24 @@ func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 	}
 
 	// construct job post from request
-	jobPost := model.JobPost{}
+	rawInput := jobPostCreateRequest{}
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&jobPost.EditableJobPostInfo); err != nil {
+	if err := decoder.Decode(&rawInput); err != nil {
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Invalid request body: %s", err.Error()),
 		})
 		return
 	}
 
+	jobPost := model.JobPost{
+		EditableJobPostInfo: rawInput.EditableJobPostInfo,
+		DefaultForm:         rawInput.DefaultForm,
+		OptionalForms:       pq.StringArray(rawInput.OptionalForms),
+		CompanyUserID:       user.ID,
+	}
+
 	// save job post
-	jobPost.CompanyUserID = user.ID
 	if err := jc.DB.Create(&jobPost).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to create job post: ", err),
