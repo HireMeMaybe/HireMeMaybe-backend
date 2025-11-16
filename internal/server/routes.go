@@ -80,9 +80,12 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
+
 	r.GET("/", s.HelloWorldHandler)
 	r.GET("/health", s.healthHandler)
 	v1 := r.Group("/api/v1")
+	// Apply rate limiting only to API routes (exclude Swagger and other non-API endpoints)
+	v1.Use(middleware.EnvRateLimitMiddleware())
 	{
 		authRoute := v1.Group("/auth")
 		{
@@ -169,7 +172,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		}
 	}
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", middleware.RateLimiterMiddleware(uint(30)),ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
