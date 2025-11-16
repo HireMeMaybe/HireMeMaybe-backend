@@ -60,7 +60,11 @@ func (jc *FileController) UploadResume(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
@@ -132,19 +136,9 @@ func (jc *FileController) UploadResume(c *gin.Context) {
 func (jc *FileController) companyUpload(c *gin.Context, fName string) (model.CompanyUser, []byte, string) {
 	var company = model.CompanyUser{}
 
-	u, _ := c.Get("user")
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
-			Error: "User information not provided",
-		})
-		return company, nil, ""
-	}
-
-	user, ok := u.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Failed to assert type",
-		})
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 		return company, nil, ""
 	}
 

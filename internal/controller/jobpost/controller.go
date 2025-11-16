@@ -53,7 +53,11 @@ func NewJobPostController(db *database.DBinstanceStruct) *JobPostController {
 func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 
 	// Get user
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Ensure that user is a verified company
 	var companyUser model.CompanyUser
@@ -128,8 +132,9 @@ func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 // @Router /jobpost [get]
 func (jc *JobPostController) GetPosts(c *gin.Context) {
 
-	user := utilities.ExtractUser(c)
-	if c.IsAborted() {
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -241,8 +246,9 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 func (jc *JobPostController) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 
-	user := utilities.ExtractUser(c)
-	if c.IsAborted() {
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -292,8 +298,12 @@ func (jc *JobPostController) GetPostByID(c *gin.Context) {
 // @Router /jobpost/{id} [patch]
 func (jc *JobPostController) EditJobPost(c *gin.Context) {
 
-	// Use ExtractUser itiesity to get authenticated user
-	user := utilities.ExtractUser(c)
+	// Use ExtractUser utility to get authenticated user
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Get job post id from path
 	id := c.Param("id")
@@ -366,7 +376,11 @@ func (jc *JobPostController) EditJobPost(c *gin.Context) {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /jobpost/{id} [delete]
 func (jc *JobPostController) DeleteJobPost(c *gin.Context) {
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 	id := c.Param("id")
 
 	job := model.JobPost{}

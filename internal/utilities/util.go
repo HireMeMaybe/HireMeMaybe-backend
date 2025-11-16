@@ -3,8 +3,8 @@ package utilities
 
 import (
 	"HireMeMaybe-backend/internal/model"
+	"errors"
 	"log"
-	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -21,24 +21,19 @@ type MessageResponse struct {
 	Message string `json:"message"`
 }
 
-// ExtractUser will extract user model from gin context and abort with error message
-func ExtractUser(c *gin.Context) model.User {
+// ExtractUser extracts the user model from Gin context.
+// It no longer aborts the request; instead returns an error when missing/invalid.
+func ExtractUser(c *gin.Context) (model.User, error) {
 	u, _ := c.Get("user")
 	if u == nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "User information not provided",
-		})
-		return model.User{}
+		return model.User{}, errors.New("User information not provided")
 	}
 
 	user, ok := u.(model.User)
 	if !ok {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to assert type",
-		})
-		return model.User{}
+		return model.User{}, errors.New("Failed to assert type")
 	}
-	return user
+	return user, nil
 }
 
 // CreateAdmin creates an admin user with the given password and username in the provided database.

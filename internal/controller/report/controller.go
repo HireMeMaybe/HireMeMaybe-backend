@@ -53,8 +53,9 @@ type PostReportRequest struct {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /report/user [post]
 func (jc *ReportController) CreateUserReport(c *gin.Context) {
-	user := utilities.ExtractUser(c)
-	if c.IsAborted() {
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -132,8 +133,9 @@ func (jc *ReportController) CreateUserReport(c *gin.Context) {
 // @Router /report/post [post]
 func (jc *ReportController) CreatePostReport(c *gin.Context) {
 
-	user := utilities.ExtractUser(c)
-	if c.IsAborted() {
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 		return
 	}
 

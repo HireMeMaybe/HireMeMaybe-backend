@@ -50,7 +50,11 @@ func (jc *CPSKController) EditCPSKProfile(c *gin.Context) {
 
 	var cpskUser = model.CPSKUser{}
 
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Retrieve original profile from DB
 	if err := jc.DB.Preload("User").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
@@ -96,7 +100,11 @@ func (jc *CPSKController) EditCPSKProfile(c *gin.Context) {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /cpsk/myprofile [get]
 func (jc *CPSKController) GetMyCPSKProfile(c *gin.Context) {
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	cpskUser := model.CPSKUser{}
 
