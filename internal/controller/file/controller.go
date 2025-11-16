@@ -5,6 +5,7 @@ import (
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
 	"HireMeMaybe-backend/internal/utilities"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -14,18 +15,27 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // FileController handles file related endpoints
 type FileController struct {
-	DB *database.DBinstanceStruct
+	DB      *database.DBinstanceStruct
+	Storage StorageClient
 }
 
+const (
+	resumeObjectPrefix = "resumes"
+	logoObjectPrefix   = "logos"
+	bannerObjectPrefix = "banners"
+)
+
 // NewFileController creates a new instance of FileController
-func NewFileController(db *database.DBinstanceStruct) *FileController {
+func NewFileController(db *database.DBinstanceStruct, storage StorageClient) *FileController {
 	return &FileController{
-		DB: db,
+		DB:      db,
+		Storage: storage,
 	}
 }
 
@@ -101,8 +111,12 @@ func (jc *FileController) UploadResume(c *gin.Context) {
 		return
 	}
 
-	cpskUser.Resume.Content = fileBytes
-	cpskUser.Resume.Extension = ".pdf"
+	if err := jc.persistFileData(&cpskUser.Resume, fileBytes, ".pdf", resumeObjectPrefix); err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to store resume: %s", err.Error()),
+		})
+		return
+	}
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
@@ -215,8 +229,12 @@ func (jc *FileController) UploadLogo(c *gin.Context) {
 		return
 	}
 
-	company.Logo.Content = fileBytes
-	company.Logo.Extension = fileExtension
+	if err := jc.persistFileData(&company.Logo, fileBytes, fileExtension, logoObjectPrefix); err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to store logo: %s", err.Error()),
+		})
+		return
+	}
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
@@ -251,8 +269,12 @@ func (jc *FileController) UploadBanner(c *gin.Context) {
 		return
 	}
 
-	company.Banner.Content = fileBytes
-	company.Banner.Extension = fileExtension
+	if err := jc.persistFileData(&company.Banner, fileBytes, fileExtension, bannerObjectPrefix); err != nil {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: fmt.Sprintf("Failed to store banner: %s", err.Error()),
+		})
+		return
+	}
 
 	if err := jc.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
@@ -287,21 +309,72 @@ func (jc *FileController) GetFile(c *gin.Context) {
 		return
 	}
 
-	// Set Content-Disposition with file name and extension
+	jc.writeFileResponse(c, &file)
+}
+
+func (jc *FileController) writeFileResponse(c *gin.Context, file *model.File) {
 	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+fmt.Sprint(file.ID)+file.Extension)
 	c.Writer.Header().Set("Content-Type", "application/octet-stream")
-	c.Writer.Header().Set("Content-Length", fmt.Sprint(len(file.Content)))
 
-	// Write file data to response
-	_, err := c.Writer.Write(file.Content)
-	if err != nil {
-		if !c.Writer.Written() {
+	if file.StorageObjectName != nil {
+		if jc.Storage == nil {
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Failed to send file content",
+				Error: "Cloud storage is disabled while the requested file is stored remotely",
 			})
-		} else {
-			c.Abort()
+			return
+		}
+		reader, size, err := jc.Storage.DownloadFile(*file.StorageObjectName)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: fmt.Sprintf("Failed to download file from storage: %s", err.Error()),
+			})
+			return
+		}
+		defer func() {
+			if err := reader.Close(); err != nil {
+				log.Printf("failed to close storage reader: %v", err)
+			}
+		}()
+
+		if size > 0 {
+			c.Writer.Header().Set("Content-Length", fmt.Sprint(size))
+		}
+		if _, err := io.Copy(c.Writer, reader); err != nil {
+			jc.handleWriterError(c, err)
 		}
 		return
 	}
+
+	c.Writer.Header().Set("Content-Length", fmt.Sprint(len(file.Content)))
+	if _, err := c.Writer.Write(file.Content); err != nil {
+		jc.handleWriterError(c, err)
+	}
+}
+
+func (jc *FileController) handleWriterError(c *gin.Context, err error) {
+	if !c.Writer.Written() {
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+			Error: "Failed to send file content",
+		})
+	} else {
+		c.Abort()
+	}
+}
+
+func (jc *FileController) persistFileData(file *model.File, fileBytes []byte, extension, prefix string) error {
+	file.Extension = extension
+	if jc.Storage == nil {
+		file.Content = fileBytes
+		file.StorageObjectName = nil
+		return nil
+	}
+
+	objectName := fmt.Sprintf("%s/%s%s", prefix, uuid.NewString(), extension)
+	if err := jc.Storage.UploadFile(objectName, bytes.NewReader(fileBytes)); err != nil {
+		return err
+	}
+
+	file.StorageObjectName = &objectName
+	file.Content = nil
+	return nil
 }
