@@ -26,12 +26,12 @@ type MessageResponse struct {
 func ExtractUser(c *gin.Context) (model.User, error) {
 	u, _ := c.Get("user")
 	if u == nil {
-		return model.User{}, errors.New("User information not provided")
+		return model.User{}, errors.New("user information not provided")
 	}
 
 	user, ok := u.(model.User)
 	if !ok {
-		return model.User{}, errors.New("Failed to assert type")
+		return model.User{}, errors.New("failed to assert type")
 	}
 	return user, nil
 }

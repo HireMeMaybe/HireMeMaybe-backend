@@ -25,31 +25,44 @@ func errorHandler(c *gin.Context, info ratelimit.Info) {
 	})
 }
 
+// RateLimiterMiddleware creates a rate limiter middleware with the specified requests per second.
 func RateLimiterMiddleware(reqPerSec uint) gin.HandlerFunc {
 
 	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
-		Rate:   time.Second,
-		Limit:  reqPerSec,
+		Rate:  time.Second,
+		Limit: reqPerSec,
 	})
 
 	return ratelimit.RateLimiter(store, &ratelimit.Options{
-		KeyFunc:     keyFunc,
+		KeyFunc:      keyFunc,
 		ErrorHandler: errorHandler,
 	})
 }
 
+// EnvRateLimitMiddleware creates a rate limiter middleware using the RATE_LIMIT_REQUESTS_PER_SECOND environment variable.
 func EnvRateLimitMiddleware() gin.HandlerFunc {
 
 	rateLimitString := os.Getenv("RATE_LIMIT_REQUESTS_PER_SECOND")
-	rateLimitInt, err := strconv.Atoi(rateLimitString)
+	var rateLimit uint
 
-	if err != nil {
-		rateLimitInt = 5 // default to 5 requests per second if env variable is not set or invalid
+	if rateLimitString == "" {
+		rateLimit = 5
+	} else {
+		// Parse as unsigned, clamp to platform max, and ensure non-zero
+		if v, err := strconv.ParseUint(rateLimitString, 10, 64); err == nil {
+			maxUint := uint64(^uint(0))
+			if v == 0 {
+				rateLimit = 5
+			} else {
+				if v > maxUint {
+					v = maxUint
+				}
+				rateLimit = uint(v)
+			}
+		} else {
+			rateLimit = 5
+		}
 	}
 
-	if rateLimitInt <= 0 {
-		rateLimitInt = 5 // ensure rate limit is positive
-	}
-
-	return RateLimiterMiddleware(uint(rateLimitInt))
+	return RateLimiterMiddleware(rateLimit)
 }
