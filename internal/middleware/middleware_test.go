@@ -280,7 +280,7 @@ func TestCheckRole_NoRequireAuthBefore(t *testing.T) {
 	var body map[string]interface{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 
-	assert.Contains(t, body["error"], "User information not provided")
+	assert.Contains(t, body["error"], "user information not provided")
 }
 
 func TestCheckRole_WrongRole(t *testing.T) {
