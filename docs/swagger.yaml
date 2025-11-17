@@ -215,6 +215,10 @@ definitions:
         type: string
       location:
         type: string
+      optional_forms:
+        items:
+          type: string
+        type: array
       req:
         type: string
       salary:
@@ -275,6 +279,8 @@ definitions:
         type: string
       company_user:
         $ref: '#/definitions/model.CompanyUser'
+      default_form:
+        type: boolean
       desc:
         type: string
       exp_lvl:
@@ -285,6 +291,10 @@ definitions:
         type: integer
       location:
         type: string
+      optional_forms:
+        items:
+          type: string
+        type: array
       post_time:
         type: string
       req:

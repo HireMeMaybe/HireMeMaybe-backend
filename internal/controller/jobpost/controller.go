@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -25,8 +24,7 @@ type JobPostController struct {
 
 type jobPostCreateRequest struct {
 	model.EditableJobPostInfo
-	DefaultForm   bool     `json:"default_form"`
-	OptionalForms []string `json:"optional_forms"`
+	DefaultForm bool `json:"default_form"`
 }
 
 // NewJobPostController creates a new instance of JobPostController
@@ -92,7 +90,6 @@ func (jc *JobPostController) CreateJobPostHandler(c *gin.Context) {
 	jobPost := model.JobPost{
 		EditableJobPostInfo: rawInput.EditableJobPostInfo,
 		DefaultForm:         rawInput.DefaultForm,
-		OptionalForms:       pq.StringArray(rawInput.OptionalForms),
 		CompanyUserID:       user.ID,
 	}
 
@@ -194,10 +191,10 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 	}
 
 	result = result.Order(clause.OrderByColumn{
-			Column: clause.Column{Name: "post_time"},
-			Desc:   strings.ToLower(rawDesc) == "true",
-		}).Find(&rawPosts)
-		
+		Column: clause.Column{Name: "post_time"},
+		Desc:   strings.ToLower(rawDesc) == "true",
+	}).Find(&rawPosts)
+
 	if err := result.Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprint("Failed to fetch job post: ", err.Error()),
@@ -223,7 +220,6 @@ func (jc *JobPostController) GetPosts(c *gin.Context) {
 		}
 		posts = append(posts, rawPostResp)
 	}
-
 
 	c.JSON(http.StatusOK, posts)
 }
