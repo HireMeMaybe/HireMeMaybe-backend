@@ -14,9 +14,9 @@ import (
 // CheckPunishment check whether user is punished or not
 func CheckPunishment(db *database.DBinstanceStruct, punishmentType string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := utilities.ExtractUser(ctx)
-
-		if ctx.IsAborted() {
+		user, err := utilities.ExtractUser(ctx)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
 			return
 		}
 

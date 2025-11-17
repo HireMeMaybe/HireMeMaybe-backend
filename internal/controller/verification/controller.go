@@ -47,11 +47,15 @@ type aiVerificationResponse struct {
 // @Router /company/ai-verify [post]
 func (jc *VerificationController) AIVerifyCompany(c *gin.Context) {
 	// Extract user from token (middleware already validated it's a company)
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Fetch company information with all necessary preloads
 	var company model.CompanyUser
-	err := jc.DB.
+	err = jc.DB.
 		Preload("User").
 		Preload("Logo").
 		Preload("Banner").

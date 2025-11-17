@@ -103,7 +103,11 @@ func getCheckRoleHandler(role ...string) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"ok": false})
 			return
 		}
-		user := utilities.ExtractUser(c)
+		user, err := utilities.ExtractUser(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": err.Error()})
+			return
+		}
 		if !utilities.Contains(role, user.Role) {
 			c.JSON(http.StatusForbidden, gin.H{"ok": false, "error": "User doesn't have permission to access"})
 			return
@@ -276,7 +280,7 @@ func TestCheckRole_NoRequireAuthBefore(t *testing.T) {
 	var body map[string]interface{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 
-	assert.Contains(t, body["error"], "User information not provided")
+	assert.Contains(t, body["error"], "user information not provided")
 }
 
 func TestCheckRole_WrongRole(t *testing.T) {

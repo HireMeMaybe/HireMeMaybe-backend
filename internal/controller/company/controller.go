@@ -44,7 +44,11 @@ type editCompanyUser struct {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/myprofile [get]
 func (jc *CompanyController) GetMyCompanyProfile(c *gin.Context) {
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	company := model.CompanyUser{}
 
@@ -81,7 +85,11 @@ func (jc *CompanyController) GetMyCompanyProfile(c *gin.Context) {
 // @Failure 500 {object} utilities.ErrorResponse "Database error"
 // @Router /company/profile [patch]
 func (jc *CompanyController) EditCompanyProfile(c *gin.Context) {
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	company := model.CompanyUser{}
 

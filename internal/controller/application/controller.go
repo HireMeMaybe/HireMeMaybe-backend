@@ -42,7 +42,11 @@ func NewApplicationController(db *database.DBinstanceStruct) *ApplicationControl
 // @Router /application [post]
 func (j *ApplicationController) ApplicationHandler(c *gin.Context) {
 	// ExtractUser(c)
-	user := utilities.ExtractUser(c)
+	user, err := utilities.ExtractUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	// Extract application detail from request body
 	application := model.Application{}
