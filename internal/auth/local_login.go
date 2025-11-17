@@ -196,7 +196,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	}
 
 	var user model.User
-	err := lh.DB.Where("username = ?", info.Username).First(&user).Error
+	err := lh.DB.Preload("Punishment").Where("username = ?", info.Username).First(&user).Error
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -213,6 +213,15 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 			Error: fmt.Sprintf("Database error: %s", err.Error()),
 		})
 		return
+	}
+
+	if msg, status, err := database.RemovePunishment(user, lh.DB); err != nil {
+		if status == http.StatusInternalServerError {
+			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+				Error: msg,
+			})
+			return
+		}
 	}
 
 	if user.Password == "" {

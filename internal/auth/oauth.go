@@ -111,7 +111,7 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 	var user model.User
 	respStatus := http.StatusOK
 
-	err := h.DB.Where("google_id = ?", uinfo.GID).First(&user).Error
+	err := h.DB.Preload("Punishment").Where("google_id = ?", uinfo.GID).First(&user).Error
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -127,6 +127,15 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 
 		respStatus = http.StatusCreated
 	case err == nil:
+
+		if msg, status, err := database.RemovePunishment(user, h.DB); err != nil {
+			if status == http.StatusInternalServerError {
+				c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
+					Error: msg,
+				})
+				return
+			}
+		}
 
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(userModel).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {

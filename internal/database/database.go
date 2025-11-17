@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"sync"
@@ -285,4 +286,40 @@ func (d *DBinstanceStruct) installExtension() error {
 	}
 	log.Println("uuid-ossp extension installed or already exists")
 	return nil
+}
+
+// RemovePunishment removes punishment from user and delete punishment record from database
+func RemovePunishment(user model.User, db *DBinstanceStruct) (string, int, error) {
+	if user.Punishment == nil {
+		return "", http.StatusOK, nil
+	}
+
+	if user.Punishment.PunishEnd == nil {
+		return "You don't have access to this endpoint due to permanent punishment",
+			http.StatusForbidden,
+			fmt.Errorf("Permanent punishment")
+	}
+
+	if user.Punishment.PunishEnd.After(time.Now()) {
+		return fmt.Sprintf("You don't have access to this endpoint until: %s", user.Punishment.PunishEnd),
+			http.StatusForbidden,
+			fmt.Errorf("Unexpired punishment")
+	}
+
+	punishment := model.PunishmentStruct{}
+	punishmentID := user.PunishmentID
+	user.Punishment = nil
+	user.PunishmentID = nil
+
+	if err := db.Save(&user).Error; err != nil {
+		return fmt.Sprintf("Failed to update user info: %s", err.Error()), http.StatusInternalServerError, err
+	}
+
+	if punishmentID != nil {
+		if err := db.Where("id = ?", punishmentID).Delete(&punishment).Error; err != nil {
+			return fmt.Sprintf("Failed to delete punishment record: %s", err.Error()), http.StatusInternalServerError, err
+		}
+	}
+
+	return "", http.StatusOK, nil
 }
