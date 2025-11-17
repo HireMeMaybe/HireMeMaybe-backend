@@ -297,13 +297,13 @@ func RemovePunishment(user model.User, db *DBinstanceStruct) (string, int, error
 	if user.Punishment.PunishEnd == nil {
 		return "You don't have access to this endpoint due to permanent punishment",
 			http.StatusForbidden,
-			fmt.Errorf("Permanent punishment")
+			fmt.Errorf("permanent punishment")
 	}
 
 	if user.Punishment.PunishEnd.After(time.Now()) {
 		return fmt.Sprintf("You don't have access to this endpoint until: %s", user.Punishment.PunishEnd),
 			http.StatusForbidden,
-			fmt.Errorf("Unexpired punishment")
+			fmt.Errorf("unexpired punishment")
 	}
 
 	punishment := model.PunishmentStruct{}
