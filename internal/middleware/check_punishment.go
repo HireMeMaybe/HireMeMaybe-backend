@@ -53,6 +53,7 @@ func CheckPunishment(db *database.DBinstanceStruct, punishmentType string) gin.H
 		punishment := model.PunishmentStruct{}
 		punishmentID := user.PunishmentID
 		user.Punishment = nil
+		user.PunishmentID = nil
 
 		if err := db.Save(&user).Error; err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utilities.ErrorResponse{
