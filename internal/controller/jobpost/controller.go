@@ -252,6 +252,7 @@ func (jc *JobPostController) GetPostByID(c *gin.Context) {
 	if err := jc.DB.
 		Preload("CompanyUser").
 		Preload("CompanyUser.User").
+		Preload("CompanyUser.User.Punishment").
 		Preload("Applications").
 		Where("id = ?", id).
 		First(&job).Error; err != nil {
@@ -263,6 +264,15 @@ func (jc *JobPostController) GetPostByID(c *gin.Context) {
 			Error: fmt.Sprintf("Failed to retrieve job post: %s", err.Error()),
 		})
 		return
+	}
+
+	if job.CompanyUser.User.Punishment != nil {
+		if job.CompanyUser.User.Punishment.PunishmentType == "ban" &&
+			(job.CompanyUser.User.Punishment.PunishEnd == nil ||
+				job.CompanyUser.User.Punishment.PunishEnd.After(time.Now())) {
+			c.JSON(http.StatusNotFound, utilities.ErrorResponse{Error: "Job post not found"})
+			return
+		}
 	}
 
 	rawPostResp, err := job.ToJobPostResponse(user)
