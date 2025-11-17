@@ -2502,6 +2502,12 @@
                 "location": {
                     "type": "string"
                 },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "req": {
                     "type": "string"
                 },
@@ -2593,6 +2599,9 @@
                 "company_user": {
                     "$ref": "#/definitions/model.CompanyUser"
                 },
+                "default_form": {
+                    "type": "boolean"
+                },
                 "desc": {
                     "type": "string"
                 },
@@ -2607,6 +2616,12 @@
                 },
                 "location": {
                     "type": "string"
+                },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "post_time": {
                     "type": "string"

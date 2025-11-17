@@ -2509,6 +2509,12 @@ const docTemplate = `{
                 "location": {
                     "type": "string"
                 },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "req": {
                     "type": "string"
                 },
@@ -2600,6 +2606,9 @@ const docTemplate = `{
                 "company_user": {
                     "$ref": "#/definitions/model.CompanyUser"
                 },
+                "default_form": {
+                    "type": "boolean"
+                },
                 "desc": {
                     "type": "string"
                 },
@@ -2614,6 +2623,12 @@ const docTemplate = `{
                 },
                 "location": {
                     "type": "string"
+                },
+                "optional_forms": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "post_time": {
                     "type": "string"
