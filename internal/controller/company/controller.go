@@ -58,6 +58,8 @@ func (jc *CompanyController) GetMyCompanyProfile(c *gin.Context) {
 		Preload("Banner").
 		Preload("JobPost").
 		Preload("JobPost.Applications").
+		Preload("JobPost.Applications.CPSKUser").
+		Preload("JobPost.Applications.CPSKUser.User").
 		Where("user_id = ?", user.ID.String()).
 		First(&company).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{

@@ -111,6 +111,8 @@ definitions:
       cpsk_id:
         description: CPSKID references CPSKUser.UserID (uuid)
         type: string
+      cpsk_user:
+        $ref: '#/definitions/model.CPSKUser'
       id:
         type: integer
       post_id:
