@@ -24,7 +24,7 @@ type Application struct {
 
 	// CPSKID references CPSKUser.UserID (uuid)
 	CPSKID   uuid.UUID `gorm:"type:uuid;not null;index" json:"cpsk_id"`
-	CPSKUser CPSKUser  `gorm:"foreignKey:CPSKID;references:UserID" json:"-"`
+	CPSKUser CPSKUser  `gorm:"foreignKey:CPSKID;references:UserID" json:"cpsk_user"`
 
 	// PostID references JobPost.ID
 	PostID  uint    `gorm:"not null;index" json:"post_id" binding:"required"`

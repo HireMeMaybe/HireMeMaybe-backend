@@ -2356,6 +2356,9 @@ const docTemplate = `{
                     "description": "CPSKID references CPSKUser.UserID (uuid)",
                     "type": "string"
                 },
+                "cpsk_user": {
+                    "$ref": "#/definitions/model.CPSKUser"
+                },
                 "id": {
                     "type": "integer"
                 },
