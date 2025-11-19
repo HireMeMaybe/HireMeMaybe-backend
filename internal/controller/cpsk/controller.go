@@ -109,7 +109,11 @@ func (jc *CPSKController) GetMyCPSKProfile(c *gin.Context) {
 	cpskUser := model.CPSKUser{}
 
 	// Retrieve original profile from DB
-	if err := jc.DB.Preload("User").Preload("Resume").Preload("Applications").Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
+	if err := jc.DB.Preload("User").
+		Preload("Resume").
+		Preload("Applications").
+		Preload("Applications.Answer").
+		Where("user_id = ?", user.ID.String()).First(&cpskUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to retrieve user information from database: %s", err.Error()),
 		})
