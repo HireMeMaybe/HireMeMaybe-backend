@@ -80,7 +80,19 @@ func (j *ApplicationController) ApplicationHandler(c *gin.Context) {
 
 	application.Status = model.ApplicationStatusPending
 
-	if !application.JobPost.DefaultForm {
+	// Fetch referenced job post to determine form type instead of trusting request body
+	var job model.JobPost
+	if err := j.DB.Select("id", "default_form").Where("id = ?", application.PostID).First(&job).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, utilities.ErrorResponse{Error: "Invalid PostID: job post not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{Error: fmt.Sprintf("Failed to verify job post: %s", err.Error())})
+		return
+	}
+
+	if !job.DefaultForm {
+		// Non-default form means no standard answer payload should be stored
 		application.Answer = nil
 		application.AnswerID = nil
 	}
