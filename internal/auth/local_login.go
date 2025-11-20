@@ -81,9 +81,7 @@ func (lh *LocalRegisterHandler) LocalRegisterHandler(c *gin.Context) {
 		// Do nothing
 
 	default:
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -209,9 +207,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 		// Do nothing
 
 	default:
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 

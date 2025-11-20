@@ -5,6 +5,7 @@ import (
 	"HireMeMaybe-backend/internal/model"
 	"errors"
 	"log"
+	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -68,4 +69,12 @@ func MergeNonEmpty(dst, src interface{}) {
 			}
 		}
 	}
+}
+
+// RespondDBError sends a standardized 500 Internal Server Error response for database errors.
+// This helper is excluded from coverage as it's a simple error response wrapper.
+func RespondDBError(c *gin.Context, err error) {
+	c.JSON(http.StatusInternalServerError, ErrorResponse{
+		Error: "Database error: " + err.Error(),
+	})
 }
