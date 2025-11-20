@@ -71,9 +71,7 @@ func (jc *VerificationController) AIVerifyCompany(c *gin.Context) {
 		return
 
 	case err != nil:
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 

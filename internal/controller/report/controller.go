@@ -83,9 +83,7 @@ func (jc *ReportController) CreateUserReport(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + err.Error(),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -105,9 +103,7 @@ func (jc *ReportController) CreateUserReport(c *gin.Context) {
 	}
 
 	if err := jc.DB.Create(&report).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + err.Error(),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -155,9 +151,7 @@ func (jc *ReportController) CreatePostReport(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + dberr.Error(),
-		})
+		utilities.RespondDBError(c, dberr)
 		return
 	}
 
@@ -170,9 +164,7 @@ func (jc *ReportController) CreatePostReport(c *gin.Context) {
 	}
 
 	if err := jc.DB.Create(&report).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + err.Error(),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -211,18 +203,14 @@ func (jc *ReportController) GetReport(c *gin.Context) {
 
 	if err := postQuery.Find(&postReports).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Database error: " + err.Error(),
-			})
+			utilities.RespondDBError(c, err)
 			return
 		}
 	}
 
 	if err := userQuery.Find(&userReports).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Database error: " + err.Error(),
-			})
+			utilities.RespondDBError(c, err)
 			return
 		}
 	}
@@ -277,9 +265,7 @@ func (jc *ReportController) UpdateReportStatus(c *gin.Context) {
 				})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Database error: " + err.Error(),
-			})
+			utilities.RespondDBError(c, err)
 			return
 		}
 		report = &userReport
@@ -292,9 +278,7 @@ func (jc *ReportController) UpdateReportStatus(c *gin.Context) {
 				})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-				Error: "Database error: " + err.Error(),
-			})
+			utilities.RespondDBError(c, err)
 			return
 		}
 		report = &postReport
@@ -313,9 +297,7 @@ func (jc *ReportController) UpdateReportStatus(c *gin.Context) {
 		return
 	}
 	if err := jc.DB.Save(report).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: "Database error: " + err.Error(),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
