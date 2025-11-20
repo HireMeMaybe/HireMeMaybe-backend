@@ -38,6 +38,21 @@ docker-down:
 test:
 	@echo "Testing..."
 	@go test ./... -v
+
+# Test with coverage (excluding model, server, testutil, utilities, docs)
+coverage:
+	@echo "Running tests with coverage..."
+	@go test -coverprofile=coverage.out -covermode=atomic $$(go list ./internal/... | grep -v "/model" | grep -v "/server" | grep -v "/testutil" | grep -v "/utilities" | grep -v "/docs")
+	@cat coverage.out | grep -v "auth_test_helpers.go" | grep -v "rate_limiter.go" > coverage.filtered.out
+	@mv coverage.filtered.out coverage.out
+	@echo ""
+	@echo "Coverage summary:"
+	@go tool cover -func=coverage.out | tail -1
+	@echo ""
+	@echo "Generating HTML coverage report..."
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Done! Open coverage.html to view detailed coverage report."
+
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
@@ -65,4 +80,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+.PHONY: all build run test coverage clean watch docker-run docker-down itest
