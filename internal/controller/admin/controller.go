@@ -71,9 +71,7 @@ func (jc *AdminController) GetCompanies(c *gin.Context) {
 	result = result.Find(&companyUser)
 
 	if err := result.Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -113,9 +111,7 @@ func (jc *AdminController) GetCPSK(c *gin.Context) {
 	result = result.Find(&cpskUser)
 
 	if err := result.Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -155,9 +151,7 @@ func (jc *AdminController) GetVisitors(c *gin.Context) {
 	result = result.Find(&visitorUser)
 
 	if err := result.Error; err != nil {
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
@@ -213,9 +207,7 @@ func (jc *AdminController) VerifyCompany(c *gin.Context) {
 		// Do nothing
 
 	default:
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %s", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 	company.VerifiedStatus = status

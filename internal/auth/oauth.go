@@ -150,9 +150,7 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 			return
 		}
 	default:
-		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
-			Error: fmt.Sprintf("Database error: %v", err.Error()),
-		})
+		utilities.RespondDBError(c, err)
 		return
 	}
 
