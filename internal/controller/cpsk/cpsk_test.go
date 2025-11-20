@@ -64,7 +64,7 @@ func TestGetMyCPSKProfile_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	if resp != nil {
-		_, ok := resp["user_id"]
+		_, ok := resp["id"]
 		assert.True(t, ok)
 	}
 }

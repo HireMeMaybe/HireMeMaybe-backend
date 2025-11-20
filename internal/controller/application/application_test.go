@@ -75,6 +75,12 @@ func TestApplicationHandler_Duplicate(t *testing.T) {
 		t.Fatalf("failed to create resume file: %v", err)
 	}
 
+	// Clean up any existing application for this CPSK and post to ensure test isolation
+	if err := testDB.Where("post_id = ? AND cpsk_id = ?", database.TestJobPost1.ID, database.TestUserCPSK1.ID).
+		Delete(&model.Application{}).Error; err != nil {
+		t.Fatalf("failed to cleanup existing application: %v", err)
+	}
+
 	r := gin.Default()
 	ac := &ApplicationController{DB: testDB}
 	r.POST("/application", middleware.RequireAuth(testDB), middleware.CheckRole(model.RoleCPSK), ac.ApplicationHandler)
