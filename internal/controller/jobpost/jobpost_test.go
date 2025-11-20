@@ -152,3 +152,127 @@ func TestCreateJobPost_Success(t *testing.T) {
 		assert.Equal(t, "New Internship", resp["title"])
 	}
 }
+
+func TestDeleteJobPost_Success(t *testing.T) {
+	// Create a job post to delete
+	companyToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	// Create a new job post
+	jobPost := model.JobPost{
+		EditableJobPostInfo: model.EditableJobPostInfo{
+			Title:    "Test Job to Delete",
+			Desc:     "This job will be deleted",
+			Req:      "None",
+			ExpLvl:   "Entry",
+			Location: "Test Location",
+			Type:     "Full-time",
+			Salary:   "0",
+		},
+		CompanyUserID: database.TestUserCompany1.ID,
+		DefaultForm:   true,
+	}
+	if err := testDB.Create(&jobPost).Error; err != nil {
+		t.Fatalf("failed to create test job post: %v", err)
+	}
+
+	r := gin.Default()
+	jc := &JobPostController{DB: testDB}
+	r.DELETE("/jobpost/:id", middleware.RequireAuth(testDB), jc.DeleteJobPost)
+
+	rec, resp := testutil.MakeJSONRequest(nil, companyToken, r, fmt.Sprintf("/jobpost/%d", jobPost.ID), http.MethodDelete)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "Job post deleted", resp["message"])
+
+	// Verify the job post was actually deleted
+	var deletedJob model.JobPost
+	err = testDB.Where("id = ?", jobPost.ID).First(&deletedJob).Error
+	assert.Error(t, err)
+	assert.Equal(t, gorm.ErrRecordNotFound, err)
+}
+
+func TestDeleteJobPost_NotFound(t *testing.T) {
+	companyToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	jc := &JobPostController{DB: testDB}
+	r.DELETE("/jobpost/:id", middleware.RequireAuth(testDB), jc.DeleteJobPost)
+
+	rec, resp := testutil.MakeJSONRequest(nil, companyToken, r, "/jobpost/999999", http.MethodDelete)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Equal(t, "Job post not found", resp["error"])
+}
+
+
+func TestDeleteJobPost_ForbiddenNotOwner(t *testing.T) {
+	// Get token for company2 (not the owner of TestJobPost1)
+	company2Token, err := auth.GetAccessToken(t, testDB, database.TestUserCompany2.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	jc := &JobPostController{DB: testDB}
+	r.DELETE("/jobpost/:id", middleware.RequireAuth(testDB), jc.DeleteJobPost)
+
+	// TestJobPost1 belongs to TestUserCompany1, trying to delete with Company2
+	rec, resp := testutil.MakeJSONRequest(nil, company2Token, r, fmt.Sprintf("/jobpost/%d", database.TestJobPost1.ID), http.MethodDelete)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Equal(t, "You are not allowed to delete this job post", resp["error"])
+}
+
+func TestDeleteJobPost_AdminCanDelete(t *testing.T) {
+	// Create a job post to delete
+	jobPost := model.JobPost{
+		EditableJobPostInfo: model.EditableJobPostInfo{
+			Title:    "Test Job Admin Delete",
+			Desc:     "Admin will delete this",
+			Req:      "None",
+			ExpLvl:   "Entry",
+			Location: "Test Location",
+			Type:     "Full-time",
+			Salary:   "0",
+		},
+		CompanyUserID: database.TestUserCompany1.ID,
+		DefaultForm:   true,
+	}
+	if err := testDB.Create(&jobPost).Error; err != nil {
+		t.Fatalf("failed to create test job post: %v", err)
+	}
+
+	// Get admin token
+	adminToken, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	jc := &JobPostController{DB: testDB}
+	r.DELETE("/jobpost/:id", middleware.RequireAuth(testDB), jc.DeleteJobPost)
+
+	rec, resp := testutil.MakeJSONRequest(nil, adminToken, r, fmt.Sprintf("/jobpost/%d", jobPost.ID), http.MethodDelete)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "Job post deleted", resp["message"])
+
+	// Verify the job post was actually deleted
+	var deletedJob model.JobPost
+	err = testDB.Where("id = ?", jobPost.ID).First(&deletedJob).Error
+	assert.Error(t, err)
+	assert.Equal(t, gorm.ErrRecordNotFound, err)
+}
+
+func TestDeleteJobPost_CPSKUserCannotDelete(t *testing.T) {
+	// Get CPSK user token
+	cpskToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	jc := &JobPostController{DB: testDB}
+	r.DELETE("/jobpost/:id", middleware.RequireAuth(testDB), jc.DeleteJobPost)
+
+	rec, resp := testutil.MakeJSONRequest(nil, cpskToken, r, fmt.Sprintf("/jobpost/%d", database.TestJobPost1.ID), http.MethodDelete)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Equal(t, "You are not allowed to delete this job post", resp["error"])
+}

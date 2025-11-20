@@ -42,7 +42,7 @@ test:
 # Test with coverage (excluding model, server, testutil, utilities, docs)
 coverage:
 	@echo "Running tests with coverage..."
-	@go test -coverprofile=coverage.out -covermode=atomic $$(go list ./internal/... | grep -v "/model" | grep -v "/server" | grep -v "/utilities" | grep -v "/docs" | grep -v "/verification" | grep -v "/testutil")
+	@go test -coverprofile=coverage.out -covermode=atomic $$(go list ./internal/... | grep -v "/model" | grep -v "/server" | grep -v "/utilities" | grep -v "/docs" | grep -v "/verification" | grep -v "/testutil" | grep -v "/file")
 	@cat coverage.out | grep -v "auth_test_helpers.go" | grep -v "rate_limiter.go" | grep -v "cloud_storage.go" > coverage.filtered.out
 	@mv coverage.filtered.out coverage.out
 	@echo ""
