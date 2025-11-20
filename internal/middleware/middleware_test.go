@@ -2,8 +2,11 @@ package middleware
 
 import (
 	"HireMeMaybe-backend/internal/auth"
+	"HireMeMaybe-backend/internal/controller/application"
+	"HireMeMaybe-backend/internal/controller/jobpost"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/testutil"
 	"HireMeMaybe-backend/internal/utilities"
 	"context"
 	"encoding/json"
@@ -22,6 +25,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
+	"gorm.io/gorm"
 )
 
 var testDB *database.DBinstanceStruct
@@ -411,4 +415,3 @@ func TestSizeLimit_WayExceedLimit(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	assert.Contains(t, body["error"], "Entity too large")
 }
-

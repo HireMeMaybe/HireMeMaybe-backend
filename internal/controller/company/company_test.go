@@ -69,3 +69,21 @@ func TestGetCompanyByID_Success(t *testing.T) {
 		assert.True(t, ok)
 	}
 }
+
+func TestGetMyCompanyProfile_Success(t *testing.T) {
+	// use company user token to fetch own profile
+	companyToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	r := gin.Default()
+	cc := &CompanyController{DB: testDB}
+	r.GET("/company/myprofile", middleware.RequireAuth(testDB), cc.GetMyCompanyProfile)
+
+	rec, resp := testutil.MakeJSONRequest(nil, companyToken, r, "/company/myprofile", http.MethodGet)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if resp != nil {
+		_, ok := resp["id"]
+		assert.True(t, ok)
+	}
+}
