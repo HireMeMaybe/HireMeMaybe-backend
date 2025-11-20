@@ -490,7 +490,7 @@ func TestCheckPunishment_SuspendedCPSKCannotApply(t *testing.T) {
 	// Attempt to apply - should be blocked by middleware
 	engine := gin.New()
 	ac := &application.ApplicationController{DB: testDB}
-	engine.POST("/application", RequireAuth(testDB), CheckRole(model.RoleCPSK), ac.ApplicationHandler)
+	engine.POST("/application", RequireAuth(testDB), CheckPunishment(testDB, model.SuspendPunishment), CheckRole(model.RoleCPSK), ac.ApplicationHandler)
 
 	body := gin.H{"post_id": database.TestJobPost1.ID, "resume_id": f.ID}
 
