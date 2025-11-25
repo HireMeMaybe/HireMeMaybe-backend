@@ -55,12 +55,15 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 	cloudStorageClient, err := file.NewCloudStorageClient(os.Getenv("CLOUD_STORAGE_BUCKET"))
 
+	blackListStore := auth.NewInMemoryBlacklistStore()
+
 	if err != nil {
 		panic("Failed to create cloud storage client: " + err.Error())
 	}
 
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
+	logoutController := auth.NewLogoutController(blackListStore)
 	// controller := controller.NewJobController(s.DB)
 
 	fileController := file.NewFileController(s.DB, cloudStorageClient)
@@ -96,11 +99,12 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 			authRoute.POST("login", lAuth.LocalLoginHandler)
 			authRoute.POST("register", lAuth.LocalRegisterHandler)
+			authRoute.POST("logout", middleware.JwtBlacklistCheck(blackListStore), middleware.RequireAuth(s.DB), logoutController.LogoutHandler)
 		}
 		// Any routes
 		needAuth := v1.Group("")
 		{
-			needAuth.Use(middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
+			needAuth.Use(middleware.JwtBlacklistCheck(blackListStore), middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
 			fileRoute := needAuth.Group("/file")
 			{
 				fileRoute.GET(":id", fileController.GetFile)

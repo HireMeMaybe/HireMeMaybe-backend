@@ -20,17 +20,14 @@ import (
 // access to the endpoint.
 func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		const BearerSchema = "Bearer "
-		authHeader := ctx.GetHeader("Authorization")
-
-		if len(authHeader) <= len(BearerSchema) {
+		tokenString, err := utilities.ExtractBearerToken(ctx)
+		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, utilities.ErrorResponse{
-				Error: "Invalid authorization header",
+				Error: err.Error(),
 			})
 			return
 		}
 
-		tokenString := authHeader[len(BearerSchema):]
 		token, err := auth.ValidatedToken(tokenString)
 
 		if err != nil {
@@ -62,6 +59,7 @@ func RequireAuth(db *database.DBinstanceStruct) gin.HandlerFunc {
 		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
+		ctx.Set("claims", claims)
 
 		if claims.Issuer != auth.JwtIssuer {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utilities.ErrorResponse{
