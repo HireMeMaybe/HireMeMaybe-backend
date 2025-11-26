@@ -47,6 +47,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 
 	// check does body has code
 	if err := c.ShouldBindJSON(&code); err != nil {
+		LogAuthAttempt("warning", "Google", "Fail", "", "No authorization code provided")
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("No authorization code provided: %v", err.Error()),
 		})
@@ -59,6 +60,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 		code.Code,
 	)
 	if err != nil {
+		LogAuthAttempt("warning", "Google", "Fail", "", "Token exchange failed")
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to receive token: %v", err.Error()),
 		})
@@ -68,6 +70,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 	client := h.OauthConfig.Client(context.Background(), token)
 	resp, err := client.Get(h.UserInfoEndpoint)
 	if err != nil {
+		LogAuthAttempt("warning", "Google", "Fail", "", "Failed to fetch user information")
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to fetch user information: %v", err.Error()),
 		})
@@ -79,6 +82,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 		if resp.Body != nil {
 			bodyBytes, _ = io.ReadAll(resp.Body)
 		}
+		LogAuthAttempt("warning", "Google", "Fail", "", fmt.Sprintf("Failed to fetch user information: status=%d", resp.StatusCode))
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to fetch user information: status=%d body=%s", resp.StatusCode, string(bodyBytes)),
 		})
@@ -93,6 +97,7 @@ func (h *OauthLoginHandler) getUserInfo(c *gin.Context) (model.GoogleUserInfo, e
 
 	err = json.NewDecoder(resp.Body).Decode(&uInfo)
 	if err != nil {
+		LogAuthAttempt("warning", "Google", "Fail", "", "Failed to decode user info")
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to decode user info: %v", err.Error()),
 		})
@@ -119,6 +124,7 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 		userModel.FillGoogleInfo(uinfo)
 
 		if err := h.DB.Create(userModel).Error; err != nil {
+			LogAuthAttempt("error", "Google", "Fail", uinfo.Email, "Failed to create user")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to create user: %v", err.Error()),
 			})
@@ -130,6 +136,7 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 
 		if msg, status, err := database.RemovePunishment(user, h.DB); err != nil {
 			if status == http.StatusInternalServerError {
+				LogAuthAttempt("error", "Google", "Fail", uinfo.Email, "RemovePunishment failed")
 				c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 					Error: msg,
 				})
@@ -139,11 +146,13 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 
 		if err := h.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(userModel).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				LogAuthAttempt("error", "Google", "Fail", uinfo.Email, "User type mismatch")
 				c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 					Error: "You already registered as a different user type",
 				})
 				return
 			}
+			LogAuthAttempt("error", "Google", "Fail", uinfo.Email, "Failed to retrieve user data")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %v", err.Error()),
 			})
@@ -161,11 +170,15 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 
 	accessToken, _, err = GenerateStandardToken(userModel.GetID())
 	if err != nil {
+		LogAuthAttempt("error", "Google", "Fail", uinfo.Email, "Failed to generate access token")
 		c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 			Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 		})
 		return
 	}
+
+	// successful OAuth login/register
+	LogAuthAttempt("info", "Google", "Success", uinfo.Email, "OAuth authenticated")
 
 	resp := userModel.GetLoginResponse(accessToken)
 

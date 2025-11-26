@@ -187,6 +187,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	var info loginInfo
 
 	if err := c.ShouldBindJSON(&info); err != nil {
+		LogAuthAttempt("warning", "Local", "Fail", "", "Missing or invalid credentials")
 		c.JSON(http.StatusBadRequest, utilities.ErrorResponse{
 			Error: "Username or password is not provided",
 		})
@@ -198,6 +199,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
+		LogAuthAttempt("warning", "Local", "Fail", info.Username, "Username not found")
 		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
 			Error: "Username or password is incorrect",
 		})
@@ -207,12 +209,14 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 		// Do nothing
 
 	default:
+		LogAuthAttempt("error", "Local", "Fail", info.Username, fmt.Sprintf("Database error: %s", err.Error()))
 		utilities.RespondDBError(c, err)
 		return
 	}
 
 	if msg, status, err := database.RemovePunishment(user, lh.DB); err != nil {
 		if status == http.StatusInternalServerError {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "RemovePunishment failed")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: msg,
 			})
@@ -221,6 +225,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	}
 
 	if user.Password == "" {
+		LogAuthAttempt("warning", "Local", "Fail", info.Username, "No password set")
 		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
 			Error: "Username or password is incorrect",
 		})
@@ -228,6 +233,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	}
 
 	if !utilities.VerifyPassword(info.Password, user.Password) {
+		LogAuthAttempt("warning", "Local", "Fail", info.Username, "Invalid password")
 		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{
 			Error: "Username or password is incorrect",
 		})
@@ -238,6 +244,7 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	case model.RoleCPSK:
 		var cpskUser model.CPSKUser
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&cpskUser).Error; err != nil {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "Failed to retrieve user data")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
@@ -246,19 +253,23 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 
 		accessToken, _, err := GenerateStandardToken(cpskUser.UserID)
 		if err != nil {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "Failed to generate access token")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
+		LogAuthAttempt("info", "Local", "Success", user.Username, "User authenticated as CPSK")
 		c.JSON(http.StatusOK, model.CPSKResponse{
 			User:        cpskUser,
 			AccessToken: accessToken,
 		})
+
 	case model.RoleCompany:
 		var companyUser model.CompanyUser
 		if err := lh.DB.Preload("User").Preload("User.Punishment").Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "Failed to retrieve user data")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to retrieve user data: %s", err.Error()),
 			})
@@ -267,12 +278,14 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 
 		accessToken, _, err := GenerateStandardToken(companyUser.UserID)
 		if err != nil {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "Failed to generate access token")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
+		LogAuthAttempt("info", "Local", "Success", user.Username, "User authenticated as Company")
 		c.JSON(http.StatusOK, model.CompanyResponse{
 			User:        companyUser,
 			AccessToken: accessToken,
@@ -280,12 +293,14 @@ func (lh *LocalRegisterHandler) LocalLoginHandler(c *gin.Context) {
 	default:
 		accessToken, _, err := GenerateStandardToken(user.ID)
 		if err != nil {
+			LogAuthAttempt("error", "Local", "Fail", user.Username, "Failed to generate access token")
 			c.JSON(http.StatusInternalServerError, utilities.ErrorResponse{
 				Error: fmt.Sprintf("Failed to generate access token: %s", err.Error()),
 			})
 			return
 		}
 
+		LogAuthAttempt("info", "Local", "Success", user.Username, "User authenticated as Admin")
 		c.JSON(http.StatusOK, adminResponse{
 			User:        user,
 			AccessToken: accessToken,
