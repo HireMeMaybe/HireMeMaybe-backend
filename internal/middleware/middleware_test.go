@@ -2,8 +2,11 @@ package middleware
 
 import (
 	"HireMeMaybe-backend/internal/auth"
+	"HireMeMaybe-backend/internal/controller/application"
+	"HireMeMaybe-backend/internal/controller/jobpost"
 	"HireMeMaybe-backend/internal/database"
 	"HireMeMaybe-backend/internal/model"
+	"HireMeMaybe-backend/internal/testutil"
 	"HireMeMaybe-backend/internal/utilities"
 	"context"
 	"encoding/json"
@@ -22,6 +25,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
+	"gorm.io/gorm"
 )
 
 var testDB *database.DBinstanceStruct
@@ -410,4 +414,368 @@ func TestSizeLimit_WayExceedLimit(t *testing.T) {
 	var body map[string]interface{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	assert.Contains(t, body["error"], "Entity too large")
+}
+
+func TestCheckPunishment_SuspendedCompanyCannotPost(t *testing.T) {
+	companyToken, err := auth.GetAccessToken(t, testDB, database.TestUserCompany1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	// attach a suspend punishment to the company user
+	var user model.User
+	if err := testDB.Where("id = ?", database.TestUserCompany1.ID).First(&user).Error; err != nil {
+		t.Fatalf("failed to load company user: %v", err)
+	}
+	now := time.Now()
+	future := now.Add(48 * time.Hour)
+	punishment := model.PunishmentStruct{PunishmentType: model.SuspendPunishment, PunishAt: &now, PunishEnd: &future}
+	user.Punishment = &punishment
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to save punishment: %v", err)
+	}
+
+	engine := gin.New()
+	jc := &jobpost.JobPostController{DB: testDB}
+	engine.POST("/jobpost", RequireAuth(testDB), CheckRole(model.RoleCompany), CheckPunishment(testDB, model.SuspendPunishment), jc.CreateJobPostHandler)
+
+	body := gin.H{
+		"title":        "Suspended Company Posting",
+		"desc":         "Should be blocked",
+		"req":          "None",
+		"exp_lvl":      "Intern",
+		"location":     "Remote",
+		"type":         "Intern",
+		"salary":       "0",
+		"tags":         []string{"go"},
+		"default_form": true,
+	}
+
+	rec, resp := testutil.MakeJSONRequest(body, companyToken, engine, "/jobpost", http.MethodPost)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	if resp != nil {
+		assert.Contains(t, resp["error"], "don't have access")
+	}
+
+	// cleanup punishment
+	user.Punishment = nil
+	user.PunishmentID = nil
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to cleanup punishment: %v", err)
+	}
+}
+
+func TestCheckPunishment_SuspendedCPSKCannotApply(t *testing.T) {
+	cpskToken, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	// create a resume file record to reference
+	f := model.File{Content: []byte("resume-ban"), Extension: ".pdf"}
+	if err := testDB.Create(&f).Error; err != nil {
+		t.Fatalf("failed to create resume file: %v", err)
+	}
+
+	// Attach a ban punishment to the CPSK user (unexpired)
+	var user model.User
+	if err := testDB.Where("id = ?", database.TestUserCPSK1.ID).First(&user).Error; err != nil {
+		t.Fatalf("failed to load user: %v", err)
+	}
+	now := time.Now()
+	future := now.Add(24 * time.Hour)
+	punishment := model.PunishmentStruct{PunishmentType: model.SuspendPunishment, PunishAt: &now, PunishEnd: &future}
+	user.Punishment = &punishment
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to save punishment: %v", err)
+	}
+
+	// Attempt to apply - should be blocked by middleware
+	engine := gin.New()
+	ac := &application.ApplicationController{DB: testDB}
+	engine.POST("/application", RequireAuth(testDB), CheckPunishment(testDB, model.SuspendPunishment), CheckRole(model.RoleCPSK), ac.ApplicationHandler)
+
+	body := gin.H{"post_id": database.TestJobPost1.ID, "resume_id": f.ID}
+
+	rec, resp := testutil.MakeJSONRequest(body, cpskToken, engine, "/application", http.MethodPost)
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	if resp != nil {
+		// message should indicate lack of access
+		assert.Contains(t, resp["error"], "don't have access")
+	}
+
+	// Clean up: remove punishment so other tests unaffected
+	user.Punishment = nil
+	user.PunishmentID = nil
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to cleanup punishment: %v", err)
+	}
+}
+
+func TestCheckPunishment_BannedUserCannotAccess(t *testing.T) {
+	// Use CPSK user for this test
+	token, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	// attach a permanent ban (PunishEnd == nil)
+	var user model.User
+	if err := testDB.Where("id = ?", database.TestUserCPSK1.ID).First(&user).Error; err != nil {
+		t.Fatalf("failed to load user: %v", err)
+	}
+	now := time.Now()
+	punishment := model.PunishmentStruct{PunishmentType: model.BanPunishment, PunishAt: &now, PunishEnd: nil}
+	user.Punishment = &punishment
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to save punishment: %v", err)
+	}
+
+	// Protected endpoint that also checks for ban punishment
+	engine := gin.New()
+	engine.GET("/protected-ban", RequireAuth(testDB), CheckPunishment(testDB, model.BanPunishment), checkUserHandler)
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected-ban", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	assert.Contains(t, body["error"], "permanent punishment")
+
+	// cleanup punishment
+	user.Punishment = nil
+	user.PunishmentID = nil
+	if err := testDB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		t.Fatalf("failed to cleanup punishment: %v", err)
+	}
+}
+
+func TestCheckPunishment_NoUserInContext(t *testing.T) {
+	engine := gin.New()
+	engine.GET("/check", CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Contains(t, body["error"], "user information not provided")
+}
+
+func TestCheckPunishment_AdminUser(t *testing.T) {
+	engine := gin.New()
+	engine.GET("/check", RequireAuth(testDB), CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Admin can access"})
+	})
+
+	token, err := auth.GetAccessToken(t, testDB, database.TestAdminUser.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Equal(t, true, body["ok"])
+	assert.Equal(t, "Admin can access", body["message"])
+}
+
+func TestCheckPunishment_UserWithNoPunishment(t *testing.T) {
+	engine := gin.New()
+	engine.GET("/check", RequireAuth(testDB), CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "message": "No punishment"})
+	})
+
+	token, err := auth.GetAccessToken(t, testDB, database.TestUserCPSK1.Username, database.TestSeedPassword)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Equal(t, true, body["ok"])
+	assert.Equal(t, "No punishment", body["message"])
+}
+
+func TestCheckPunishment_UserWithDifferentPunishmentType(t *testing.T) {
+	// Create a user with suspend punishment
+	punishEnd := time.Now().Add(24 * time.Hour)
+	punishment := model.PunishmentStruct{
+		PunishmentType: "suspend",
+		PunishEnd:      &punishEnd,
+	}
+	if err := testDB.Create(&punishment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	punishmentID := int(punishment.ID)
+	testUser := model.User{
+		Username:     "test_suspended_user",
+		Password:     "hashed_password",
+		Role:         model.RoleCPSK,
+		PunishmentID: &punishmentID,
+	}
+	if err := testDB.Create(&testUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	cpskUser := model.CPSKUser{
+		UserID: testUser.ID,
+		EditableCPSKInfo: model.EditableCPSKInfo{
+			FirstName: "Test",
+			LastName:  "Suspended",
+		},
+	}
+	if err := testDB.Create(&cpskUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// Checking for "ban" when user has "suspend" should allow access
+	engine := gin.New()
+	engine.GET("/check", RequireAuth(testDB), CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Different punishment type"})
+	})
+
+	token, _, err := auth.GenerateStandardToken(testUser.ID)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Equal(t, true, body["ok"])
+	assert.Equal(t, "Different punishment type", body["message"])
+
+	// Cleanup
+	testDB.Unscoped().Delete(&cpskUser)
+	testDB.Unscoped().Delete(&testUser)
+	testDB.Unscoped().Delete(&punishment)
+}
+
+func TestCheckPunishment_UserWithMatchingActivePunishment(t *testing.T) {
+	// Create a user with active ban
+	punishment := model.PunishmentStruct{
+		PunishmentType: "ban",
+		PunishEnd:      nil, // Permanent ban
+	}
+	if err := testDB.Create(&punishment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	punishmentID := int(punishment.ID)
+	testUser := model.User{
+		Username:     "test_banned_user",
+		Password:     "hashed_password",
+		Role:         model.RoleCPSK,
+		PunishmentID: &punishmentID,
+	}
+	if err := testDB.Create(&testUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	cpskUser := model.CPSKUser{
+		UserID: testUser.ID,
+		EditableCPSKInfo: model.EditableCPSKInfo{
+			FirstName: "Test",
+			LastName:  "Banned",
+		},
+	}
+	if err := testDB.Create(&cpskUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	engine := gin.New()
+	engine.GET("/check", RequireAuth(testDB), CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Should not reach here"})
+	})
+
+	token, _, err := auth.GenerateStandardToken(testUser.ID)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Contains(t, body["error"], "You don't have access to this endpoint due to permanent punishment")
+
+	// Cleanup
+	testDB.Unscoped().Delete(&cpskUser)
+	testDB.Unscoped().Delete(&testUser)
+	testDB.Unscoped().Delete(&punishment)
+}
+
+func TestCheckPunishment_UserWithExpiredPunishment(t *testing.T) {
+	// Create a user with expired ban
+	punishEnd := time.Now().Add(-24 * time.Hour) // Expired yesterday
+	punishment := model.PunishmentStruct{
+		PunishmentType: "ban",
+		PunishEnd:      &punishEnd,
+	}
+	if err := testDB.Create(&punishment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	punishmentID := int(punishment.ID)
+	testUser := model.User{
+		Username:     "test_expired_ban_user",
+		Password:     "hashed_password",
+		Role:         model.RoleCPSK,
+		PunishmentID: &punishmentID,
+	}
+	if err := testDB.Create(&testUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	cpskUser := model.CPSKUser{
+		UserID: testUser.ID,
+		EditableCPSKInfo: model.EditableCPSKInfo{
+			FirstName: "Test",
+			LastName:  "Expired",
+		},
+	}
+	if err := testDB.Create(&cpskUser).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	engine := gin.New()
+	engine.GET("/check", RequireAuth(testDB), CheckPunishment(testDB, "ban"), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Punishment expired and removed"})
+	})
+
+	token, _, err := auth.GenerateStandardToken(testUser.ID)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/check", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	// Should pass through since RemovePunishment removes expired punishments
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var body map[string]interface{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Equal(t, true, body["ok"])
+	assert.Equal(t, "Punishment expired and removed", body["message"])
+
+	// Cleanup
+	testDB.Unscoped().Delete(&cpskUser)
+	testDB.Unscoped().Delete(&testUser)
+	testDB.Unscoped().Delete(&punishment)
 }
