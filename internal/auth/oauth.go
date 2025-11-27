@@ -165,7 +165,6 @@ func (h *OauthLoginHandler) loginOrRegisterUser(userModel model.UserModel, uinfo
 
 	var accessToken string
 
-	// TODO: change this when implementing refresh token
 	var _ string
 
 	accessToken, _, err = GenerateStandardToken(userModel.GetID())

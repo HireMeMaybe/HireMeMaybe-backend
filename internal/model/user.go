@@ -71,7 +71,7 @@ type EditableVisitorInfo struct {
 
 // PunishmentStruct is for storing punishment detail like ban or suspend
 type PunishmentStruct struct {
-	ID             uint       `gorm:"primaryKey;autoIncrement;->" json:"-"`
+	ID             int       `gorm:"primaryKey;autoIncrement;->" json:"-"`
 	PunishmentType string     `json:"type"`
 	PunishAt       *time.Time `json:"at"`
 	PunishEnd      *time.Time `json:"end"`
