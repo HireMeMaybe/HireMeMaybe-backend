@@ -176,7 +176,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		}
 	}
 
-	r.GET("/swagger/*any", middleware.RateLimiterMiddleware(uint(30)),ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", middleware.RateLimiterMiddleware(uint(30)), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }

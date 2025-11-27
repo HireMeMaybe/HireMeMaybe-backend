@@ -132,7 +132,7 @@ func TestLogoutMissingClaims(t *testing.T) {
 	var resp map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, "Invalid token claims", resp["error"])
+	assert.Equal(t, "invalid token claims", resp["error"])
 }
 
 func TestLogoutInvalidClaimsType(t *testing.T) {
@@ -164,7 +164,7 @@ func TestLogoutInvalidClaimsType(t *testing.T) {
 	var resp map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, "Invalid token claims type", resp["error"])
+	assert.Equal(t, "invalid token claims type", resp["error"])
 }
 
 func TestLogoutBlacklistStoreError(t *testing.T) {
@@ -329,7 +329,7 @@ func TestExtractClaims(t *testing.T) {
 		claims, err := extractClaims(c)
 		assert.Error(t, err)
 		assert.Nil(t, claims)
-		assert.Equal(t, "Invalid token claims", err.Error())
+		assert.Equal(t, "invalid token claims", err.Error())
 	})
 
 	// Test invalid claims type
@@ -342,7 +342,7 @@ func TestExtractClaims(t *testing.T) {
 		claims, err := extractClaims(c)
 		assert.Error(t, err)
 		assert.Nil(t, claims)
-		assert.Equal(t, "Invalid token claims type", err.Error())
+		assert.Equal(t, "invalid token claims type", err.Error())
 	})
 }
 

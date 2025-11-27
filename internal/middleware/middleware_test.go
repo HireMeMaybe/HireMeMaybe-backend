@@ -197,7 +197,7 @@ func TestRequireAuth_NoHeader(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	var body map[string]interface{}
 	_ = json.Unmarshal(rec.Body.Bytes(), &body)
-	assert.Contains(t, body["error"], "Invalid authorization header")
+	assert.Contains(t, body["error"], "invalid authorization header")
 }
 
 func TestRequireAuth_ExpiredToken(t *testing.T) {
@@ -424,7 +424,7 @@ func TestJwtBlacklistCheck_NoHeader(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	var body map[string]interface{}
 	_ = json.Unmarshal(rec.Body.Bytes(), &body)
-	assert.Contains(t, body["error"], "Invalid authorization header")
+	assert.Contains(t, body["error"], "invalid authorization header")
 }
 
 func TestJwtBlacklistCheck_InvalidHeader(t *testing.T) {

@@ -9,18 +9,21 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// LogoutController handles user logout by blacklisting JWT tokens
 type LogoutController struct {
 	BlacklistStore JwtBlacklistStore
 }
 
+// NewLogoutController creates a new instance of LogoutController
 func NewLogoutController(blacklistStore JwtBlacklistStore) *LogoutController {
 	return &LogoutController{
 		BlacklistStore: blacklistStore,
 	}
 }
 
+// LogoutHandler handles user logout by blacklisting the JWT token
 func (lc *LogoutController) LogoutHandler(c *gin.Context) {
-	
+
 	tokenString, err := utilities.ExtractBearerToken(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utilities.ErrorResponse{Error: err.Error()})
@@ -45,12 +48,12 @@ func (lc *LogoutController) LogoutHandler(c *gin.Context) {
 func extractClaims(c *gin.Context) (*jwt.RegisteredClaims, error) {
 	claims, ok := c.Get("claims")
 	if !ok {
-		return nil, fmt.Errorf("Invalid token claims")
+		return nil, fmt.Errorf("invalid token claims")
 	}
 
 	realClaims, okCast := claims.(*jwt.RegisteredClaims)
 	if !okCast {
-		return nil, fmt.Errorf("Invalid token claims type")
+		return nil, fmt.Errorf("invalid token claims type")
 	}
 	return realClaims, nil
 }
