@@ -1,86 +1,160 @@
-# Project HireMeMaybe-backend
+# HireMeMaybe Backend
 
-Backend service for HireMeMaybe web application platform for employment focused on Computer Engineering and Software and Knowledge Engineering student at Kasetsart university
+Backend service for HireMeMaybe - A web application platform connecting Computer Engineering and Software and Knowledge Engineering students at Kasetsart University with employment opportunities.
 
-## Requirement
-- golang  v1.24.6
-- docker
+## Requirements
 
-## How to run
-- Copy sample.env and fill Google client ID and Secret other you can leave it as default
+- Go v1.24.6 or higher
+- Docker & Docker Compose
+- Make (for using Makefile commands)
 
-Mac / Linux:
-```
-cp ./sample.env .env
-```
+## Quick Start
 
-Window:
-```
-copy ./sample.env .env
-```
-
-- Start postgres docker container 
-```
-make docker run
-```
-
-- Install psql and run this command
-```
-PGPASSWORD=<database password> psql -h 127.0.0.1 -U <database username> -d <database name> -f ./init_extension.sql
-```
-
-- Install dependencies
-```
-go get .
-```
-
-- Run server
-```
-make run
-```
-
-## MakeFile
-
-Run build make command with tests
+### 1. Clone the Repository
 ```bash
-make all
+git clone https://github.com/HireMeMaybe/HireMeMaybe-backend.git
+cd HireMeMaybe-backend
 ```
 
-Build the application
+### 2. Setup Environment Variables
+
+Copy the sample environment file and configure it:
+
+Copy the sample environment file and configure it:
+
+**macOS/Linux:**
 ```bash
-make build
+cp sample.env .env
 ```
 
-Run the application
-```bash
-make run
+**Windows:**
+```cmd
+copy sample.env .env
 ```
-Create DB container
+
+**Required configurations:**
+- `CPSK_GOOGLE_AUTH_CLIENT` - Google OAuth Client ID
+- `CPSK_GOOGLE_AUTH_SECRET` - Google OAuth Client Secret
+- Other variables can be left as default for local development
+
+### 3. Start the Database
+
+Start the PostgreSQL database container:
 ```bash
 make docker-run
 ```
 
-Shutdown DB Container
+### 4. Install Dependencies
+
+Download and install Go dependencies:
 ```bash
-make docker-down
+go mod tidy
 ```
 
-DB Integrations Test:
+### 5. Run the Server
+
+Start the development server:
 ```bash
-make itest
+make run
 ```
 
-Live reload the application:
-```bash
-make watch
+The server will start at `http://localhost:8080`
+
+**API Documentation:** Available at `http://localhost:8080/swagger/index.html`
+
+## Available Commands
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `make run` | Run the application |
+| `make watch` | Run with live reload (auto-restart on changes) |
+| `make build` | Build the application binary |
+| `make clean` | Remove build artifacts |
+
+### Database
+
+| Command | Description |
+|---------|-------------|
+| `make docker-run` | Start PostgreSQL container |
+| `make docker-down` | Stop PostgreSQL container |
+
+### Testing
+
+| Command | Description |
+|---------|-------------|
+| `make test` | Run all unit tests |
+| `make itest` | Run integration tests with database |
+| `make all` | Build and run tests |
+
+## Project Structure
+
+```
+HireMeMaybe-backend/
+├── cmd/                    # Application entry points
+│   ├── api/               # Main API server
+│   ├── create-admin/      # Admin user creation tool
+│   └── clean-db/          # Database cleanup utility
+├── internal/              # Private application code
+│   ├── auth/             # Authentication & authorization
+│   ├── controller/       # HTTP request handlers
+│   ├── database/         # Database configuration
+│   ├── middleware/       # HTTP middleware (auth, CORS, rate limiting)
+│   ├── model/            # Data models
+│   ├── server/           # Server setup and routes
+│   └── utilities/        # Helper functions
+├── docs/                 # Swagger API documentation
+├── .env                  # Environment variables (create from sample.env)
+├── go.mod                # Go module dependencies
+└── Makefile              # Development commands
 ```
 
-Run the test suite:
+## Security Features
+
+- **JWT Authentication** - Token-based authentication with blacklist support
+- **OAuth 2.0** - Google OAuth integration for CPSK users
+- **Role-Based Access Control** - Admin, Company, CPSK, and Visitor roles
+- **Rate Limiting** - Protection against brute force attacks
+- **Security Headers** - HSTS, X-Frame-Options, X-Content-Type-Options
+- **Input Validation** - Request validation and sanitization
+- **File Upload Security** - Size limits, extension validation, cloud storage
+
+## Environment Variables
+
+Key environment variables (see `sample.env` for complete list):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | `8080` |
+| `DATABASE_URL` | PostgreSQL connection string | `localhost:5432` |
+| `JWT_SECRET` | Secret key for JWT signing | - |
+| `CPSK_GOOGLE_AUTH_CLIENT` | Google OAuth Client ID | - |
+| `CPSK_GOOGLE_AUTH_SECRET` | Google OAuth Client Secret | - |
+| `ALLOW_ORIGIN` | CORS allowed origins (comma-separated) | `http://localhost:3000` |
+| `CLOUD_STORAGE_BUCKET` | Cloud storage bucket name | - |
+
+## Running Tests
+
+### Unit Tests
 ```bash
 make test
 ```
 
-Clean up binary from the last build:
+### Integration Tests (requires database)
 ```bash
-make clean
+make itest
+```
+
+### Test Coverage
+```bash
+go test ./... -cover
+```
+
+## API Documentation
+
+Once the server is running, access the interactive Swagger documentation at:
+
+```
+http://localhost:8080/swagger/index.html
 ```
