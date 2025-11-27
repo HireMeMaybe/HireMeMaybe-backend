@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -18,30 +16,34 @@ var loggingEnv = os.Getenv("LOGGING")
 // identifier: username, email, userID, etc. (optional)
 // message: additional info (optional)
 func LogAuthAttempt(level string, authType string, status string, identifier string, message string) {
-	if strings.ToLower(loggingEnv) != "true" {
+	if !strings.EqualFold(loggingEnv, "true") {
 		return
 	}
-	// ensure log directory exists
-	dir := filepath.Join("log")
-	_ = os.MkdirAll(dir, 0o755)
 
-	fpath := filepath.Join(dir, "auth.log")
-	f, err := os.OpenFile(fpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	// ensure log directory exists
+	if err := os.MkdirAll("log", 0o750); err != nil {
+		// best-effort: if logging fails, do not crash the app, just return
+		return
+	}
+	f, err := os.OpenFile("log/auth.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		// best-effort: if logging fails, do not crash the app, just return
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	ts := time.Now().UTC().Format(time.RFC3339)
-	line := fmt.Sprintf("%s | %s | %s | %s", ts, level, authType, status)
+	parts := []string{ts, level, authType, status}
 	if identifier != "" {
-		line = line + " | " + identifier
+		parts = append(parts, identifier)
 	}
 	if message != "" {
-		line = line + " | " + message
+		parts = append(parts, message)
 	}
-	line = line + "\n"
+	line := strings.Join(parts, " | ") + "\n"
 
-	_, _ = f.WriteString(line)
+	if _, err := f.WriteString(line); err != nil {
+		// best-effort: ignore write errors
+		return
+	}
 }
