@@ -64,7 +64,6 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
 	logoutController := auth.NewLogoutController(blackListStore)
-	// controller := controller.NewJobController(s.DB)
 
 	fileController := file.NewFileController(s.DB, cloudStorageClient)
 	companyController := company.NewCompanyController(s.DB)
@@ -83,6 +82,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
+	r.Use(middleware.SafeHeader())
 
 	r.GET("/", s.HelloWorldHandler)
 	r.GET("/health", s.healthHandler)
