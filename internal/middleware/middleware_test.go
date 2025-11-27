@@ -201,7 +201,7 @@ func TestRequireAuth_NoHeader(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	var body map[string]interface{}
 	_ = json.Unmarshal(rec.Body.Bytes(), &body)
-	assert.Contains(t, body["error"], "Invalid authorization header")
+	assert.Contains(t, body["error"], "invalid authorization header")
 }
 
 func TestRequireAuth_ExpiredToken(t *testing.T) {
@@ -778,4 +778,111 @@ func TestCheckPunishment_UserWithExpiredPunishment(t *testing.T) {
 	testDB.Unscoped().Delete(&cpskUser)
 	testDB.Unscoped().Delete(&testUser)
 	testDB.Unscoped().Delete(&punishment)
+}
+
+func TestJwtBlacklistCheck_NoHeader(t *testing.T) {
+	blacklistStore := auth.NewInMemoryBlacklistStore()
+	engine := gin.New()
+	engine.GET("/protected", JwtBlacklistCheck(blacklistStore), checkUserHandler)
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	assert.Contains(t, body["error"], "invalid authorization header")
+}
+
+func TestJwtBlacklistCheck_InvalidHeader(t *testing.T) {
+	blacklistStore := auth.NewInMemoryBlacklistStore()
+	engine := gin.New()
+	engine.GET("/protected", JwtBlacklistCheck(blacklistStore), checkUserHandler)
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "InvalidFormat")
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+}
+
+func TestJwtBlacklistCheck_TokenNotBlacklisted(t *testing.T) {
+	blacklistStore := auth.NewInMemoryBlacklistStore()
+	engine := gin.New()
+	engine.GET("/protected", JwtBlacklistCheck(blacklistStore), checkUserHandler)
+
+	token, _, err := auth.GenerateStandardToken(database.TestUserCPSK1.ID)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	// Should pass through middleware (handler will fail because no user in context, but that's expected)
+	// The middleware itself doesn't abort, so it should reach the handler
+	assert.NotEqual(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestJwtBlacklistCheck_TokenBlacklisted(t *testing.T) {
+	blacklistStore := auth.NewInMemoryBlacklistStore()
+	engine := gin.New()
+	engine.GET("/protected", JwtBlacklistCheck(blacklistStore), checkUserHandler)
+
+	token, _, err := auth.GenerateStandardToken(database.TestUserCPSK1.ID)
+	assert.NoError(t, err)
+
+	// Add token to blacklist
+	err = blacklistStore.AddToBlacklist(token, time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	assert.Equal(t, "Token has been revoked", body["error"])
+}
+
+func TestJwtBlacklistCheck_MultipleTokens(t *testing.T) {
+	blacklistStore := auth.NewInMemoryBlacklistStore()
+	engine := gin.New()
+	engine.GET("/protected", JwtBlacklistCheck(blacklistStore), checkUserHandler)
+
+	// Create multiple tokens
+	token1, _, err := auth.GenerateStandardToken(database.TestUserCPSK1.ID)
+	assert.NoError(t, err)
+	token2, _, err := auth.GenerateStandardToken(database.TestUserCompany1.ID)
+	assert.NoError(t, err)
+
+	// Blacklist only token1
+	err = blacklistStore.AddToBlacklist(token1, time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+
+	// Test blacklisted token
+	req1, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req1.Header.Set("Authorization", "Bearer "+token1)
+	rec1 := httptest.NewRecorder()
+	engine.ServeHTTP(rec1, req1)
+
+	assert.Equal(t, http.StatusUnauthorized, rec1.Code)
+	var body1 map[string]interface{}
+	_ = json.Unmarshal(rec1.Body.Bytes(), &body1)
+	assert.Equal(t, "Token has been revoked", body1["error"])
+
+	// Test non-blacklisted token
+	req2, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req2.Header.Set("Authorization", "Bearer "+token2)
+	rec2 := httptest.NewRecorder()
+	engine.ServeHTTP(rec2, req2)
+
+	// Should pass through (not return 401 for blacklist)
+	assert.NotEqual(t, http.StatusUnauthorized, rec2.Code)
 }

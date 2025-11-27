@@ -55,13 +55,15 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 	cloudStorageClient, err := file.NewCloudStorageClient(os.Getenv("CLOUD_STORAGE_BUCKET"))
 
+	blackListStore := auth.NewInMemoryBlacklistStore()
+
 	if err != nil {
 		panic("Failed to create cloud storage client: " + err.Error())
 	}
 
 	gAuth := auth.NewOauthLoginHandler(s.DB, googleOauth, "https://www.googleapis.com/oauth2/v3/userinfo")
 	lAuth := auth.NewLocalAuthHandler(s.DB)
-	// controller := controller.NewJobController(s.DB)
+	logoutController := auth.NewLogoutController(blackListStore)
 
 	fileController := file.NewFileController(s.DB, cloudStorageClient)
 	companyController := company.NewCompanyController(s.DB)
@@ -80,6 +82,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
+	r.Use(middleware.SafeHeader())
 
 	r.GET("/", s.HelloWorldHandler)
 	r.GET("/health", s.healthHandler)
@@ -96,11 +99,12 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 
 			authRoute.POST("login", lAuth.LocalLoginHandler)
 			authRoute.POST("register", lAuth.LocalRegisterHandler)
+			authRoute.POST("logout", middleware.JwtBlacklistCheck(blackListStore), middleware.RequireAuth(s.DB), logoutController.LogoutHandler)
 		}
 		// Any routes
 		needAuth := v1.Group("")
 		{
-			needAuth.Use(middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
+			needAuth.Use(middleware.JwtBlacklistCheck(blackListStore), middleware.RequireAuth(s.DB), middleware.CheckPunishment(s.DB, model.BanPunishment))
 			fileRoute := needAuth.Group("/file")
 			{
 				fileRoute.GET(":id", fileController.GetFile)
@@ -172,7 +176,7 @@ func (s *MyServer) RegisterRoutes() http.Handler {
 		}
 	}
 
-	r.GET("/swagger/*any", middleware.RateLimiterMiddleware(uint(30)),ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", middleware.RateLimiterMiddleware(uint(30)), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
